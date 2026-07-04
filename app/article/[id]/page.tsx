@@ -6,6 +6,23 @@ type ArticlePageProps = {
   }>;
 };
 
+async function getSummary(title: string, description: string) {
+  const response = await fetch("http://localhost:3000/api/summarize", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      title,
+      description,
+    }),
+  });
+
+  const data = await response.json();
+  return data.summary;
+}
+
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { id } = await params;
   const articles = await getNews();
@@ -24,6 +41,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       </main>
     );
   }
+
+  const summary = await getSummary(article.title, article.description);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white px-8 py-16">
@@ -55,9 +74,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <h2 className="text-xl font-bold">AI Summary</h2>
-            <p className="text-gray-400 mt-3">
-              A neutral summary of the article will appear here.
-            </p>
+            <p className="text-gray-400 mt-3">{summary}</p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
