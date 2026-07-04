@@ -1,4 +1,5 @@
 import { getNews } from "../../lib/getNews";
+export const dynamic = "force-dynamic";
 
 type ArticlePageProps = {
   params: Promise<{
@@ -7,7 +8,11 @@ type ArticlePageProps = {
 };
 
 async function getSummary(title: string, description: string) {
-  const response = await fetch("http://localhost:3000/api/summarize", {
+  const baseUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";
+
+const response = await fetch(`${baseUrl}/api/summarize`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
