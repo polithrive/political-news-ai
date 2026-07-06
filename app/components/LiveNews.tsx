@@ -15,12 +15,43 @@ type Article = {
 
 export default function LiveNews() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [summaries, setSummaries] = useState<Record<number, string>>({});
 
   useEffect(() => {
     async function getNews() {
       const response = await fetch("/api/news");
       const data = await response.json();
-      setArticles(data.articles || []);
+      const articlesList = data.articles || [];
+
+      setArticles(articlesList);
+
+      articlesList.slice(0, 6).forEach(async (article: Article, index: number) => {
+        const summaryResponse = await fetch("/api/summarize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: article.title,
+            description: article.description,
+          }),
+        });
+
+        if (!summaryResponse.ok) {
+  setSummaries((prev) => ({
+    ...prev,
+    [index]: "AI summary failed to generate.",
+  }));
+  return;
+}
+
+const summaryData = await summaryResponse.json();
+
+        setSummaries((prev) => ({
+          ...prev,
+          [index]: summaryData.summary,
+        }));
+      });
     }
 
     getNews();
@@ -76,7 +107,7 @@ export default function LiveNews() {
             <div className="mt-5 rounded-xl bg-slate-800 p-4">
               <p className="text-sm font-semibold text-red-500">AI SUMMARY</p>
               <p className="mt-2 text-sm text-gray-300">
-                AI-generated summary coming soon.
+                {summaries[index] || "Generating AI summary..."}
               </p>
             </div>
 
