@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PoliticalPulse
 
-## Getting Started
+> People don't need more political news.
+> They need better tools to understand it.
 
-First, run the development server:
+PoliticalPulse is an AI-powered political intelligence platform that transforms political news into structured intelligence reports.
+
+Instead of telling people what to think, PoliticalPulse helps people understand complex political issues by comparing perspectives, identifying common ground, and separating facts from interpretation.
+
+---
+
+## Features
+
+- 🧠 Executive Brief
+- 📊 Intelligence Assessment
+- ⚖️ Political Spectrum
+- ✅ Key Facts
+- 🌎 Perspective Analysis
+- 🤝 Consensus Engine
+- ✔️ Fact Check
+- 📰 Live News Feed
+- 🤖 AI-Powered Intelligence Reports
+
+---
+
+## Tech Stack
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- OpenAI API
+
+---
+
+## Vision
+
+PoliticalPulse is designed to become the world's most trusted AI-powered political intelligence platform.
+
+Our goal is not to produce more news.
+
+Our goal is to help people understand it.
+
+---
+
+## Current Status
+
+Project Sentinel – In Development
+
+See `/docs/ROADMAP.md` for upcoming features.
+
+---
+
+## Running Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Roadmap
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Upcoming features include:
 
-## Learn More
+- Source Comparison
+- Why This Matters
+- Timeline
+- Related Stories
+- Saved Reports
+- User Accounts
+- Premium Intelligence Reports
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private project.
