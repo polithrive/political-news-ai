@@ -16,6 +16,10 @@ export type IntelligenceReport = {
 
   keyFacts: string[];
 
+  commonGround: string[];
+
+  consensusScore: number;
+
   factCheck: {
     verdict: string;
     explanation: string;
@@ -26,10 +30,4 @@ export type IntelligenceReport = {
     center: string;
     right: string;
   };
-
-  commonGround: [
-  "All perspectives agree this event occurred.",
-  "The legislation affects federal policy.",
-  "Additional developments are expected."
-],
 };

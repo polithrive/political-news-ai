@@ -6,7 +6,7 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const { title, description } = await request.json();
+    const article = await request.json();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
@@ -14,66 +14,113 @@ export async function POST(request: Request) {
         {
           role: "system",
           content: `
-You are an impartial political news analyst.
+You are PoliticalPulse Intelligence.
 
-Analyze the article and return ONLY valid JSON.
+You are an impartial political intelligence analyst.
 
-Return this exact format:
+Your job is NOT to tell users what to think.
+Your job is to help users understand the issue before forming an opinion.
+
+Separate facts from interpretation.
+Explain why the story matters.
+Identify uncertainty.
+Compare viewpoints fairly.
+Highlight where perspectives agree.
+Never advocate for a political position.
+
+Return ONLY valid JSON.
+Do not include markdown.
+Do not include explanations outside the JSON.
+          `,
+        },
+        {
+          role: "user",
+          content: `
+Generate a PoliticalPulse Intelligence Report for this article.
+
+Article title:
+${article.title}
+
+Article description:
+${article.description}
+
+Source:
+${article.source?.name}
+
+Return this exact JSON structure:
 
 {
-  "summary": "Brief neutral summary of the article.",
+  "summary": "A concise executive briefing explaining what happened and why it matters.",
   "biasScore": 50,
-  "lean": "Center",
-  "biasReasoning": "Brief explanation of the bias rating.",
+  "confidence": 85,
+  "category": "Politics",
   "keyFacts": [
     "Fact 1",
     "Fact 2",
     "Fact 3"
   ],
-  "factCheck": "Brief note on whether the claims appear factual, uncertain, or need verification.",
-  "confidence": 85
+  "perspectives": {
+    "left": "How a left-leaning perspective may interpret this story.",
+    "center": "How a neutral or centrist perspective may interpret this story.",
+    "right": "How a right-leaning perspective may interpret this story."
+  },
+  "commonGround": [
+    "Point of agreement 1",
+    "Point of agreement 2",
+    "Point of agreement 3"
+  ],
+  "consensusScore": 75,
+  "factCheck": {
+    "verdict": "Mostly factual, uncertain, mixed, or needs verification.",
+    "explanation": "Brief explanation of what appears verified, uncertain, or needing more evidence."
+  }
 }
 
 Rules:
-- biasScore must be between 0 and 100
-- 0 = strongly left-leaning
-- 50 = neutral/center
-- 100 = strongly right-leaning
-- lean must be one of:
-  Left
-  Lean Left
-  Center
-  Lean Right
-  Right
-- keyFacts must contain exactly 3 short facts.
-- confidence must be between 0 and 100.
-- Keep all responses concise.
-`,
-        },
-        {
-          role: "user",
-          content: `
-Title:
-${title}
-
-Description:
-${description}
-`,
+- biasScore must be a number from 0 to 100.
+- 0 means far left, 50 means center, 100 means far right.
+- confidence must be a number from 0 to 100.
+- consensusScore must be a number from 0 to 100.
+- keyFacts must contain 3 to 5 concise facts.
+- commonGround must contain 2 to 4 points.
+- If the article is not political, still analyze it neutrally and set category appropriately.
+          `,
         },
       ],
-      response_format: {
-        type: "json_object",
-      },
+      temperature: 0.3,
     });
 
-    return Response.json(
-      JSON.parse(completion.choices[0].message.content!)
-    );
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("No AI response returned");
+    }
+
+    const analysis = JSON.parse(content);
+
+    return Response.json(analysis);
   } catch (error) {
-    console.error("Analyze API Error:", error);
+    console.error("Analyze API error:", error);
 
     return Response.json(
-      { error: "Failed to analyze article" },
+      {
+        summary: "Unable to generate intelligence analysis at this time.",
+        biasScore: 50,
+        confidence: 0,
+        category: "Unknown",
+        keyFacts: [],
+        perspectives: {
+          left: "Left perspective not available.",
+          center: "Center perspective not available.",
+          right: "Right perspective not available.",
+        },
+        commonGround: [],
+        consensusScore: 0,
+        factCheck: {
+          verdict: "Unavailable",
+          explanation: "The intelligence engine could not complete analysis.",
+        },
+      },
       { status: 500 }
     );
   }

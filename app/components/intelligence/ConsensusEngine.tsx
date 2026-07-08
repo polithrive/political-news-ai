@@ -5,9 +5,9 @@ type ConsensusEngineProps = {
   report: IntelligenceReport;
 };
 
-export default function ConsensusEngine({
-  report,
-}: ConsensusEngineProps) {
+export default function ConsensusEngine({ report }: ConsensusEngineProps) {
+  const commonGround = report.commonGround ?? [];
+
   return (
     <ReportSection
       title="Consensus Engine"
@@ -19,17 +19,20 @@ export default function ConsensusEngine({
           Areas of Agreement
         </h3>
 
-        <ul className="mt-5 space-y-4">
-        {(report.commonGround ?? []).map((item, index) => (
-            <li
-              key={index}
-              className="flex items-start gap-3 text-slate-200"
-            >
-              <span className="text-green-400 font-bold">✓</span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+        {commonGround.length > 0 ? (
+          <ul className="mt-5 space-y-4">
+            {commonGround.map((item, index) => (
+              <li key={index} className="flex items-start gap-3 text-slate-200">
+                <span className="font-bold text-green-400">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-5 text-slate-400">
+            Common ground analysis is being generated.
+          </p>
+        )}
       </div>
     </ReportSection>
   );

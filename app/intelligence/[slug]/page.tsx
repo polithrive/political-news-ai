@@ -14,6 +14,8 @@ import IntelligenceOverview from "@/app/components/intelligence/IntelligenceOver
 import KeyFacts from "@/app/components/intelligence/KeyFacts";
 import PerspectiveAnalysis from "@/app/components/intelligence/PerspectiveAnalysis";
 import ConsensusEngine from "@/app/components/intelligence/ConsensusEngine";
+import FactCheck from "@/app/components/intelligence/FactCheck";
+import SourceComparison from "@/app/components/intelligence/SourceComparison";
 
 export default function IntelligenceReportPage() {
   const [article, setArticle] = useState<Article | null>(null);
@@ -85,6 +87,12 @@ export default function IntelligenceReportPage() {
 </div>
 <div className="mt-8">
   <ConsensusEngine report={report} />
+  <div className="mt-8">
+  <FactCheck report={report} />
+</div>
+<div className="mt-8">
+  <SourceComparison />
+</div>
 </div>
         {isLoading && (
           <p className="mt-4 text-sm text-slate-400">

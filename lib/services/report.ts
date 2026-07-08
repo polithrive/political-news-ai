@@ -20,8 +20,17 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       sourcesReviewed: 1,
     },
     executiveSummary: "Generating intelligence report...",
-    keyFacts: [],
-    factCheck: {
+   keyFacts: [],
+
+commonGround: [
+  "All perspectives agree this event occurred.",
+  "The legislation affects federal policy.",
+  "Additional developments are expected.",
+],
+
+consensusScore: 82,
+
+factCheck: {
       verdict: "Pending",
       explanation: "Fact checking is being generated.",
     },
@@ -60,8 +69,17 @@ export async function generateIntelligenceReport(
     },
     executiveSummary:
       analysis.summary ?? article.description ?? "No summary available.",
-    keyFacts: analysis.keyFacts ?? [],
-    factCheck: {
+keyFacts: analysis.keyFacts ?? [],
+
+commonGround: analysis.commonGround ?? [
+  "All perspectives agree this event occurred.",
+  "The legislation affects federal policy.",
+  "Additional developments are expected.",
+],
+
+consensusScore: analysis.consensusScore ?? 82,
+
+factCheck: {
       verdict: analysis.factCheck?.verdict ?? "Pending",
       explanation:
         analysis.factCheck?.explanation ??

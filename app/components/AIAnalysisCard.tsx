@@ -73,7 +73,9 @@ export default function AIAnalysisCard({
             </span>
           </div>
 
-          <p className="mt-2 text-sm text-gray-300">{factCheck}</p>
+          <p className="mt-2 text-sm text-gray-300">{typeof factCheck === "string"
+  ? factCheck
+  : `${factCheck.verdict}: ${factCheck.explanation}`}</p>
         </div>
       </div>
 
