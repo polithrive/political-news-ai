@@ -1,4 +1,4 @@
-import ReportSection from "./ReportSection";
+import ReportSection from "./intelligence/ReportSection";
 
 export default function SourceComparison() {
   return (

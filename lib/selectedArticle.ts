@@ -1,4 +1,4 @@
-import type { Article } from "@/types/article";
+import type { Article } from "@/app/types/article";
 
 const SELECTED_ARTICLE_KEY = "politicalpulse_selected_article";
 

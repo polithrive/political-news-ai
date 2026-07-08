@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Article } from "../../types/article";
-import type { AnalysisResult } from "../../types/analysis";
+import type { Article } from "../types/article";
+import type { AnalysisResult } from "../types/analysis";
 import AIAnalysisCard from "./AIAnalysisCard";
 import { getLatestNews } from "../../lib/news";
 import { analyzeArticle } from "../lib/analysis";

@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "../../types/analysis";
+import type { AnalysisResult } from "../types/analysis";
 import BiasMeter from "./BiasMeter";
 
 export default function AIAnalysisCard({
@@ -72,10 +72,9 @@ export default function AIAnalysisCard({
               AI Assessment
             </span>
           </div>
-
-          <p className="mt-2 text-sm text-gray-300">{typeof factCheck === "string"
-  ? factCheck
-  : `${factCheck.verdict}: ${factCheck.explanation}`}</p>
+<p className="mt-2 text-sm text-gray-300">
+  {factCheck}
+</p>
         </div>
       </div>
 

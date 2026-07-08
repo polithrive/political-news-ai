@@ -8,8 +8,8 @@ import {
   getMockIntelligenceReport,
 } from "@/lib/services/report";
 import { getSelectedArticle } from "@/lib/selectedArticle";
-import type { Article } from "@/types/article";
-import type { IntelligenceReport } from "@/types/report";
+import type { Article } from "../../types/article";
+import type { IntelligenceReport } from "../../types/report";
 import IntelligenceOverview from "@/app/components/intelligence/IntelligenceOverview";
 import KeyFacts from "@/app/components/intelligence/KeyFacts";
 import PerspectiveAnalysis from "@/app/components/intelligence/PerspectiveAnalysis";

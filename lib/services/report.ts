@@ -1,5 +1,5 @@
-import type { Article } from "../types/article";
-import type { IntelligenceReport } from "../types/report";
+import type { Article } from "@/app/types/article";
+import type { IntelligenceReport } from "@/app/types/report";
 
 export function getMockIntelligenceReport(): IntelligenceReport {
   return {

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import AIAnalysisCard from "../AIAnalysisCard";
 import { getLatestNews } from "../../../lib/news";
 import { analyzeArticle } from "../../lib/analysis";
-import type { Article } from "../../../types/article";
-import type { AnalysisResult } from "../../../types/analysis";
+import type { Article } from "../../types/article";
+import type { AnalysisResult } from "../../types/analysis";
 
 export default function IntelligenceStory() {
   const [story, setStory] = useState<Article | null>(null);

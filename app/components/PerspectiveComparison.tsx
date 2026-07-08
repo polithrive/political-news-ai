@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ComparisonResult } from "../../types/comparison";
+import type { ComparisonResult } from "../types/comparison";
 
 export default function PerspectiveComparison() {
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);

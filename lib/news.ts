@@ -1,4 +1,4 @@
-import type { Article } from "../types/article";
+import type { Article } from "@/app/types/article";
 
 export async function getLatestNews(): Promise<Article[]> {
   const response = await fetch("/api/news");
