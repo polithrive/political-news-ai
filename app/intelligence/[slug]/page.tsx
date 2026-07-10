@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import ConsensusEngine from "@/app/components/intelligence/ConsensusEngine";
@@ -106,12 +107,12 @@ export default function IntelligenceReportPage() {
               a complete intelligence report.
             </p>
 
-            <a
+            <Link
               href="/"
               className="mt-6 inline-flex rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
             >
               Return to homepage
-            </a>
+            </Link>
           </div>
         </section>
       </main>
@@ -147,12 +148,12 @@ export default function IntelligenceReportPage() {
                 Try again
               </button>
 
-              <a
+              <Link
                 href="/"
                 className="rounded-lg border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
               >
                 Return to homepage
-              </a>
+              </Link>
             </div>
           </div>
         </section>

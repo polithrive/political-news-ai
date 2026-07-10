@@ -1,4 +1,33 @@
-import type { AnalysisResult, FactCheckResult } from "@/app/types/analysis";
+import type {
+  AnalysisResult,
+  FactCheckResult,
+} from "@/app/types/analysis";
+
+type FactCheckObject = {
+  verdict: unknown;
+  explanation: unknown;
+};
+
+type AnalysisInput = {
+  summary?: unknown;
+  biasScore?: unknown;
+  lean?: unknown;
+  biasReasoning?: unknown;
+  keyFacts?: unknown;
+  factCheck?: unknown;
+  confidence?: unknown;
+};
+
+function isFactCheckObject(
+  value: unknown
+): value is FactCheckObject {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "verdict" in value &&
+    "explanation" in value
+  );
+}
 
 function normalizeFactCheck(
   factCheck: unknown
@@ -7,15 +36,10 @@ function normalizeFactCheck(
     return factCheck;
   }
 
-  if (
-    factCheck &&
-    typeof factCheck === "object" &&
-    "verdict" in factCheck &&
-    "explanation" in factCheck
-  ) {
+  if (isFactCheckObject(factCheck)) {
     return {
-      verdict: String((factCheck as any).verdict),
-      explanation: String((factCheck as any).explanation),
+      verdict: String(factCheck.verdict),
+      explanation: String(factCheck.explanation),
     };
   }
 
@@ -25,19 +49,31 @@ function normalizeFactCheck(
   };
 }
 
-export function normalizeAnalysis(data: any): AnalysisResult {
+export function normalizeAnalysis(
+  data: AnalysisInput
+): AnalysisResult {
   return {
-    summary: String(data.summary ?? "Summary unavailable."),
+    summary: String(
+      data.summary ?? "Summary unavailable."
+    ),
+
     biasScore:
-      typeof data.biasScore === "number" ? data.biasScore : 50,
+      typeof data.biasScore === "number"
+        ? data.biasScore
+        : 50,
+
     lean: String(data.lean ?? "Center"),
+
     biasReasoning: String(
       data.biasReasoning ?? "No reasoning available."
     ),
+
     keyFacts: Array.isArray(data.keyFacts)
       ? data.keyFacts.map(String)
       : [],
+
     factCheck: normalizeFactCheck(data.factCheck),
+
     confidence:
       typeof data.confidence === "number"
         ? data.confidence

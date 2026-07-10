@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import type { Article } from "../../types/article";
 
 type ReportHeaderProps = {
@@ -8,7 +10,7 @@ export default function ReportHeader({
   article,
 }: ReportHeaderProps) {
   return (
-    <header className="rounded-2xl border border-slate-800 bg-slate-900 shadow-xl overflow-hidden">
+    <header className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
       {/* Intelligence Banner */}
 
       <div className="border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 px-8 py-6">
@@ -46,11 +48,17 @@ export default function ReportHeader({
         </div>
 
         {article.urlToImage && (
-          <img
-            src={article.urlToImage}
-            alt={article.title}
-            className="mt-8 h-[420px] w-full rounded-2xl object-cover"
-          />
+          <div className="relative mt-8 h-[420px] w-full overflow-hidden rounded-2xl">
+            <Image
+              src={article.urlToImage}
+              alt={article.title}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              unoptimized
+              priority
+            />
+          </div>
         )}
 
         <p className="mt-8 text-lg leading-8 text-slate-300">
