@@ -1,8 +1,4 @@
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { openai } from "@/lib/ai/client";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +7,7 @@ export async function POST(request: Request) {
     const title = body.title || "No title provided";
     const description = body.description || "No description provided";
 
-    const completion = await client.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

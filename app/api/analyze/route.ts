@@ -1,8 +1,5 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { openai } from "@/lib/ai/client";
+import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
 
 export async function POST(request: Request) {
   try {
@@ -13,47 +10,45 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `
-You are PoliticalPulse Intelligence.
-
-You are an impartial political intelligence analyst.
-
-Your job is NOT to tell users what to think.
-Your job is to help users understand the issue before forming an opinion.
-
-Separate facts from interpretation.
-Explain why the story matters.
-Identify uncertainty.
-Compare viewpoints fairly.
-Highlight where perspectives agree.
-Never advocate for a political position.
-
-Return ONLY valid JSON.
-Do not include markdown.
-Do not include explanations outside the JSON.
-          `,
+          content: SYSTEM_PROMPTS.politicalAnalyst,
         },
         {
           role: "user",
           content: `
-Generate a PoliticalPulse Intelligence Report for this article.
+Generate a PoliticalPulse Intelligence Report for the following article.
 
 Article title:
-${article.title}
+${article.title ?? "Title unavailable"}
 
 Article description:
-${article.description}
+${article.description ?? "Description unavailable"}
 
 Source:
-${article.source?.name}
+${article.source?.name ?? "Source unavailable"}
 
 Return this exact JSON structure:
 
 {
-  "summary": "A concise executive briefing explaining what happened and why it matters.",
+  "summary": "A concise executive briefing explaining what happened.",
+  "whyThisMatters": "A clear explanation of why this story is politically, socially, legally, or economically important.",
+  "whoIsAffected": [
+    "Affected group 1",
+    "Affected group 2",
+    "Affected group 3"
+  ],
+  "shortTermImpact": "The likely effects over the next several days, weeks, or months.",
+  "longTermImpact": "The possible longer-term political, legal, economic, or social effects.",
+  "unansweredQuestions": [
+    "Important unanswered question 1",
+    "Important unanswered question 2",
+    "Important unanswered question 3"
+  ],
   "biasScore": 50,
+  "lean": "Center",
+  "biasReasoning": "A concise explanation of why the article framing appears left, center, or right leaning.",
   "confidence": 85,
   "category": "Politics",
+  "sourcesReviewed": 1,
   "keyFacts": [
     "Fact 1",
     "Fact 2",
@@ -72,22 +67,54 @@ Return this exact JSON structure:
   "consensusScore": 75,
   "factCheck": {
     "verdict": "Mostly factual, uncertain, mixed, or needs verification.",
-    "explanation": "Brief explanation of what appears verified, uncertain, or needing more evidence."
+    "explanation": "A concise explanation of what appears verified, uncertain, or in need of additional evidence."
+  },
+  "evidence": {
+    "primarySources": [
+      "Primary source or reporting organization 1",
+      "Primary source or reporting organization 2"
+    ],
+    "conflictingReporting": [
+      "A meaningful conflict, discrepancy, or uncertainty between available claims"
+    ],
+    "methodology": "A concise explanation of how the assessment was produced.",
+    "lastAnalyzedAt": "ISO-8601 date and time"
   }
 }
 
 Rules:
+
+- Return only valid JSON.
+- Do not include markdown.
+- Do not include text outside the JSON object.
+- Base the analysis only on the supplied article information.
+- Do not invent legislation, quotes, vote totals, dates, sources, or events.
+- Clearly acknowledge when the supplied article does not provide enough information.
 - biasScore must be a number from 0 to 100.
-- 0 means far left, 50 means center, 100 means far right.
+- A biasScore of 0 means strongly left-framed.
+- A biasScore of 50 means neutral or centrist framing.
+- A biasScore of 100 means strongly right-framed.
 - confidence must be a number from 0 to 100.
 - consensusScore must be a number from 0 to 100.
-- keyFacts must contain 3 to 5 concise facts.
-- commonGround must contain 2 to 4 points.
-- If the article is not political, still analyze it neutrally and set category appropriately.
-          `,
+- sourcesReviewed must reflect the number of identifiable sources in the supplied article data.
+- keyFacts must contain 3 to 5 concise facts when enough information exists.
+- whoIsAffected must contain 2 to 5 concise groups when identifiable.
+- unansweredQuestions must contain 2 to 5 concise questions.
+- commonGround must contain 2 to 4 meaningful points when identifiable.
+- Return lean as Left, Center, or Right.
+- Return biasReasoning as one concise paragraph.
+- Separate confirmed information from assumptions.
+- If there is no identifiable conflicting reporting, return an empty conflictingReporting array.
+- Use the article source in evidence.primarySources when available.
+- Use the current date and time in ISO-8601 format for evidence.lastAnalyzedAt.
+- If the article is not political, analyze it neutrally and set category appropriately.
+`,
         },
       ],
       temperature: 0.3,
+      response_format: {
+        type: "json_object",
+      },
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -105,20 +132,56 @@ Rules:
     return Response.json(
       {
         summary: "Unable to generate intelligence analysis at this time.",
+
+        whyThisMatters:
+          "PoliticalPulse could not determine why this story matters.",
+
+        whoIsAffected: [],
+
+        shortTermImpact:
+          "Short-term impact analysis is currently unavailable.",
+
+        longTermImpact:
+          "Long-term impact analysis is currently unavailable.",
+
+        unansweredQuestions: [],
+
         biasScore: 50,
+
+        lean: "Center",
+
+        biasReasoning: "Bias reasoning is not available.",
+
         confidence: 0,
+
         category: "Unknown",
+
+        sourcesReviewed: 0,
+
         keyFacts: [],
+
         perspectives: {
           left: "Left perspective not available.",
           center: "Center perspective not available.",
           right: "Right perspective not available.",
         },
+
         commonGround: [],
+
         consensusScore: 0,
+
         factCheck: {
           verdict: "Unavailable",
-          explanation: "The intelligence engine could not complete analysis.",
+          explanation:
+            "The intelligence engine could not complete the fact-checking analysis.",
+        },
+
+        evidence: {
+          primarySources: [],
+          conflictingReporting: [],
+          methodology:
+            "PoliticalPulse could not complete its evidence assessment.",
+          lastAnalyzedAt: new Date().toISOString(),
         },
       },
       { status: 500 }

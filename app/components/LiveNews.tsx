@@ -81,7 +81,14 @@ export default function LiveNews() {
             <p className="text-gray-400 mt-4">{article.description}</p>
 
             {analysisResults[index] ? (
-              <AIAnalysisCard {...analysisResults[index]} />
+              <AIAnalysisCard
+  {...analysisResults[index]}
+  factCheck={
+    typeof analysisResults[index].factCheck === "string"
+      ? analysisResults[index].factCheck
+      : `${analysisResults[index].factCheck.verdict}: ${analysisResults[index].factCheck.explanation}`
+  }
+/>
             ) : (
               <div className="mt-5 rounded-xl bg-slate-800 p-4">
                 <p className="text-sm font-semibold text-red-500">

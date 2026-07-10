@@ -1,5 +1,6 @@
 import type { Article } from "../types/article";
 import type { AnalysisResult } from "../types/analysis";
+import { normalizeAnalysis } from "@/lib/ai/normalize";
 
 export async function analyzeArticle(
   article: Article
@@ -12,6 +13,7 @@ export async function analyzeArticle(
     body: JSON.stringify({
       title: article.title,
       description: article.description,
+      source: article.source,
     }),
   });
 
@@ -19,5 +21,7 @@ export async function analyzeArticle(
     throw new Error("Failed to analyze article.");
   }
 
-  return response.json();
+  const data = await response.json();
+
+  return normalizeAnalysis(data);
 }

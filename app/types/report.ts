@@ -7,12 +7,29 @@ export type IntelligenceOverview = {
   sourcesReviewed: number;
 };
 
+export type ReportEvidence = {
+  primarySources: string[];
+  conflictingReporting: string[];
+  methodology: string;
+  lastAnalyzedAt: string;
+};
+
 export type IntelligenceReport = {
   article: Article;
 
   overview: IntelligenceOverview;
 
   executiveSummary: string;
+
+  whyThisMatters: string;
+
+  whoIsAffected: string[];
+
+  shortTermImpact: string;
+
+  longTermImpact: string;
+
+  unansweredQuestions: string[];
 
   keyFacts: string[];
 
@@ -30,4 +47,6 @@ export type IntelligenceReport = {
     center: string;
     right: string;
   };
+
+  evidence: ReportEvidence;
 };

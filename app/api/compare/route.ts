@@ -1,21 +1,22 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { openai } from "@/lib/ai/client";
+import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
 
 export async function POST(request: Request) {
   try {
     const { topic } = await request.json();
-    const completion = await openai.chat.completions.create({
-  model: "gpt-4.1-mini",
-  messages: [
-    {
-      role: "system",
-      content: `
-You are an impartial political analyst for PoliticalPulse.
 
-Compare how different political perspectives may frame a political topic.
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        {
+          role: "system",
+          content: SYSTEM_PROMPTS.perspectiveComparison,
+        },
+        {
+          role: "user",
+          content: `
+Topic:
+${topic}
 
 Return ONLY valid JSON in this exact format:
 
@@ -38,30 +39,20 @@ Return ONLY valid JSON in this exact format:
 }
 
 Rules:
-- Be neutral and balanced.
-- Do not tell users what to believe.
 - commonGround must contain exactly 3 items.
 - majorDifferences must contain exactly 3 items.
 - Keep each field concise.
 `,
-    },
-    {
-      role: "user",
-      content: `
-Topic:
-${topic}
-`,
-    },
-  ],
-  response_format: {
-    type: "json_object",
-  },
-});
+        },
+      ],
+      response_format: {
+        type: "json_object",
+      },
+    });
 
-return Response.json(
-  JSON.parse(completion.choices[0].message.content!)
-);
-
+    return Response.json(
+      JSON.parse(completion.choices[0].message.content!)
+    );
   } catch (error) {
     console.error("Compare API Error:", error);
 
