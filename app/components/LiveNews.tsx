@@ -18,36 +18,136 @@ export default function LiveNews() {
   const [analysisResults, setAnalysisResults] = useState<
     Record<number, AnalysisResult>
   >({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
-    async function loadNews() {
-      const articlesList = await getLatestNews();
+    let isCancelled = false;
 
-      setArticles(articlesList);
+    async function loadArticleAnalysis(
+      article: Article,
+      index: number
+    ) {
+      try {
+        const analysisData =
+          await analyzeArticle(article);
 
-      articlesList.slice(0, 6).forEach(async (article, index) => {
-        const analysisData = await analyzeArticle(article);
-
-        setAnalysisResults((previousResults) => ({
-          ...previousResults,
-          [index]: analysisData,
-        }));
-      });
+        if (!isCancelled) {
+          setAnalysisResults((previousResults) => ({
+            ...previousResults,
+            [index]: analysisData,
+          }));
+        }
+      } catch (error) {
+        console.error(
+          `Failed to analyze article ${index + 1}:`,
+          error
+        );
+      }
     }
 
-    loadNews();
+    async function loadNews() {
+      try {
+        setErrorMessage(null);
+
+        const articlesList =
+          await getLatestNews();
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (articlesList.length === 0) {
+          setErrorMessage(
+            "PoliticalPulse did not receive any live articles."
+          );
+          return;
+        }
+
+        setArticles(articlesList);
+
+        articlesList
+          .slice(0, 6)
+          .forEach((article, index) => {
+            void loadArticleAnalysis(
+              article,
+              index
+            );
+          });
+      } catch (error) {
+        console.error(
+          "Failed to load live news:",
+          error
+        );
+
+        if (!isCancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "PoliticalPulse could not load live news."
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadNews();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  if (articles.length === 0) {
+  if (isLoading) {
     return (
       <section className="mx-auto max-w-7xl px-8 py-16">
         <h2 className="mb-6 text-3xl font-bold">
           Live News
         </h2>
 
-        <p className="text-gray-400">
-          Loading live articles...
-        </p>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="h-96 animate-pulse rounded-2xl border border-slate-800 bg-slate-900"
+              />
+            )
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <section className="mx-auto max-w-7xl px-8 py-16">
+        <h2 className="mb-6 text-3xl font-bold">
+          Live News
+        </h2>
+
+        <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-6">
+          <p className="font-semibold text-red-400">
+            Live news could not be loaded.
+          </p>
+
+          <p className="mt-2 text-slate-300">
+            {errorMessage}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 rounded-lg bg-red-600 px-5 py-2 font-semibold text-white transition hover:bg-red-500"
+          >
+            Try again
+          </button>
+        </div>
       </section>
     );
   }
@@ -64,7 +164,7 @@ export default function LiveNews() {
 
           return (
             <article
-              key={article.url}
+              key={article.url || `${article.title}-${index}`}
               className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:border-red-500"
             >
               {article.urlToImage && (
@@ -81,12 +181,17 @@ export default function LiveNews() {
               )}
 
               <p className="text-sm font-semibold uppercase text-red-500">
-                {article.source.name}
+                {article.source?.name ||
+                  "Unknown Source"}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
                 Published:{" "}
-                {new Date(article.publishedAt).toLocaleString()}
+                {article.publishedAt
+                  ? new Date(
+                      article.publishedAt
+                    ).toLocaleString()
+                  : "Date unavailable"}
               </p>
 
               <p className="mt-3 inline-block rounded-full bg-slate-800 px-3 py-1 text-sm text-gray-300">
@@ -94,7 +199,8 @@ export default function LiveNews() {
               </p>
 
               <p className="ml-2 mt-3 inline-block rounded-full bg-slate-800 px-3 py-1 text-sm text-gray-300">
-                Perspective: {analysis?.lean ?? "Analyzing..."}
+                Perspective:{" "}
+                {analysis?.lean ?? "Analyzing..."}
               </p>
 
               <h3 className="mt-4 text-2xl font-bold">
@@ -102,14 +208,16 @@ export default function LiveNews() {
               </h3>
 
               <p className="mt-4 text-gray-400">
-                {article.description}
+                {article.description ||
+                  "No article description is available."}
               </p>
 
               {analysis ? (
                 <AIAnalysisCard
                   {...analysis}
                   factCheck={
-                    typeof analysis.factCheck === "string"
+                    typeof analysis.factCheck ===
+                    "string"
                       ? analysis.factCheck
                       : `${analysis.factCheck.verdict}: ${analysis.factCheck.explanation}`
                   }
@@ -128,7 +236,9 @@ export default function LiveNews() {
 
               <Link
                 href={`/intelligence/${index + 1}`}
-                onClick={() => saveSelectedArticle(article)}
+                onClick={() =>
+                  saveSelectedArticle(article)
+                }
                 className="mt-6 inline-block rounded-lg bg-red-600 px-5 py-2 font-semibold transition hover:bg-red-700"
               >
                 Open Intelligence Report →
