@@ -13,6 +13,7 @@ import {
   calculateSourceConsensus,
   type SourceConsensus,
 } from "./sourceConsensus";
+import { getSourceRating } from "./sourceRanking";
 import { calculateTrustScore } from "./trustScore";
 
 type DebatePerspectiveResponse = {
@@ -145,11 +146,9 @@ function createFallbackRankedSource(
   return {
     article,
 
-    sourceRating: {
-      reliability: 75,
-      factualReporting: 75,
-      politicalLean: "Mixed",
-    },
+    sourceRating: getSourceRating(
+      article.source?.name ?? "Unknown Source"
+    ),
 
     isPrimary: true,
   };

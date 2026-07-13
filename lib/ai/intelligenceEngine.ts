@@ -1,5 +1,6 @@
 import type { Article } from "@/app/types/article";
 import type {
+  DebatePerspective,
   IntelligenceReport,
   PoliticalPerspectiveAnalysis,
 } from "@/app/types/report";
@@ -34,70 +35,138 @@ function createFallbackSource(
   };
 }
 
+function createDebatePerspective(
+  position: string,
+  fallback: string
+): DebatePerspective {
+  return {
+    position: position.trim() || fallback,
+    strongestArguments: [],
+    primaryConcerns: [],
+  };
+}
+
 function createFallbackPerspectiveAnalysis({
+  article,
   left,
   center,
   right,
   commonGround,
 }: {
+  article: Article;
   left: string;
   center: string;
   right: string;
   commonGround: string[];
 }): PoliticalPerspectiveAnalysis {
   return {
-    progressive:
-      left ||
-      "A progressive perspective is not available from the current analysis.",
+    topic:
+      article.title ||
+      "The central political debate",
 
-    centrist:
-      center ||
-      "A centrist perspective is not available from the current analysis.",
+    progressive: createDebatePerspective(
+      left,
+      "A progressive perspective is not available from the current analysis."
+    ),
 
-    conservative:
-      right ||
-      "A conservative perspective is not available from the current analysis.",
+    centrist: createDebatePerspective(
+      center,
+      "A centrist perspective is not available from the current analysis."
+    ),
 
-    consensus:
+    conservative: createDebatePerspective(
+      right,
+      "A conservative perspective is not available from the current analysis."
+    ),
+
+    areasOfAgreement:
       commonGround.length > 0
-        ? commonGround.join(" ")
-        : "The current analysis did not identify clear areas of consensus.",
+        ? commonGround
+        : [
+            "The current analysis did not identify clear areas of agreement.",
+          ],
 
-    disagreements: [],
+    mainDisagreements: [],
+
+    politicalPulseAnalysis:
+      "PoliticalPulse identified the primary viewpoints, but a dedicated debate synthesis was not available.",
+
+    debateTemperature: 50,
   };
 }
 
+function normalizeStringArray(
+  value: unknown
+): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter(
+          (item): item is string =>
+            typeof item === "string"
+        )
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 function normalizePerspectiveAnalysis(
+  article: Article,
   perspectives: PoliticalPerspectives
 ): PoliticalPerspectiveAnalysis {
-  return {
-    progressive:
-      perspectives.progressive?.trim() ||
-      "A progressive perspective is not available.",
+  const consensus =
+    perspectives.consensus?.trim() || "";
 
-    centrist:
-      perspectives.centrist?.trim() ||
-      "A centrist perspective is not available.",
-
-    conservative:
-      perspectives.conservative?.trim() ||
-      "A conservative perspective is not available.",
-
-    consensus:
-      perspectives.consensus?.trim() ||
-      "The analysis did not identify clear areas of consensus.",
-
-    disagreements: Array.isArray(
+  const disagreements =
+    normalizeStringArray(
       perspectives.disagreements
-    )
-      ? perspectives.disagreements
-          .filter(
-            (item): item is string =>
-              typeof item === "string" &&
-              item.trim().length > 0
-          )
-          .map((item) => item.trim())
-      : [],
+    );
+
+  return {
+    topic:
+      article.title ||
+      "The central political debate",
+
+    progressive: createDebatePerspective(
+      perspectives.progressive ?? "",
+      "A progressive perspective is not available."
+    ),
+
+    centrist: createDebatePerspective(
+      perspectives.centrist ?? "",
+      "A centrist perspective is not available."
+    ),
+
+    conservative: createDebatePerspective(
+      perspectives.conservative ?? "",
+      "A conservative perspective is not available."
+    ),
+
+    areasOfAgreement: consensus
+      ? [consensus]
+      : [
+          "The analysis did not identify clear areas of agreement.",
+        ],
+
+    mainDisagreements: disagreements,
+
+    politicalPulseAnalysis:
+      consensus ||
+      "PoliticalPulse identified the primary viewpoints, but a dedicated neutral synthesis was not available.",
+
+    debateTemperature:
+      disagreements.length >= 3
+        ? 70
+        : disagreements.length === 2
+          ? 60
+          : disagreements.length === 1
+            ? 45
+            : 25,
   };
 }
 
@@ -107,18 +176,23 @@ export async function generatePoliticalIntelligence(
   let rankedSources: RankedArticle[];
 
   try {
-    rankedSources = await gatherStorySources(article);
+    rankedSources =
+      await gatherStorySources(article);
   } catch (error) {
     console.error(
       "PoliticalPulse failed to gather story sources:",
       error
     );
 
-    rankedSources = [createFallbackSource(article)];
+    rankedSources = [
+      createFallbackSource(article),
+    ];
   }
 
   if (rankedSources.length === 0) {
-    rankedSources = [createFallbackSource(article)];
+    rankedSources = [
+      createFallbackSource(article),
+    ];
   }
 
   const sourceConsensus =
@@ -134,10 +208,9 @@ export async function generatePoliticalIntelligence(
    * Generate the primary intelligence analysis and the
    * expanded political perspectives concurrently.
    *
-   * The primary report remains the required result.
-   * Expanded perspectives may fall back to the report's
-   * existing left, center, and right analysis if their
-   * dedicated generation request fails.
+   * The primary report remains required. Dedicated
+   * perspectives may fall back to the report's existing
+   * left, center, and right analysis.
    */
   const [analysisResult, perspectiveResult] =
     await Promise.allSettled([
@@ -167,31 +240,38 @@ export async function generatePoliticalIntelligence(
     )
   );
 
-  const analysis = normalizePoliticalResponse(
-    analysisResult.value,
-    {
-      sourceCount: sourceConsensus.sourceCount,
+  const analysis =
+    normalizePoliticalResponse(
+      analysisResult.value,
+      {
+        sourceCount:
+          sourceConsensus.sourceCount,
 
-      sourceNames,
+        sourceNames,
 
-      fallbackConsensusScore:
-        sourceConsensus.consensusScore,
+        fallbackConsensusScore:
+          sourceConsensus.consensusScore,
 
-      fallbackConfidence:
-        sourceConsensus.averageReliability,
+        fallbackConfidence:
+          sourceConsensus.averageReliability,
 
-      fallbackSummary:
-        article.description ||
-        "No executive summary is available.",
-    }
-  );
-
-  let perspectiveAnalysis: PoliticalPerspectiveAnalysis;
-
-  if (perspectiveResult.status === "fulfilled") {
-    perspectiveAnalysis = normalizePerspectiveAnalysis(
-      perspectiveResult.value
+        fallbackSummary:
+          article.description ||
+          "No executive summary is available.",
+      }
     );
+
+  let perspectiveAnalysis:
+    PoliticalPerspectiveAnalysis;
+
+  if (
+    perspectiveResult.status === "fulfilled"
+  ) {
+    perspectiveAnalysis =
+      normalizePerspectiveAnalysis(
+        article,
+        perspectiveResult.value
+      );
   } else {
     console.error(
       "PoliticalPulse expanded perspective analysis failed:",
@@ -200,6 +280,7 @@ export async function generatePoliticalIntelligence(
 
     perspectiveAnalysis =
       createFallbackPerspectiveAnalysis({
+        article,
         left: analysis.perspectives.left,
         center: analysis.perspectives.center,
         right: analysis.perspectives.right,
@@ -207,19 +288,22 @@ export async function generatePoliticalIntelligence(
       });
   }
 
-  const trustScore = calculateTrustScore({
-    confidence: analysis.confidence,
+  const trustScore =
+    calculateTrustScore({
+      confidence: analysis.confidence,
 
-    consensusScore: analysis.consensusScore,
+      consensusScore:
+        analysis.consensusScore,
 
-    sourceCount: sourceConsensus.sourceCount,
+      sourceCount:
+        sourceConsensus.sourceCount,
 
-    averageReliability:
-      sourceConsensus.averageReliability,
+      averageReliability:
+        sourceConsensus.averageReliability,
 
-    politicalDistribution:
-      sourceConsensus.politicalDistribution,
-  });
+      politicalDistribution:
+        sourceConsensus.politicalDistribution,
+    });
 
   return {
     article,
@@ -228,33 +312,41 @@ export async function generatePoliticalIntelligence(
       biasScore: analysis.biasScore,
       confidence: analysis.confidence,
       category: analysis.category,
-      sourcesReviewed: analysis.sourcesReviewed,
+      sourcesReviewed:
+        analysis.sourcesReviewed,
     },
 
     trustScore,
 
     executiveSummary: analysis.summary,
 
-    whyThisMatters: analysis.whyThisMatters,
+    whyThisMatters:
+      analysis.whyThisMatters,
 
-    whoIsAffected: analysis.whoIsAffected,
+    whoIsAffected:
+      analysis.whoIsAffected,
 
-    shortTermImpact: analysis.shortTermImpact,
+    shortTermImpact:
+      analysis.shortTermImpact,
 
-    longTermImpact: analysis.longTermImpact,
+    longTermImpact:
+      analysis.longTermImpact,
 
     unansweredQuestions:
       analysis.unansweredQuestions,
 
     keyFacts: analysis.keyFacts,
 
-    commonGround: analysis.commonGround,
+    commonGround:
+      analysis.commonGround,
 
-    consensusScore: analysis.consensusScore,
+    consensusScore:
+      analysis.consensusScore,
 
     factCheck: analysis.factCheck,
 
-    perspectives: analysis.perspectives,
+    perspectives:
+      analysis.perspectives,
 
     perspectiveAnalysis,
 

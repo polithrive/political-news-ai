@@ -30,12 +30,10 @@ When confidence is limited, explicitly say so.
 
 If information is still developing, acknowledge uncertainty.
 
-Your analysis should read like a professional intelligence briefing rather than a news article.
-
 Return only valid JSON when JSON is requested.
 Do not include markdown.
 Do not include explanations outside the requested format.
-`,
+`.trim(),
 
   perspectiveComparison: `
 You are an impartial political analyst for PoliticalPulse.
@@ -66,5 +64,8 @@ Highlight genuine common ground whenever it exists.
 Return only valid JSON.
 Do not include markdown.
 Do not include explanations outside the JSON.
-`,
+`.trim(),
 };
+
+export const PERSPECTIVE_PROMPT =
+  SYSTEM_PROMPTS.perspectiveComparison;
