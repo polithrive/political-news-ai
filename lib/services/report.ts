@@ -1,5 +1,245 @@
 import type { Article } from "@/app/types/article";
-import type { IntelligenceReport } from "@/app/types/report";
+import type {
+  DebatePerspective,
+  IntelligenceReport,
+  PoliticalPerspectiveAnalysis,
+} from "@/app/types/report";
+
+import {
+  gatherStorySources,
+  type RankedArticle,
+} from "./multiSource";
+import {
+  calculateSourceConsensus,
+  type SourceConsensus,
+} from "./sourceConsensus";
+import { calculateTrustScore } from "./trustScore";
+
+type DebatePerspectiveResponse = {
+  position?: unknown;
+  strongestArguments?: unknown;
+  primaryConcerns?: unknown;
+};
+
+type AnalysisResponse = {
+  summary?: unknown;
+  whyThisMatters?: unknown;
+  whoIsAffected?: unknown;
+  shortTermImpact?: unknown;
+  longTermImpact?: unknown;
+  unansweredQuestions?: unknown;
+  biasScore?: unknown;
+  confidence?: unknown;
+  category?: unknown;
+  sourcesReviewed?: unknown;
+  keyFacts?: unknown;
+  commonGround?: unknown;
+  consensusScore?: unknown;
+
+  factCheck?: {
+    verdict?: unknown;
+    explanation?: unknown;
+  };
+
+  perspectives?: {
+    left?: unknown;
+    center?: unknown;
+    right?: unknown;
+  };
+
+  perspectiveAnalysis?: {
+    topic?: unknown;
+
+    progressive?: DebatePerspectiveResponse;
+
+    centrist?: DebatePerspectiveResponse;
+
+    conservative?: DebatePerspectiveResponse;
+
+    areasOfAgreement?: unknown;
+    mainDisagreements?: unknown;
+    politicalPulseAnalysis?: unknown;
+    debateTemperature?: unknown;
+  };
+
+  evidence?: {
+    primarySources?: unknown;
+    conflictingReporting?: unknown;
+    methodology?: unknown;
+    lastAnalyzedAt?: unknown;
+  };
+};
+
+type MultiSourceAnalysisRequest = Article & {
+  primaryArticle: Article;
+
+  sources: Array<{
+    article: Article;
+    sourceRating: RankedArticle["sourceRating"];
+    isPrimary: boolean;
+  }>;
+
+  sourceConsensus: SourceConsensus;
+};
+
+function toStringValue(
+  value: unknown,
+  fallback: string
+): string {
+  return typeof value === "string" && value.trim()
+    ? value.trim()
+    : fallback;
+}
+
+function toNumberValue(
+  value: unknown,
+  fallback: number
+): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : fallback;
+}
+
+function toClampedScore(
+  value: unknown,
+  fallback: number
+): number {
+  const numericValue = toNumberValue(value, fallback);
+
+  return Math.max(
+    0,
+    Math.min(100, Math.round(numericValue))
+  );
+}
+
+function toPositiveCount(
+  value: unknown,
+  fallback: number
+): number {
+  const numericValue = toNumberValue(value, fallback);
+
+  return Math.max(0, Math.round(numericValue));
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter(
+          (item): item is string =>
+            typeof item === "string"
+        )
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function createFallbackRankedSource(
+  article: Article
+): RankedArticle {
+  return {
+    article,
+
+    sourceRating: {
+      reliability: 75,
+      factualReporting: 75,
+      politicalLean: "Mixed",
+    },
+
+    isPrimary: true,
+  };
+}
+
+function createDebatePerspective(
+  perspective: DebatePerspectiveResponse | undefined,
+  fallbackPosition: string
+): DebatePerspective {
+  return {
+    position: toStringValue(
+      perspective?.position,
+      fallbackPosition
+    ),
+
+    strongestArguments: toStringArray(
+      perspective?.strongestArguments
+    ),
+
+    primaryConcerns: toStringArray(
+      perspective?.primaryConcerns
+    ),
+  };
+}
+
+function createPerspectiveAnalysis(
+  analysis: AnalysisResponse,
+  article: Article,
+  commonGround: string[]
+): PoliticalPerspectiveAnalysis {
+  const dedicatedAnalysis =
+    analysis.perspectiveAnalysis;
+
+  const areasOfAgreement = toStringArray(
+    dedicatedAnalysis?.areasOfAgreement
+  );
+
+  const mainDisagreements = toStringArray(
+    dedicatedAnalysis?.mainDisagreements
+  );
+
+  return {
+    topic: toStringValue(
+      dedicatedAnalysis?.topic,
+      article.title ||
+        "The central political debate"
+    ),
+
+    progressive: createDebatePerspective(
+      dedicatedAnalysis?.progressive,
+      toStringValue(
+        analysis.perspectives?.left,
+        "A dedicated progressive analysis is not available."
+      )
+    ),
+
+    centrist: createDebatePerspective(
+      dedicatedAnalysis?.centrist,
+      toStringValue(
+        analysis.perspectives?.center,
+        "A dedicated centrist analysis is not available."
+      )
+    ),
+
+    conservative: createDebatePerspective(
+      dedicatedAnalysis?.conservative,
+      toStringValue(
+        analysis.perspectives?.right,
+        "A dedicated conservative analysis is not available."
+      )
+    ),
+
+    areasOfAgreement:
+      areasOfAgreement.length > 0
+        ? areasOfAgreement
+        : commonGround,
+
+    mainDisagreements,
+
+    politicalPulseAnalysis: toStringValue(
+      dedicatedAnalysis?.politicalPulseAnalysis,
+      "PoliticalPulse identified the major perspectives and areas of possible agreement, but a dedicated synthesis was not available."
+    ),
+
+    debateTemperature: toClampedScore(
+      dedicatedAnalysis?.debateTemperature,
+      50
+    ),
+  };
+}
 
 export function getMockIntelligenceReport(): IntelligenceReport {
   return {
@@ -9,6 +249,7 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       url: "",
       urlToImage: "",
       publishedAt: new Date().toISOString(),
+
       source: {
         name: "PoliticalPulse",
       },
@@ -21,7 +262,16 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       sourcesReviewed: 1,
     },
 
-    executiveSummary: "Generating intelligence report...",
+    trustScore: {
+      overall: 0,
+      evidenceStrength: "Low",
+      reportingAgreement: 0,
+      sourceCount: 1,
+      politicalDiversity: "Low",
+    },
+
+    executiveSummary:
+      "Generating intelligence report...",
 
     whyThisMatters:
       "PoliticalPulse is determining why this story matters.",
@@ -39,16 +289,16 @@ export function getMockIntelligenceReport(): IntelligenceReport {
     keyFacts: [],
 
     commonGround: [
-      "All perspectives agree this event occurred.",
-      "The issue may affect public policy.",
-      "Additional developments may follow.",
+      "The reported issue is part of an active public discussion.",
+      "Additional reporting may change how the story is understood.",
     ],
 
-    consensusScore: 82,
+    consensusScore: 0,
 
     factCheck: {
       verdict: "Pending",
-      explanation: "Fact checking is being generated.",
+      explanation:
+        "Fact checking is being generated.",
     },
 
     perspectives: {
@@ -57,11 +307,47 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       right: "Generating right perspective...",
     },
 
+    perspectiveAnalysis: {
+      topic: "Generating debate topic...",
+
+      progressive: {
+        position:
+          "Generating progressive position...",
+        strongestArguments: [],
+        primaryConcerns: [],
+      },
+
+      centrist: {
+        position:
+          "Generating centrist position...",
+        strongestArguments: [],
+        primaryConcerns: [],
+      },
+
+      conservative: {
+        position:
+          "Generating conservative position...",
+        strongestArguments: [],
+        primaryConcerns: [],
+      },
+
+      areasOfAgreement: [
+        "PoliticalPulse is analyzing potential areas of agreement.",
+      ],
+
+      mainDisagreements: [],
+
+      politicalPulseAnalysis:
+        "PoliticalPulse is generating a neutral synthesis of the debate.",
+
+      debateTemperature: 0,
+    },
+
     evidence: {
       primarySources: ["PoliticalPulse AI"],
       conflictingReporting: [],
       methodology:
-        "PoliticalPulse AI is gathering information from multiple perspectives.",
+        "PoliticalPulse AI is gathering and evaluating available reporting.",
       lastAnalyzedAt: new Date().toISOString(),
     },
   };
@@ -70,110 +356,244 @@ export function getMockIntelligenceReport(): IntelligenceReport {
 export async function generateIntelligenceReport(
   article: Article
 ): Promise<IntelligenceReport> {
+  let rankedSources: RankedArticle[];
+
+  try {
+    rankedSources =
+      await gatherStorySources(article);
+  } catch (error) {
+    console.error(
+      "Failed to gather ranked sources for report:",
+      error
+    );
+
+    rankedSources = [
+      createFallbackRankedSource(article),
+    ];
+  }
+
+  if (rankedSources.length === 0) {
+    rankedSources = [
+      createFallbackRankedSource(article),
+    ];
+  }
+
+  const sourceConsensus =
+    calculateSourceConsensus(rankedSources);
+
+  const requestBody: MultiSourceAnalysisRequest = {
+    ...article,
+
+    primaryArticle: article,
+
+    sources: rankedSources.map((source) => ({
+      article: source.article,
+      sourceRating: source.sourceRating,
+      isPrimary: source.isPrimary,
+    })),
+
+    sourceConsensus,
+  };
+
   const response = await fetch("/api/analyze", {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(article),
+
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to generate intelligence report");
+    throw new Error(
+      "Failed to generate intelligence report"
+    );
   }
 
-  const analysis = await response.json();
+  const analysis =
+    (await response.json()) as AnalysisResponse;
 
-  const sourceName =
-    article.source?.name?.trim() || "Article source unavailable";
+  const sourceNames = Array.from(
+    new Set(
+      rankedSources
+        .map((source) =>
+          source.article.source?.name?.trim()
+        )
+        .filter(
+          (sourceName): sourceName is string =>
+            Boolean(sourceName)
+        )
+    )
+  );
+
+  const analyzedSourceCount =
+    sourceNames.length ||
+    rankedSources.length ||
+    1;
+
+  const confidence = toClampedScore(
+    analysis.confidence,
+    sourceConsensus.averageReliability
+  );
+
+  const consensusScore = toClampedScore(
+    analysis.consensusScore,
+    sourceConsensus.consensusScore
+  );
+
+  const sourcesReviewed = toPositiveCount(
+    analysis.sourcesReviewed,
+    analyzedSourceCount
+  );
+
+  const returnedCommonGround = toStringArray(
+    analysis.commonGround
+  );
+
+  const commonGround =
+    returnedCommonGround.length > 0
+      ? returnedCommonGround
+      : [
+          "Multiple reports identify the story as relevant to the public discussion.",
+          "Further developments may change how the issue is understood.",
+        ];
+
+  const analysisPrimarySources =
+    toStringArray(
+      analysis.evidence?.primarySources
+    );
+
+  const conflictingReporting =
+    toStringArray(
+      analysis.evidence?.conflictingReporting
+    );
+
+  const trustScore = calculateTrustScore({
+    confidence,
+    consensusScore,
+    sourceCount: sourceConsensus.sourceCount,
+    averageReliability:
+      sourceConsensus.averageReliability,
+    politicalDistribution:
+      sourceConsensus.politicalDistribution,
+  });
+
+  const perspectiveAnalysis =
+    createPerspectiveAnalysis(
+      analysis,
+      article,
+      commonGround
+    );
 
   return {
     article,
 
     overview: {
-      biasScore: analysis.biasScore ?? 50,
-      confidence: analysis.confidence ?? 75,
-      category: analysis.category ?? "Political",
-      sourcesReviewed: analysis.sourcesReviewed ?? 1,
+      biasScore: toClampedScore(
+        analysis.biasScore,
+        50
+      ),
+
+      confidence,
+
+      category: toStringValue(
+        analysis.category,
+        "Political"
+      ),
+
+      sourcesReviewed,
     },
 
-    executiveSummary:
-      analysis.summary ??
-      article.description ??
-      "No executive summary is available.",
+    trustScore,
 
-    whyThisMatters:
-      analysis.whyThisMatters ??
-      "PoliticalPulse could not determine why this story matters from the available information.",
+    executiveSummary: toStringValue(
+      analysis.summary,
+      article.description ||
+        "No executive summary is available."
+    ),
 
-    whoIsAffected: Array.isArray(analysis.whoIsAffected)
-      ? analysis.whoIsAffected
-      : [],
+    whyThisMatters: toStringValue(
+      analysis.whyThisMatters,
+      "PoliticalPulse could not determine why this story matters from the available reporting."
+    ),
 
-    shortTermImpact:
-      analysis.shortTermImpact ??
-      "The short-term impact is not yet clear from the available information.",
+    whoIsAffected: toStringArray(
+      analysis.whoIsAffected
+    ),
 
-    longTermImpact:
-      analysis.longTermImpact ??
-      "The long-term impact is not yet clear from the available information.",
+    shortTermImpact: toStringValue(
+      analysis.shortTermImpact,
+      "The short-term impact is not yet clear from the available reporting."
+    ),
 
-    unansweredQuestions: Array.isArray(analysis.unansweredQuestions)
-      ? analysis.unansweredQuestions
-      : [],
+    longTermImpact: toStringValue(
+      analysis.longTermImpact,
+      "The long-term impact is not yet clear from the available reporting."
+    ),
 
-    keyFacts: Array.isArray(analysis.keyFacts)
-      ? analysis.keyFacts
-      : [],
+    unansweredQuestions: toStringArray(
+      analysis.unansweredQuestions
+    ),
 
-    commonGround: Array.isArray(analysis.commonGround)
-      ? analysis.commonGround
-      : [
-          "The reported event or issue is relevant to the public discussion.",
-          "Additional information may change how the story is understood.",
-        ],
+    keyFacts: toStringArray(
+      analysis.keyFacts
+    ),
 
-    consensusScore: analysis.consensusScore ?? 50,
+    commonGround,
+
+    consensusScore,
 
     factCheck: {
-      verdict: analysis.factCheck?.verdict ?? "Pending",
-      explanation:
-        analysis.factCheck?.explanation ??
-        "Fact-checking details are not currently available.",
+      verdict: toStringValue(
+        analysis.factCheck?.verdict,
+        "Pending"
+      ),
+
+      explanation: toStringValue(
+        analysis.factCheck?.explanation,
+        "Fact-checking details are not currently available."
+      ),
     },
 
     perspectives: {
-      left:
-        analysis.perspectives?.left ??
-        "Left-leaning perspective analysis is not available.",
-      center:
-        analysis.perspectives?.center ??
-        "Centrist perspective analysis is not available.",
-      right:
-        analysis.perspectives?.right ??
-        "Right-leaning perspective analysis is not available.",
+      left: toStringValue(
+        analysis.perspectives?.left,
+        "Left-leaning perspective analysis is not available."
+      ),
+
+      center: toStringValue(
+        analysis.perspectives?.center,
+        "Centrist perspective analysis is not available."
+      ),
+
+      right: toStringValue(
+        analysis.perspectives?.right,
+        "Right-leaning perspective analysis is not available."
+      ),
     },
+
+    perspectiveAnalysis,
 
     evidence: {
       primarySources:
-        Array.isArray(analysis.evidence?.primarySources) &&
-        analysis.evidence.primarySources.length > 0
-          ? analysis.evidence.primarySources
-          : [sourceName],
+        analysisPrimarySources.length > 0
+          ? analysisPrimarySources
+          : sourceNames,
 
-      conflictingReporting: Array.isArray(
-        analysis.evidence?.conflictingReporting
-      )
-        ? analysis.evidence.conflictingReporting
-        : [],
+      conflictingReporting,
 
-      methodology:
-        analysis.evidence?.methodology ??
-        "PoliticalPulse AI analyzes the supplied article, separates facts from interpretation, compares likely political perspectives, evaluates uncertainty, and produces a neutral intelligence assessment.",
+      methodology: toStringValue(
+        analysis.evidence?.methodology,
+        `PoliticalPulse gathered ${analyzedSourceCount} source${
+          analyzedSourceCount === 1 ? "" : "s"
+        }, removed duplicate coverage, evaluated source metadata, calculated a preliminary source-set confidence score, and generated a neutral intelligence assessment.`
+      ),
 
-      lastAnalyzedAt:
-        analysis.evidence?.lastAnalyzedAt ??
-        new Date().toISOString(),
+      lastAnalyzedAt: toStringValue(
+        analysis.evidence?.lastAnalyzedAt,
+        new Date().toISOString()
+      ),
     },
   };
 }

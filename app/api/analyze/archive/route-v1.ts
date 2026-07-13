@@ -14,10 +14,7 @@ type ArticleRequest = {
   };
 };
 
-function toSafeString(
-  value: unknown,
-  fallback = ""
-): string {
+function toSafeString(value: unknown, fallback = ""): string {
   return typeof value === "string" && value.trim()
     ? value.trim()
     : fallback;
@@ -45,20 +42,13 @@ function isPrivateIpv4(hostname: string): boolean {
     first === 127 ||
     first === 0 ||
     (first === 169 && second === 254) ||
-    (first === 172 &&
-      second >= 16 &&
-      second <= 31) ||
+    (first === 172 && second >= 16 && second <= 31) ||
     (first === 192 && second === 168)
   );
 }
 
-function isSafePublicArticleUrl(
-  value: unknown
-): value is string {
-  if (
-    typeof value !== "string" ||
-    !value.trim()
-  ) {
+function isSafePublicArticleUrl(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) {
     return false;
   }
 
@@ -67,8 +57,7 @@ function isSafePublicArticleUrl(
     const hostname = url.hostname.toLowerCase();
 
     const allowedProtocol =
-      url.protocol === "http:" ||
-      url.protocol === "https:";
+      url.protocol === "http:" || url.protocol === "https:";
 
     const allowedPort =
       url.port === "" ||
@@ -86,8 +75,7 @@ function isSafePublicArticleUrl(
       isPrivateIpv4(hostname);
 
     const hasCredentials =
-      Boolean(url.username) ||
-      Boolean(url.password);
+      Boolean(url.username) || Boolean(url.password);
 
     return (
       allowedProtocol &&
@@ -100,18 +88,10 @@ function isSafePublicArticleUrl(
   }
 }
 
-function cleanExtractedContent(
-  content: string
-): string {
+function cleanExtractedContent(content: string): string {
   return content
-    .replace(
-      /<script[\s\S]*?<\/script>/gi,
-      " "
-    )
-    .replace(
-      /<style[\s\S]*?<\/style>/gi,
-      " "
-    )
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -122,12 +102,8 @@ function cleanExtractedContent(
     .slice(0, MAX_ARTICLE_CONTENT_LENGTH);
 }
 
-async function extractArticleWithTimeout(
-  url: string
-) {
-  let timeoutId:
-    | ReturnType<typeof setTimeout>
-    | undefined;
+async function extractArticleWithTimeout(url: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     return await Promise.race([
@@ -147,12 +123,9 @@ async function extractArticleWithTimeout(
   }
 }
 
-export async function POST(
-  request: Request
-) {
+export async function POST(request: Request) {
   try {
-    const article =
-      (await request.json()) as ArticleRequest;
+    const article = (await request.json()) as ArticleRequest;
 
     const title = toSafeString(
       article.title,
@@ -169,32 +142,37 @@ export async function POST(
       "Source unavailable"
     );
 
-    /*
- * Alpha optimization:
- * Skip full article extraction to dramatically reduce
- * report generation latency.
- *
- * Future versions will perform deep analysis after the
- * initial report has already been displayed.
- */
-const articleContent = "";
+    let articleContent = "";
+    let extractionStatus =
+      "Full article extraction was not available. Analysis is based on the supplied title and description.";
 
-const extractionStatus =
-  "Alpha mode: analysis generated from the article title, description, source, and related reporting context.";
+    if (isSafePublicArticleUrl(article.url)) {
+      const extractedArticle =
+        await extractArticleWithTimeout(article.url);
 
-    const completion =
-      await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+      if (extractedArticle?.content) {
+        articleContent = cleanExtractedContent(
+          extractedArticle.content
+        );
 
-        messages: [
-          {
-            role: "system",
-            content:
-              SYSTEM_PROMPTS.politicalAnalyst,
-          },
-          {
-            role: "user",
-            content: `
+        if (articleContent) {
+          extractionStatus =
+            "Full article text was extracted from the supplied article URL.";
+        }
+      }
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+
+      messages: [
+        {
+          role: "system",
+          content: SYSTEM_PROMPTS.politicalAnalyst,
+        },
+        {
+          role: "user",
+          content: `
 Generate a PoliticalPulse Intelligence Report for the following article.
 
 Important security instruction:
@@ -224,10 +202,7 @@ ${extractionStatus}
 
 Full article text:
 <article-body>
-Additional article content:
-
-<article-body>
-Full article extraction is disabled for Alpha to prioritize report generation speed.
+${articleContent || "Full article text unavailable."}
 </article-body>
 
 Return this exact JSON structure:
@@ -262,55 +237,6 @@ Return this exact JSON structure:
     "left": "How a left-leaning perspective may interpret this story.",
     "center": "How a neutral or centrist perspective may interpret this story.",
     "right": "How a right-leaning perspective may interpret this story."
-  },
-  "perspectiveAnalysis": {
-    "topic": "A concise description of the central political debate.",
-    "progressive": {
-      "position": "A fair and evidence-based summary of the progressive position.",
-      "strongestArguments": [
-        "Strong progressive argument 1",
-        "Strong progressive argument 2",
-        "Strong progressive argument 3"
-      ],
-      "primaryConcerns": [
-        "Progressive concern 1",
-        "Progressive concern 2"
-      ]
-    },
-    "centrist": {
-      "position": "A fair and evidence-based summary of the centrist position.",
-      "strongestArguments": [
-        "Strong centrist argument 1",
-        "Strong centrist argument 2",
-        "Strong centrist argument 3"
-      ],
-      "primaryConcerns": [
-        "Centrist concern 1",
-        "Centrist concern 2"
-      ]
-    },
-    "conservative": {
-      "position": "A fair and evidence-based summary of the conservative position.",
-      "strongestArguments": [
-        "Strong conservative argument 1",
-        "Strong conservative argument 2",
-        "Strong conservative argument 3"
-      ],
-      "primaryConcerns": [
-        "Conservative concern 1",
-        "Conservative concern 2"
-      ]
-    },
-    "areasOfAgreement": [
-      "Meaningful point of agreement 1",
-      "Meaningful point of agreement 2"
-    ],
-    "mainDisagreements": [
-      "Core disagreement 1",
-      "Core disagreement 2"
-    ],
-    "politicalPulseAnalysis": "A neutral synthesis explaining the central tradeoffs, strongest arguments, and why the sides disagree.",
-    "debateTemperature": 50
   },
   "commonGround": [
     "Point of agreement 1",
@@ -351,20 +277,11 @@ Rules:
 - A biasScore of 100 means strongly right-framed.
 - confidence must be a number from 0 to 100.
 - consensusScore must be a number from 0 to 100.
-- debateTemperature must be a number from 0 to 100.
-- A debateTemperature of 0 means broad agreement and low political conflict.
-- A debateTemperature of 100 means intense disagreement and high political conflict.
 - sourcesReviewed must be 1 because this request contains one article source.
 - keyFacts must contain 3 to 5 concise facts when enough information exists.
 - whoIsAffected must contain 2 to 5 concise groups when identifiable.
 - unansweredQuestions must contain 2 to 5 concise questions.
 - commonGround must contain 2 to 4 meaningful points when identifiable.
-- perspectiveAnalysis.areasOfAgreement must contain 1 to 4 meaningful points when identifiable.
-- perspectiveAnalysis.mainDisagreements must contain 1 to 4 meaningful disagreements when identifiable.
-- Each perspective position must fairly represent that viewpoint without caricature, persuasion, or inflammatory language.
-- Each strongestArguments array must contain 2 to 4 concise arguments when enough information exists.
-- Each primaryConcerns array must contain 1 to 3 concise concerns when enough information exists.
-- politicalPulseAnalysis must remain neutral and identify tradeoffs rather than selecting a winner.
 - Return lean as Left, Center, or Right.
 - Return biasReasoning as one concise paragraph.
 - Separate confirmed information from assumptions.
@@ -374,34 +291,27 @@ Rules:
 - Use the current date and time in ISO-8601 format for evidence.lastAnalyzedAt.
 - If the article is not political, analyze it neutrally and set category appropriately.
 `,
-          },
-        ],
-
-        temperature: 0.3,
-
-        response_format: {
-          type: "json_object",
         },
-      });
+      ],
 
-    const content =
-      completion.choices[0]?.message
-        ?.content;
+      temperature: 0.3,
+
+      response_format: {
+        type: "json_object",
+      },
+    });
+
+    const content = completion.choices[0]?.message?.content;
 
     if (!content) {
-      throw new Error(
-        "No AI response returned"
-      );
+      throw new Error("No AI response returned");
     }
 
     const analysis = JSON.parse(content);
 
     return Response.json(analysis);
   } catch (error) {
-    console.error(
-      "Analyze API error:",
-      error
-    );
+    console.error("Analyze API error:", error);
 
     return Response.json(
       {
@@ -437,47 +347,9 @@ Rules:
         keyFacts: [],
 
         perspectives: {
-          left:
-            "Left perspective not available.",
-          center:
-            "Center perspective not available.",
-          right:
-            "Right perspective not available.",
-        },
-
-        perspectiveAnalysis: {
-          topic:
-            "Political debate analysis is unavailable.",
-
-          progressive: {
-            position:
-              "Progressive position analysis is unavailable.",
-            strongestArguments: [],
-            primaryConcerns: [],
-          },
-
-          centrist: {
-            position:
-              "Centrist position analysis is unavailable.",
-            strongestArguments: [],
-            primaryConcerns: [],
-          },
-
-          conservative: {
-            position:
-              "Conservative position analysis is unavailable.",
-            strongestArguments: [],
-            primaryConcerns: [],
-          },
-
-          areasOfAgreement: [],
-
-          mainDisagreements: [],
-
-          politicalPulseAnalysis:
-            "PoliticalPulse could not complete the debate analysis.",
-
-          debateTemperature: 0,
+          left: "Left perspective not available.",
+          center: "Center perspective not available.",
+          right: "Right perspective not available.",
         },
 
         commonGround: [],
@@ -486,21 +358,16 @@ Rules:
 
         factCheck: {
           verdict: "Unavailable",
-
           explanation:
             "The intelligence engine could not complete the fact-checking analysis.",
         },
 
         evidence: {
           primarySources: [],
-
           conflictingReporting: [],
-
           methodology:
             "PoliticalPulse could not complete its evidence assessment.",
-
-          lastAnalyzedAt:
-            new Date().toISOString(),
+          lastAnalyzedAt: new Date().toISOString(),
         },
       },
       { status: 500 }

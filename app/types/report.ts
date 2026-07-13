@@ -1,4 +1,5 @@
 import type { Article } from "./article";
+import type { TrustScore } from "./trust";
 
 export type IntelligenceOverview = {
   biasScore: number;
@@ -14,10 +15,36 @@ export type ReportEvidence = {
   lastAnalyzedAt: string;
 };
 
+export type DebatePerspective = {
+  position: string;
+  strongestArguments: string[];
+  primaryConcerns: string[];
+};
+
+export type PoliticalPerspectiveAnalysis = {
+  topic: string;
+
+  progressive: DebatePerspective;
+
+  centrist: DebatePerspective;
+
+  conservative: DebatePerspective;
+
+  areasOfAgreement: string[];
+
+  mainDisagreements: string[];
+
+  politicalPulseAnalysis: string;
+
+  debateTemperature: number;
+};
+
 export type IntelligenceReport = {
   article: Article;
 
   overview: IntelligenceOverview;
+
+  trustScore: TrustScore;
 
   executiveSummary: string;
 
@@ -42,11 +69,21 @@ export type IntelligenceReport = {
     explanation: string;
   };
 
+  /*
+   * Legacy perspective summaries used throughout
+   * the existing Intelligence Report.
+   */
   perspectives: {
     left: string;
     center: string;
     right: string;
   };
+
+  /*
+   * Dedicated structured data used by
+   * PoliticalPulse Debate™.
+   */
+  perspectiveAnalysis: PoliticalPerspectiveAnalysis;
 
   evidence: ReportEvidence;
 };
