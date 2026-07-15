@@ -71,18 +71,6 @@ type AnalysisResponse = {
   };
 };
 
-type MultiSourceAnalysisRequest = Article & {
-  primaryArticle: Article;
-
-  sources: Array<{
-    article: Article;
-    sourceRating: RankedArticle["sourceRating"];
-    isPrimary: boolean;
-  }>;
-
-  sourceConsensus: SourceConsensus;
-};
-
 function toStringValue(
   value: unknown,
   fallback: string
@@ -96,7 +84,8 @@ function toNumberValue(
   value: unknown,
   fallback: number
 ): number {
-  return typeof value === "number" && Number.isFinite(value)
+  return typeof value === "number" &&
+    Number.isFinite(value)
     ? value
     : fallback;
 }
@@ -105,7 +94,10 @@ function toClampedScore(
   value: unknown,
   fallback: number
 ): number {
-  const numericValue = toNumberValue(value, fallback);
+  const numericValue = toNumberValue(
+    value,
+    fallback
+  );
 
   return Math.max(
     0,
@@ -117,12 +109,20 @@ function toPositiveCount(
   value: unknown,
   fallback: number
 ): number {
-  const numericValue = toNumberValue(value, fallback);
+  const numericValue = toNumberValue(
+    value,
+    fallback
+  );
 
-  return Math.max(0, Math.round(numericValue));
+  return Math.max(
+    0,
+    Math.round(numericValue)
+  );
 }
 
-function toStringArray(value: unknown): string[] {
+function toStringArray(
+  value: unknown
+): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -147,7 +147,8 @@ function createFallbackRankedSource(
     article,
 
     sourceRating: getSourceRating(
-      article.source?.name ?? "Unknown Source"
+      article.source?.name ??
+        "Unknown Source"
     ),
 
     isPrimary: true,
@@ -155,7 +156,9 @@ function createFallbackRankedSource(
 }
 
 function createDebatePerspective(
-  perspective: DebatePerspectiveResponse | undefined,
+  perspective:
+    | DebatePerspectiveResponse
+    | undefined,
   fallbackPosition: string
 ): DebatePerspective {
   return {
@@ -182,13 +185,15 @@ function createPerspectiveAnalysis(
   const dedicatedAnalysis =
     analysis.perspectiveAnalysis;
 
-  const areasOfAgreement = toStringArray(
-    dedicatedAnalysis?.areasOfAgreement
-  );
+  const areasOfAgreement =
+    toStringArray(
+      dedicatedAnalysis?.areasOfAgreement
+    );
 
-  const mainDisagreements = toStringArray(
-    dedicatedAnalysis?.mainDisagreements
-  );
+  const mainDisagreements =
+    toStringArray(
+      dedicatedAnalysis?.mainDisagreements
+    );
 
   return {
     topic: toStringValue(
@@ -213,13 +218,14 @@ function createPerspectiveAnalysis(
       )
     ),
 
-    conservative: createDebatePerspective(
-      dedicatedAnalysis?.conservative,
-      toStringValue(
-        analysis.perspectives?.right,
-        "A dedicated conservative analysis is not available."
-      )
-    ),
+    conservative:
+      createDebatePerspective(
+        dedicatedAnalysis?.conservative,
+        toStringValue(
+          analysis.perspectives?.right,
+          "A dedicated conservative analysis is not available."
+        )
+      ),
 
     areasOfAgreement:
       areasOfAgreement.length > 0
@@ -228,10 +234,12 @@ function createPerspectiveAnalysis(
 
     mainDisagreements,
 
-    politicalPulseAnalysis: toStringValue(
-      dedicatedAnalysis?.politicalPulseAnalysis,
-      "PoliticalPulse identified the major perspectives and areas of possible agreement, but a dedicated synthesis was not available."
-    ),
+    politicalPulseAnalysis:
+      toStringValue(
+        dedicatedAnalysis
+          ?.politicalPulseAnalysis,
+        "PoliticalPulse identified the major perspectives and areas of possible agreement, but a dedicated synthesis was not available."
+      ),
 
     debateTemperature: toClampedScore(
       dedicatedAnalysis?.debateTemperature,
@@ -240,14 +248,77 @@ function createPerspectiveAnalysis(
   };
 }
 
+async function gatherRankedSources(
+  article: Article
+): Promise<RankedArticle[]> {
+  try {
+    const rankedSources =
+      await gatherStorySources(article);
+
+    return rankedSources.length > 0
+      ? rankedSources
+      : [
+          createFallbackRankedSource(
+            article
+          ),
+        ];
+  } catch (error) {
+    console.error(
+      "Failed to gather ranked sources for report:",
+      error
+    );
+
+    return [
+      createFallbackRankedSource(article),
+    ];
+  }
+}
+
+async function requestReportAnalysis(
+  article: Article
+): Promise<AnalysisResponse> {
+  const response = await fetch(
+    "/api/analyze",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+        Accept: "application/json",
+      },
+
+      cache: "no-store",
+
+      body: JSON.stringify({
+        title: article.title,
+        description:
+          article.description,
+        url: article.url,
+        source: article.source,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to generate intelligence report"
+    );
+  }
+
+  return (await response.json()) as AnalysisResponse;
+}
+
 export function getMockIntelligenceReport(): IntelligenceReport {
   return {
     article: {
       title: "Loading report...",
-      description: "Generating intelligence report...",
+      description:
+        "Generating intelligence report...",
       url: "",
       urlToImage: "",
-      publishedAt: new Date().toISOString(),
+      publishedAt:
+        new Date().toISOString(),
 
       source: {
         name: "PoliticalPulse",
@@ -301,13 +372,17 @@ export function getMockIntelligenceReport(): IntelligenceReport {
     },
 
     perspectives: {
-      left: "Generating left perspective...",
-      center: "Generating center perspective...",
-      right: "Generating right perspective...",
+      left:
+        "Generating left perspective...",
+      center:
+        "Generating center perspective...",
+      right:
+        "Generating right perspective...",
     },
 
     perspectiveAnalysis: {
-      topic: "Generating debate topic...",
+      topic:
+        "Generating debate topic...",
 
       progressive: {
         position:
@@ -343,11 +418,14 @@ export function getMockIntelligenceReport(): IntelligenceReport {
     },
 
     evidence: {
-      primarySources: ["PoliticalPulse AI"],
+      primarySources: [
+        "PoliticalPulse AI",
+      ],
       conflictingReporting: [],
       methodology:
         "PoliticalPulse AI is gathering and evaluating available reporting.",
-      lastAnalyzedAt: new Date().toISOString(),
+      lastAnalyzedAt:
+        new Date().toISOString(),
     },
   };
 }
@@ -355,63 +433,32 @@ export function getMockIntelligenceReport(): IntelligenceReport {
 export async function generateIntelligenceReport(
   article: Article
 ): Promise<IntelligenceReport> {
-  let rankedSources: RankedArticle[];
-
-  try {
-    rankedSources =
-      await gatherStorySources(article);
-  } catch (error) {
-    console.error(
-      "Failed to gather ranked sources for report:",
-      error
-    );
-
-    rankedSources = [
-      createFallbackRankedSource(article),
-    ];
-  }
-
-  if (rankedSources.length === 0) {
-    rankedSources = [
-      createFallbackRankedSource(article),
-    ];
-  }
+  /*
+   * Performance optimization:
+   *
+   * Source gathering and AI report generation are independent
+   * during the initial report request, so they begin together.
+   *
+   * Previously:
+   * gather sources -> wait -> generate AI report
+   *
+   * Now:
+   * gather sources ─┐
+   *                  ├-> assemble report
+   * generate AI  ───┘
+   */
+  const [
+    rankedSources,
+    analysis,
+  ] = await Promise.all([
+    gatherRankedSources(article),
+    requestReportAnalysis(article),
+  ]);
 
   const sourceConsensus =
-    calculateSourceConsensus(rankedSources);
-
-  const requestBody: MultiSourceAnalysisRequest = {
-    ...article,
-
-    primaryArticle: article,
-
-    sources: rankedSources.map((source) => ({
-      article: source.article,
-      sourceRating: source.sourceRating,
-      isPrimary: source.isPrimary,
-    })),
-
-    sourceConsensus,
-  };
-
-  const response = await fetch("/api/analyze", {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      "Failed to generate intelligence report"
+    calculateSourceConsensus(
+      rankedSources
     );
-  }
-
-  const analysis =
-    (await response.json()) as AnalysisResponse;
 
   const sourceNames = Array.from(
     new Set(
@@ -420,7 +467,9 @@ export async function generateIntelligenceReport(
           source.article.source?.name?.trim()
         )
         .filter(
-          (sourceName): sourceName is string =>
+          (
+            sourceName
+          ): sourceName is string =>
             Boolean(sourceName)
         )
     )
@@ -436,19 +485,22 @@ export async function generateIntelligenceReport(
     sourceConsensus.averageReliability
   );
 
-  const consensusScore = toClampedScore(
-    analysis.consensusScore,
-    sourceConsensus.consensusScore
-  );
+  const consensusScore =
+    toClampedScore(
+      analysis.consensusScore,
+      sourceConsensus.consensusScore
+    );
 
-  const sourcesReviewed = toPositiveCount(
-    analysis.sourcesReviewed,
-    analyzedSourceCount
-  );
+  const sourcesReviewed =
+    toPositiveCount(
+      analysis.sourcesReviewed,
+      analyzedSourceCount
+    );
 
-  const returnedCommonGround = toStringArray(
-    analysis.commonGround
-  );
+  const returnedCommonGround =
+    toStringArray(
+      analysis.commonGround
+    );
 
   const commonGround =
     returnedCommonGround.length > 0
@@ -460,23 +512,28 @@ export async function generateIntelligenceReport(
 
   const analysisPrimarySources =
     toStringArray(
-      analysis.evidence?.primarySources
+      analysis.evidence
+        ?.primarySources
     );
 
   const conflictingReporting =
     toStringArray(
-      analysis.evidence?.conflictingReporting
+      analysis.evidence
+        ?.conflictingReporting
     );
 
-  const trustScore = calculateTrustScore({
-    confidence,
-    consensusScore,
-    sourceCount: sourceConsensus.sourceCount,
-    averageReliability:
-      sourceConsensus.averageReliability,
-    politicalDistribution:
-      sourceConsensus.politicalDistribution,
-  });
+  const trustScore =
+    calculateTrustScore({
+      confidence,
+      consensusScore,
+      sourceCount:
+        sourceConsensus.sourceCount,
+      averageReliability:
+        sourceConsensus.averageReliability,
+      politicalDistribution:
+        sourceConsensus
+          .politicalDistribution,
+    });
 
   const perspectiveAnalysis =
     createPerspectiveAnalysis(
@@ -506,34 +563,39 @@ export async function generateIntelligenceReport(
 
     trustScore,
 
-    executiveSummary: toStringValue(
-      analysis.summary,
-      article.description ||
-        "No executive summary is available."
-    ),
+    executiveSummary:
+      toStringValue(
+        analysis.summary,
+        article.description ||
+          "No executive summary is available."
+      ),
 
-    whyThisMatters: toStringValue(
-      analysis.whyThisMatters,
-      "PoliticalPulse could not determine why this story matters from the available reporting."
-    ),
+    whyThisMatters:
+      toStringValue(
+        analysis.whyThisMatters,
+        "PoliticalPulse could not determine why this story matters from the available reporting."
+      ),
 
     whoIsAffected: toStringArray(
       analysis.whoIsAffected
     ),
 
-    shortTermImpact: toStringValue(
-      analysis.shortTermImpact,
-      "The short-term impact is not yet clear from the available reporting."
-    ),
+    shortTermImpact:
+      toStringValue(
+        analysis.shortTermImpact,
+        "The short-term impact is not yet clear from the available reporting."
+      ),
 
-    longTermImpact: toStringValue(
-      analysis.longTermImpact,
-      "The long-term impact is not yet clear from the available reporting."
-    ),
+    longTermImpact:
+      toStringValue(
+        analysis.longTermImpact,
+        "The long-term impact is not yet clear from the available reporting."
+      ),
 
-    unansweredQuestions: toStringArray(
-      analysis.unansweredQuestions
-    ),
+    unansweredQuestions:
+      toStringArray(
+        analysis.unansweredQuestions
+      ),
 
     keyFacts: toStringArray(
       analysis.keyFacts
@@ -550,7 +612,8 @@ export async function generateIntelligenceReport(
       ),
 
       explanation: toStringValue(
-        analysis.factCheck?.explanation,
+        analysis.factCheck
+          ?.explanation,
         "Fact-checking details are not currently available."
       ),
     },
@@ -576,7 +639,8 @@ export async function generateIntelligenceReport(
 
     evidence: {
       primarySources:
-        analysisPrimarySources.length > 0
+        analysisPrimarySources.length >
+        0
           ? analysisPrimarySources
           : sourceNames,
 
@@ -585,14 +649,18 @@ export async function generateIntelligenceReport(
       methodology: toStringValue(
         analysis.evidence?.methodology,
         `PoliticalPulse gathered ${analyzedSourceCount} source${
-          analyzedSourceCount === 1 ? "" : "s"
+          analyzedSourceCount === 1
+            ? ""
+            : "s"
         }, removed duplicate coverage, evaluated source metadata, calculated a preliminary source-set confidence score, and generated a neutral intelligence assessment.`
       ),
 
-      lastAnalyzedAt: toStringValue(
-        analysis.evidence?.lastAnalyzedAt,
-        new Date().toISOString()
-      ),
+      lastAnalyzedAt:
+        toStringValue(
+          analysis.evidence
+            ?.lastAnalyzedAt,
+          new Date().toISOString()
+        ),
     },
   };
 }

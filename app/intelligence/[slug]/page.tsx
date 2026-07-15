@@ -22,6 +22,14 @@ import TrustScore from "@/app/components/intelligence/TrustScore";
 import { getSelectedArticle } from "@/lib/selectedArticle";
 import { buildIntelligenceContext } from "@/lib/services/contextBuilder";
 import { generateIntelligenceGraph } from "@/lib/services/intelligenceGraph";
+import {
+  cacheIntelligenceGraph,
+  getCachedIntelligenceGraph,
+} from "@/lib/services/intelligenceGraphCache";
+import {
+  cacheReport,
+  getCachedReport,
+} from "@/lib/services/reportCache";
 import { generateIntelligenceReport } from "@/lib/services/report";
 
 import type { Article } from "../../types/article";
@@ -29,9 +37,8 @@ import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/int
 import type { IntelligenceReport } from "../../types/report";
 
 export default function IntelligenceReportPage() {
-  const [article, setArticle] = useState<Article | null>(
-    null
-  );
+  const [article, setArticle] =
+    useState<Article | null>(null);
 
   const [report, setReport] =
     useState<IntelligenceReport | null>(null);
@@ -45,9 +52,8 @@ export default function IntelligenceReportPage() {
   const [isGraphLoading, setIsGraphLoading] =
     useState(false);
 
-  const [errorMessage, setErrorMessage] = useState<
-    string | null
-  >(null);
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
 
   const [graphErrorMessage, setGraphErrorMessage] =
     useState<string | null>(null);
@@ -62,14 +68,32 @@ export default function IntelligenceReportPage() {
         setIsReportLoading(true);
         setErrorMessage(null);
 
+        const cachedReport =
+          getCachedReport(selectedArticle);
+
+        if (cachedReport) {
+          if (!isCancelled) {
+            setReport(cachedReport);
+          }
+
+          return;
+        }
+
         const generatedReport =
           await generateIntelligenceReport(
             selectedArticle
           );
 
-        if (!isCancelled) {
-          setReport(generatedReport);
+        if (isCancelled) {
+          return;
         }
+
+        cacheReport(
+          selectedArticle,
+          generatedReport
+        );
+
+        setReport(generatedReport);
       } catch (error) {
         console.error(
           "Failed to generate intelligence report:",
@@ -95,14 +119,34 @@ export default function IntelligenceReportPage() {
         setIsGraphLoading(true);
         setGraphErrorMessage(null);
 
+        const cachedGraph =
+          getCachedIntelligenceGraph(
+            selectedArticle
+          );
+
+        if (cachedGraph) {
+          if (!isCancelled) {
+            setGraph(cachedGraph);
+          }
+
+          return;
+        }
+
         const generatedGraph =
           await generateIntelligenceGraph(
             selectedArticle
           );
 
-        if (!isCancelled) {
-          setGraph(generatedGraph);
+        if (isCancelled) {
+          return;
         }
+
+        cacheIntelligenceGraph(
+          selectedArticle,
+          generatedGraph
+        );
+
+        setGraph(generatedGraph);
       } catch (error) {
         console.error(
           "Failed to generate Intelligence Graph:",
@@ -122,11 +166,6 @@ export default function IntelligenceReportPage() {
     }
 
     async function initializeIntelligence() {
-      /*
-       * Yield once before updating React state. This keeps
-       * initialization asynchronous and avoids synchronous
-       * state updates directly inside the effect body.
-       */
       await Promise.resolve();
 
       if (isCancelled) {
@@ -143,11 +182,6 @@ export default function IntelligenceReportPage() {
 
       setArticle(selectedArticle);
 
-      /*
-       * Start both operations immediately. The core report
-       * and graph maintain independent loading states, so a
-       * slow graph does not block the report.
-       */
       void loadReport(selectedArticle);
       void loadGraph(selectedArticle);
     }
