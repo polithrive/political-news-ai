@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type { AnalysisResult } from "../types/analysis";
 import type { Article } from "../types/article";
@@ -14,7 +18,8 @@ import { getLatestNews } from "../../lib/news";
 import { saveSelectedArticle } from "../../lib/selectedArticle";
 
 const MAX_VISIBLE_ARTICLES = 6;
-const ANALYSIS_CONCURRENCY = 2;
+const IMMEDIATE_ANALYSIS_COUNT = 2;
+const DEFERRED_ANALYSIS_ROOT_MARGIN = "350px";
 
 export default function LiveNews() {
   const [articles, setArticles] =
@@ -23,77 +28,28 @@ export default function LiveNews() {
   const [analysisResults, setAnalysisResults] =
     useState<Record<number, AnalysisResult>>({});
 
+  const [requestedAnalysis, setRequestedAnalysis] =
+    useState<Record<number, boolean>>({});
+
   const [isLoading, setIsLoading] =
     useState(true);
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
 
+  const requestedIndexesRef =
+    useRef<Set<number>>(new Set());
+
   useEffect(() => {
     let isCancelled = false;
-
-    async function analyzeArticlesWithLimit(
-      articlesToAnalyze: Article[]
-    ) {
-      let nextArticleIndex = 0;
-
-      async function analysisWorker() {
-        while (
-          !isCancelled &&
-          nextArticleIndex <
-            articlesToAnalyze.length
-        ) {
-          const articleIndex =
-            nextArticleIndex;
-
-          nextArticleIndex += 1;
-
-          const article =
-            articlesToAnalyze[
-              articleIndex
-            ];
-
-          try {
-            const analysisData =
-              await analyzeArticle(article);
-
-            if (!isCancelled) {
-              setAnalysisResults(
-                (previousResults) => ({
-                  ...previousResults,
-                  [articleIndex]:
-                    analysisData,
-                })
-              );
-            }
-          } catch (error) {
-            console.error(
-              `Failed to analyze article ${
-                articleIndex + 1
-              }:`,
-              error
-            );
-          }
-        }
-      }
-
-      const workerCount = Math.min(
-        ANALYSIS_CONCURRENCY,
-        articlesToAnalyze.length
-      );
-
-      const workers = Array.from(
-        { length: workerCount },
-        () => analysisWorker()
-      );
-
-      await Promise.all(workers);
-    }
 
     async function loadNews() {
       try {
         setErrorMessage(null);
         setAnalysisResults({});
+        setRequestedAnalysis({});
+
+        requestedIndexesRef.current.clear();
 
         const articlesList =
           await getLatestNews();
@@ -119,10 +75,6 @@ export default function LiveNews() {
         }
 
         setArticles(visibleArticles);
-
-        void analyzeArticlesWithLimit(
-          visibleArticles
-        );
       } catch (error) {
         console.error(
           "Failed to load live news:",
@@ -149,6 +101,147 @@ export default function LiveNews() {
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (articles.length === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function requestAnalysis(
+      index: number
+    ) {
+      if (
+        isCancelled ||
+        requestedIndexesRef.current.has(
+          index
+        )
+      ) {
+        return;
+      }
+
+      const article = articles[index];
+
+      if (!article) {
+        return;
+      }
+
+      requestedIndexesRef.current.add(
+        index
+      );
+
+      setRequestedAnalysis(
+        (previousState) => ({
+          ...previousState,
+          [index]: true,
+        })
+      );
+
+      try {
+        const analysisData =
+          await analyzeArticle(article);
+
+        if (!isCancelled) {
+          setAnalysisResults(
+            (previousResults) => ({
+              ...previousResults,
+              [index]: analysisData,
+            })
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Failed to analyze article ${
+            index + 1
+          }:`,
+          error
+        );
+      }
+    }
+
+    const immediateCount = Math.min(
+      IMMEDIATE_ANALYSIS_COUNT,
+      articles.length
+    );
+
+    for (
+      let index = 0;
+      index < immediateCount;
+      index += 1
+    ) {
+      void requestAnalysis(index);
+    }
+
+    if (
+      typeof IntersectionObserver ===
+      "undefined"
+    ) {
+      for (
+        let index = immediateCount;
+        index < articles.length;
+        index += 1
+      ) {
+        void requestAnalysis(index);
+      }
+
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
+
+            const indexValue =
+              entry.target.getAttribute(
+                "data-analysis-index"
+              );
+
+            const index = Number(
+              indexValue
+            );
+
+            if (
+              !Number.isInteger(index)
+            ) {
+              return;
+            }
+
+            observer.unobserve(
+              entry.target
+            );
+
+            void requestAnalysis(index);
+          });
+        },
+        {
+          root: null,
+          rootMargin:
+            DEFERRED_ANALYSIS_ROOT_MARGIN,
+          threshold: 0.01,
+        }
+      );
+
+    const deferredCards =
+      document.querySelectorAll<HTMLElement>(
+        "[data-deferred-analysis='true']"
+      );
+
+    deferredCards.forEach((card) => {
+      observer.observe(card);
+    });
+
+    return () => {
+      isCancelled = true;
+      observer.disconnect();
+    };
+  }, [articles]);
 
   if (isLoading) {
     return (
@@ -213,11 +306,26 @@ export default function LiveNews() {
             const analysis =
               analysisResults[index];
 
+            const isAnalysisRequested =
+              Boolean(
+                requestedAnalysis[index]
+              );
+
+            const isDeferred =
+              index >=
+              IMMEDIATE_ANALYSIS_COUNT;
+
             return (
               <article
                 key={
                   article.url ||
                   `${article.title}-${index}`
+                }
+                data-analysis-index={index}
+                data-deferred-analysis={
+                  isDeferred
+                    ? "true"
+                    : "false"
                 }
                 className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:border-red-500"
               >
@@ -257,7 +365,9 @@ export default function LiveNews() {
                 <p className="ml-2 mt-3 inline-block rounded-full bg-slate-800 px-3 py-1 text-sm text-gray-300">
                   Perspective:{" "}
                   {analysis?.lean ??
-                    "Analyzing..."}
+                    (isAnalysisRequested
+                      ? "Analyzing..."
+                      : "Available on view")}
                 </p>
 
                 <h3 className="mt-4 text-2xl font-bold">
@@ -286,13 +396,15 @@ export default function LiveNews() {
                     </p>
 
                     <p className="mt-2 text-sm text-gray-300">
-                      Generating AI
-                      analysis...
+                      {isAnalysisRequested
+                        ? "Generating AI analysis..."
+                        : "AI analysis will load as this story approaches the screen."}
                     </p>
                   </div>
                 )}
 
                 <Link
+                  prefetch={false}
                   href={`/intelligence/${
                     index + 1
                   }`}

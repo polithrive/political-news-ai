@@ -11,7 +11,6 @@ import {
 } from "./multiSource";
 import {
   calculateSourceConsensus,
-  type SourceConsensus,
 } from "./sourceConsensus";
 import { getSourceRating } from "./sourceRanking";
 import { calculateTrustScore } from "./trustScore";
