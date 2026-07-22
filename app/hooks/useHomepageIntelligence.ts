@@ -46,10 +46,10 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
   useEffect(() => {
     let isCancelled = false;
 
-    async function analyzeArticles(
+    async function analyzeRemainingArticles(
       articlesToAnalyze: Article[]
     ) {
-      let nextIndex = 0;
+      let nextIndex = 1;
 
       async function worker() {
         while (
@@ -80,11 +80,6 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
                 [currentIndex]: analysis,
               })
             );
-
-            if (currentIndex === 0) {
-              setFeaturedAnalysis(analysis);
-              setIsFeaturedAnalysisLoading(false);
-            }
           } catch (error) {
             console.error(
               `Failed to analyze homepage article ${
@@ -92,21 +87,24 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
               }:`,
               error
             );
-
-            if (
-              !isCancelled &&
-              currentIndex === 0
-            ) {
-              setIsFeaturedAnalysisLoading(false);
-            }
           }
         }
       }
 
+      const remainingArticleCount =
+        Math.max(
+          0,
+          articlesToAnalyze.length - 1
+        );
+
       const workerCount = Math.min(
         ANALYSIS_CONCURRENCY,
-        articlesToAnalyze.length
+        remainingArticleCount
       );
+
+      if (workerCount === 0) {
+        return;
+      }
 
       const workers = Array.from({
         length: workerCount,
@@ -147,9 +145,38 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
 
         setArticles(homepageArticles);
         setIsNewsLoading(false);
+
+        const featuredArticle =
+          homepageArticles[0];
+
+        if (!featuredArticle) {
+          return;
+        }
+
         setIsFeaturedAnalysisLoading(true);
 
-        await analyzeArticles(homepageArticles);
+        const featuredPreview =
+          await analyzeArticle(
+            featuredArticle
+          );
+
+        if (isCancelled) {
+          return;
+        }
+
+        setFeaturedAnalysis(
+          featuredPreview
+        );
+
+        setAnalysisResults({
+          0: featuredPreview,
+        });
+
+        setIsFeaturedAnalysisLoading(false);
+
+        await analyzeRemainingArticles(
+          homepageArticles
+        );
       } catch (error) {
         console.error(
           "Failed to load homepage intelligence:",
@@ -181,7 +208,8 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
   return {
     articles,
     analysisResults,
-    featuredArticle: articles[0] ?? null,
+    featuredArticle:
+      articles[0] ?? null,
     featuredAnalysis,
     isNewsLoading,
     isFeaturedAnalysisLoading,
