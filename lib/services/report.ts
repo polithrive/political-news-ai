@@ -51,9 +51,7 @@ type AnalysisResponse = {
     topic?: unknown;
 
     progressive?: DebatePerspectiveResponse;
-
     centrist?: DebatePerspectiveResponse;
-
     conservative?: DebatePerspectiveResponse;
 
     areasOfAgreement?: unknown;
@@ -70,11 +68,20 @@ type AnalysisResponse = {
   };
 };
 
+function getDurationMs(
+  startedAt: number
+): number {
+  return Math.round(
+    performance.now() - startedAt
+  );
+}
+
 function toStringValue(
   value: unknown,
   fallback: string
 ): string {
-  return typeof value === "string" && value.trim()
+  return typeof value === "string" &&
+    value.trim()
     ? value.trim()
     : fallback;
 }
@@ -100,7 +107,10 @@ function toClampedScore(
 
   return Math.max(
     0,
-    Math.min(100, Math.round(numericValue))
+    Math.min(
+      100,
+      Math.round(numericValue)
+    )
   );
 }
 
@@ -432,31 +442,64 @@ export function getMockIntelligenceReport(): IntelligenceReport {
 export async function generateIntelligenceReport(
   article: Article
 ): Promise<IntelligenceReport> {
-  /*
-   * Performance optimization:
-   *
-   * Source gathering and AI report generation are independent
-   * during the initial report request, so they begin together.
-   *
-   * Previously:
-   * gather sources -> wait -> generate AI report
-   *
-   * Now:
-   * gather sources ─┐
-   *                  ├-> assemble report
-   * generate AI  ───┘
-   */
+  const totalStartedAt =
+    performance.now();
+
+  let sourceGatheringMs = 0;
+  let aiAnalysisMs = 0;
+
+  const sourceGatheringPromise =
+    (async () => {
+      const startedAt =
+        performance.now();
+
+      try {
+        return await gatherRankedSources(
+          article
+        );
+      } finally {
+        sourceGatheringMs =
+          getDurationMs(startedAt);
+      }
+    })();
+
+  const aiAnalysisPromise =
+    (async () => {
+      const startedAt =
+        performance.now();
+
+      try {
+        return await requestReportAnalysis(
+          article
+        );
+      } finally {
+        aiAnalysisMs =
+          getDurationMs(startedAt);
+      }
+    })();
+
   const [
     rankedSources,
     analysis,
   ] = await Promise.all([
-    gatherRankedSources(article),
-    requestReportAnalysis(article),
+    sourceGatheringPromise,
+    aiAnalysisPromise,
   ]);
+
+  const assemblyStartedAt =
+    performance.now();
+
+  const consensusStartedAt =
+    performance.now();
 
   const sourceConsensus =
     calculateSourceConsensus(
       rankedSources
+    );
+
+  const consensusCalculationMs =
+    getDurationMs(
+      consensusStartedAt
     );
 
   const sourceNames = Array.from(
@@ -521,6 +564,9 @@ export async function generateIntelligenceReport(
         ?.conflictingReporting
     );
 
+  const trustScoreStartedAt =
+    performance.now();
+
   const trustScore =
     calculateTrustScore({
       confidence,
@@ -534,6 +580,11 @@ export async function generateIntelligenceReport(
           .politicalDistribution,
     });
 
+  const trustScoreCalculationMs =
+    getDurationMs(
+      trustScoreStartedAt
+    );
+
   const perspectiveAnalysis =
     createPerspectiveAnalysis(
       analysis,
@@ -541,7 +592,7 @@ export async function generateIntelligenceReport(
       commonGround
     );
 
-  return {
+  const report: IntelligenceReport = {
     article,
 
     overview: {
@@ -662,4 +713,34 @@ export async function generateIntelligenceReport(
         ),
     },
   };
+
+  const reportAssemblyMs =
+    getDurationMs(
+      assemblyStartedAt
+    );
+
+  const totalReportMs =
+    getDurationMs(
+      totalStartedAt
+    );
+
+  console.info(
+    "PoliticalPulse report performance:",
+    {
+      article:
+        article.title.slice(0, 100),
+
+      sourceCount:
+        rankedSources.length,
+
+      sourceGatheringMs,
+      aiAnalysisMs,
+      consensusCalculationMs,
+      trustScoreCalculationMs,
+      reportAssemblyMs,
+      totalReportMs,
+    }
+  );
+
+  return report;
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 
-import type { AnalysisResult } from "@/app/types/analysis";
+import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 import { openai } from "@/lib/ai/client";
 
 const PREVIEW_CACHE_REVALIDATE_SECONDS =
@@ -17,7 +17,7 @@ type GeneratePreviewInput = {
 const inFlightPreviewRequests =
   new Map<
     string,
-    Promise<AnalysisResult>
+    Promise<IntelligencePreview>
   >();
 
 function normalizeInput(
@@ -123,7 +123,7 @@ function normalizeStringArray(
 
 function normalizePreview(
   value: unknown
-): AnalysisResult {
+): IntelligencePreview {
   const candidate =
     value !== null &&
     typeof value === "object"
@@ -179,9 +179,25 @@ function normalizePreview(
       ),
     },
 
-    confidence: clampScore(
-      candidate.confidence
-    ),
+   confidence: clampScore(
+  candidate.confidence
+),
+
+trustScore: clampScore(
+  candidate.trustScore
+),
+
+consensusScore: clampScore(
+  candidate.consensusScore
+),
+
+sourcesReviewed:
+  typeof candidate.sourcesReviewed === "number"
+    ? Math.max(
+        0,
+        Math.round(candidate.sourcesReviewed)
+      )
+    : 0,
   };
 }
 
@@ -189,7 +205,7 @@ async function generatePreview(
   title: string,
   description: string,
   sourceName: string
-): Promise<AnalysisResult> {
+): Promise<IntelligencePreview> {
   const generationStartedAt =
     performance.now();
 
@@ -257,7 +273,10 @@ Return exactly:
     "verdict": "Needs verification",
     "explanation": "Maximum 20 words."
   },
-  "confidence": 80
+  "confidence": 80,
+  "trustScore": 85,
+  "consensusScore": 70,
+  "sourcesReviewed": 5
 }
 
 Requirements:
@@ -341,7 +360,7 @@ export async function generateCachedPreview({
   title,
   description,
   sourceName,
-}: GeneratePreviewInput): Promise<AnalysisResult> {
+}: GeneratePreviewInput): Promise<IntelligencePreview> {
   const normalizedTitle =
     normalizeInput(title);
 

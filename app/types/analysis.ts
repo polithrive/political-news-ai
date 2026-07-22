@@ -7,10 +7,22 @@ export type FactCheckResult =
 
 export type AnalysisResult = {
   summary: string;
+
   biasScore: number;
+
   lean: string;
+
   biasReasoning: string;
+
   keyFacts: string[];
+
   factCheck: FactCheckResult;
+
   confidence: number;
+
+  trustScore?: number;
+
+  consensusScore?: number;
+
+  sourcesReviewed?: number;
 };
