@@ -1,5 +1,8 @@
 import type { TrustScore as TrustScoreData } from "@/app/types/trust";
 
+import MetricCard from "@/app/components/ui/MetricCard";
+import { colors } from "@/lib/design/theme";
+
 type TrustScoreProps = {
   trustScore: TrustScoreData;
 };
@@ -28,49 +31,109 @@ export default function TrustScore({
   trustScore,
 }: TrustScoreProps) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70">
-      <div className="border-b border-slate-800 bg-gradient-to-r from-red-950/30 via-slate-900 to-slate-900 px-6 py-5 md:px-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
+    <section
+      className="overflow-hidden rounded-3xl border shadow-[0_20px_55px_rgba(37,54,74,0.08)]"
+      style={{
+        backgroundColor: colors.background.surface,
+        borderColor: colors.border.default,
+      }}
+    >
+      <div
+        className="border-b px-6 py-6 md:px-8"
+        style={{
+          backgroundColor: colors.background.elevated,
+          borderColor: colors.border.subtle,
+        }}
+      >
+        <p
+          className="text-xs font-bold uppercase tracking-[0.18em]"
+          style={{
+            color: colors.brand.primary,
+          }}
+        >
           PoliticalPulse Trust Score
         </p>
 
-        <h2 className="mt-2 text-2xl font-bold text-white">
+        <h2
+          className="mt-2 text-2xl font-bold tracking-tight md:text-3xl"
+          style={{
+            color: colors.text.primary,
+          }}
+        >
           Confidence in this intelligence report
         </h2>
 
-        <p className="mt-3 max-w-3xl text-slate-400">
-          This score summarizes reporting agreement, source quality, evidence
-          strength, and political diversity across the available coverage.
+        <p
+          className="mt-3 max-w-3xl text-base leading-7"
+          style={{
+            color: colors.text.secondary,
+          }}
+        >
+          This score summarizes reporting agreement, source quality,
+          evidence strength, and political diversity across the available
+          coverage.
         </p>
       </div>
 
-      <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[280px_1fr]">
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-red-400">
+      <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div
+          className="flex flex-col items-center justify-center rounded-2xl border p-8 text-center"
+          style={{
+            backgroundColor: colors.brand.primarySoft,
+            borderColor: colors.border.brand,
+          }}
+        >
+          <p
+            className="text-sm font-semibold uppercase tracking-wide"
+            style={{
+              color: colors.brand.primaryHover,
+            }}
+          >
             Overall Score
           </p>
 
           <div className="mt-4 flex items-end justify-center gap-2">
-            <span className="text-7xl font-black leading-none text-white">
+            <span
+              className="text-7xl font-black leading-none"
+              style={{
+                color: colors.text.primary,
+              }}
+            >
               {trustScore.overall}
             </span>
 
-            <span className="pb-2 text-2xl font-bold text-slate-500">
+            <span
+              className="pb-2 text-2xl font-bold"
+              style={{
+                color: colors.text.muted,
+              }}
+            >
               /100
             </span>
           </div>
 
-          <p className="mt-4 font-semibold text-slate-200">
+          <p
+            className="mt-4 font-semibold"
+            style={{
+              color: colors.text.secondary,
+            }}
+          >
             {getScoreLabel(trustScore.overall)}
           </p>
         </div>
 
         <div>
-          <div className="h-4 overflow-hidden rounded-full bg-slate-800">
+          <div
+            className="h-3 overflow-hidden rounded-full"
+            style={{
+              backgroundColor: colors.background.muted,
+            }}
+          >
             <div
-              className="h-full rounded-full bg-red-500 transition-all duration-700"
+              className="h-full rounded-full transition-all duration-700"
               style={{
                 width: getProgressWidth(trustScore.overall),
+                backgroundColor: colors.brand.primary,
               }}
             />
           </div>
@@ -80,28 +143,37 @@ export default function TrustScore({
               label="Evidence Strength"
               value={trustScore.evidenceStrength}
               description="Quality and consistency of available evidence"
+              accent="success"
             />
 
             <MetricCard
               label="Reporting Agreement"
               value={`${trustScore.reportingAgreement}%`}
               description="Preliminary agreement across the source set"
+              accent="info"
             />
 
             <MetricCard
               label="Sources Reviewed"
               value={String(trustScore.sourceCount)}
               description="Distinct reporting sources included"
+              accent="primary"
             />
 
             <MetricCard
               label="Political Diversity"
               value={trustScore.politicalDiversity}
               description="Range of perspectives represented"
+              accent="warning"
             />
           </div>
 
-          <p className="mt-6 text-sm leading-6 text-slate-500">
+          <p
+            className="mt-6 text-sm leading-6"
+            style={{
+              color: colors.text.muted,
+            }}
+          >
             The Trust Score reflects the strength of the available reporting.
             It does not guarantee that every claim is correct and should not be
             treated as a substitute for independent verification.
@@ -109,33 +181,5 @@ export default function TrustScore({
         </div>
       </div>
     </section>
-  );
-}
-
-type MetricCardProps = {
-  label: string;
-  value: string;
-  description: string;
-};
-
-function MetricCard({
-  label,
-  value,
-  description,
-}: MetricCardProps) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-5">
-      <p className="text-sm text-slate-500">
-        {label}
-      </p>
-
-      <p className="mt-2 text-2xl font-bold text-white">
-        {value}
-      </p>
-
-      <p className="mt-2 text-sm leading-5 text-slate-400">
-        {description}
-      </p>
-    </div>
   );
 }

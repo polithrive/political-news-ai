@@ -15,8 +15,10 @@ import IntelligenceOverview from "@/app/components/intelligence/IntelligenceOver
 import IntelligenceSectionSkeleton from "@/app/components/intelligence/IntelligenceSectionSkeleton";
 import KeyFacts from "@/app/components/intelligence/KeyFacts";
 import PerspectiveAnalysis from "@/app/components/intelligence/PerspectiveAnalysis";
+import ReportBlock from "@/app/components/intelligence/ReportBlock";
 import ReportHeader from "@/app/components/intelligence/ReportHeader";
 import SourceComparison from "@/app/components/intelligence/SourceComparison";
+import StickyReportNavigation from "@/app/components/intelligence/StickyReportNavigation";
 import StoryTimeline from "@/app/components/intelligence/StoryTimeline";
 import TrustScore from "@/app/components/intelligence/TrustScore";
 
@@ -252,39 +254,41 @@ export default function IntelligenceReportPage() {
         <section className="mx-auto max-w-7xl px-6 py-12">
           <ReportHeader article={article} />
 
-          <div className="mt-8 rounded-2xl border border-red-900/60 bg-red-950/20 p-8">
-            <p className="font-semibold uppercase tracking-wide text-red-500">
-              Report generation failed
-            </p>
+          <ReportBlock>
+            <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-8">
+              <p className="font-semibold uppercase tracking-wide text-red-500">
+                Report generation failed
+              </p>
 
-            <h2 className="mt-4 text-3xl font-bold">
-              We could not complete this intelligence report.
-            </h2>
+              <h2 className="mt-4 text-3xl font-bold">
+                We could not complete this intelligence report.
+              </h2>
 
-            <p className="mt-4 max-w-2xl text-slate-300">
-              {errorMessage ??
-                "An unexpected error occurred while generating the report."}
-            </p>
+              <p className="mt-4 max-w-2xl text-slate-300">
+                {errorMessage ??
+                  "An unexpected error occurred while generating the report."}
+              </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  window.location.reload()
-                }
-                className="rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
-              >
-                Try again
-              </button>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.location.reload()
+                  }
+                  className="rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
+                >
+                  Try again
+                </button>
 
-              <Link
-                href="/"
-                className="rounded-lg border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
-              >
-                Return to homepage
-              </Link>
+                <Link
+                  href="/"
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                >
+                  Return to homepage
+                </Link>
+              </div>
             </div>
-          </div>
+          </ReportBlock>
         </section>
       </main>
     );
@@ -302,176 +306,188 @@ export default function IntelligenceReportPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <ReportHeader article={article} />
 
-        {report ? (
-          <>
-            <div className="mt-8">
-              <TrustScore
-                trustScore={report.trustScore}
-              />
-            </div>
+        <div className="mt-8 grid gap-8 xl:grid-cols-[260px_minmax(0,1fr)]">
+         <StickyReportNavigation report={report} />
 
-            <div className="mt-8">
-              <ExecutiveSummary report={report} />
-            </div>
+          <div className="min-w-0">
+            {report ? (
+              <>
+                <ReportBlock
+                  id="trust-score"
+                  className="mt-0"
+                >
+                  <TrustScore
+                    trustScore={report.trustScore}
+                  />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceOverview report={report} />
-            </div>
+                <ReportBlock id="executive-summary">
+                  <ExecutiveSummary report={report} />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <ImpactAnalysis report={report} />
-            </div>
+                <ReportBlock id="intelligence-overview">
+                  <IntelligenceOverview report={report} />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <KeyFacts report={report} />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Trust Score"
-                title="Evaluating source confidence"
-                description="PoliticalPulse is reviewing source quality, reporting agreement, and evidence strength."
-                blocks={2}
-              />
-            </div>
+                <ReportBlock id="impact-analysis">
+                  <ImpactAnalysis report={report} />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Executive Brief"
-                title="Building the executive summary"
-                description="PoliticalPulse is identifying the central facts, context, and significance of this story."
-                blocks={3}
-              />
-            </div>
+                <ReportBlock id="key-facts">
+                  <KeyFacts report={report} />
+                </ReportBlock>
+              </>
+            ) : (
+              <>
+                <ReportBlock
+                  id="trust-score"
+                  className="mt-0"
+                >
+                  <IntelligenceSectionSkeleton
+                    label="Trust Score"
+                    title="Evaluating source confidence"
+                    description="PoliticalPulse is reviewing source quality, reporting agreement, and evidence strength."
+                    blocks={2}
+                  />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Intelligence Overview"
-                title="Assessing the report"
-                description="PoliticalPulse is calculating confidence, category, bias indicators, and source coverage."
-                blocks={2}
-              />
-            </div>
+                <ReportBlock id="executive-summary">
+                  <IntelligenceSectionSkeleton
+                    label="Executive Brief"
+                    title="Building the executive summary"
+                    description="PoliticalPulse is identifying the central facts, context, and significance of this story."
+                    blocks={3}
+                  />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Impact Analysis"
-                title="Evaluating potential impact"
-                description="PoliticalPulse is identifying who may be affected and the likely short- and long-term consequences."
-                blocks={3}
-              />
-            </div>
+                <ReportBlock id="intelligence-overview">
+                  <IntelligenceSectionSkeleton
+                    label="Intelligence Overview"
+                    title="Assessing the report"
+                    description="PoliticalPulse is calculating confidence, category, bias indicators, and source coverage."
+                    blocks={2}
+                  />
+                </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Key Facts"
-                title="Extracting supported facts"
-                description="PoliticalPulse is separating reported claims, established facts, and remaining uncertainties."
-                blocks={3}
-              />
-            </div>
-          </>
-        )}
+                <ReportBlock id="impact-analysis">
+                  <IntelligenceSectionSkeleton
+                    label="Impact Analysis"
+                    title="Evaluating potential impact"
+                    description="PoliticalPulse is identifying who may be affected and the likely short- and long-term consequences."
+                    blocks={3}
+                  />
+                </ReportBlock>
 
-        <div className="mt-8">
-          <StoryTimeline article={article} />
-        </div>
-
-        <div className="mt-8">
-          {graph ? (
-            <IntelligenceGraph graph={graph} />
-          ) : isGraphLoading ? (
-            <IntelligenceSectionSkeleton
-              label="Intelligence Graph"
-              title="Building connected context"
-              description="PoliticalPulse is identifying the people, organizations, events, and issues connected to this story."
-              blocks={3}
-            />
-          ) : (
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-              <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
-                Intelligence Graph
-              </p>
-
-              <h2 className="mt-2 text-2xl font-bold text-white">
-                Connected context unavailable
-              </h2>
-
-              <p className="mt-3 max-w-3xl text-slate-400">
-                {graphErrorMessage ??
-                  "PoliticalPulse could not identify reliable story connections from the available article information."}
-              </p>
-            </section>
-          )}
-        </div>
-
-        {report ? (
-          <>
-            <div className="mt-8">
-              <PerspectiveAnalysis report={report} />
-            </div>
-
-            <div className="mt-8">
-              <DebatePanel report={report} />
-            </div>
-
-            <div className="mt-8">
-              <ConsensusEngine report={report} />
-            </div>
-
-            <div className="mt-8">
-              <FactCheck report={report} />
-            </div>
-
-            <div className="mt-8">
-              <SourceComparison report={report} />
-            </div>
-
-            <div className="mt-8">
-              <EvidencePanel report={report} />
-            </div>
-
-            {reportContext && (
-              <div className="mt-8">
-                <AIChat
-                  reportTitle={article.title}
-                  reportContext={reportContext}
-                />
-              </div>
+                <ReportBlock id="key-facts">
+                  <IntelligenceSectionSkeleton
+                    label="Key Facts"
+                    title="Extracting supported facts"
+                    description="PoliticalPulse is separating reported claims, established facts, and remaining uncertainties."
+                    blocks={3}
+                  />
+                </ReportBlock>
+              </>
             )}
-          </>
-        ) : (
-          <>
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Perspective Analysis"
-                title="Comparing political viewpoints"
-                description="PoliticalPulse is evaluating progressive, centrist, and conservative interpretations."
-                blocks={3}
-              />
-            </div>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Political Debate"
-                title="Mapping agreement and disagreement"
-                description="PoliticalPulse is identifying the strongest arguments, primary concerns, and areas of common ground."
-                blocks={3}
-              />
-            </div>
+            <ReportBlock id="story-timeline">
+              <StoryTimeline article={article} />
+            </ReportBlock>
 
-            <div className="mt-8">
-              <IntelligenceSectionSkeleton
-                label="Evidence"
-                title="Reviewing supporting information"
-                description="PoliticalPulse is assembling source evidence, methodology, and conflicting reporting."
-                blocks={3}
-              />
-            </div>
-          </>
-        )}
+            <ReportBlock id="intelligence-graph">
+              {graph ? (
+                <IntelligenceGraph graph={graph} />
+              ) : isGraphLoading ? (
+                <IntelligenceSectionSkeleton
+                  label="Intelligence Graph"
+                  title="Building connected context"
+                  description="PoliticalPulse is identifying the people, organizations, events, and issues connected to this story."
+                  blocks={3}
+                />
+              ) : (
+                <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
+                    Intelligence Graph
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-bold text-white">
+                    Connected context unavailable
+                  </h2>
+
+                  <p className="mt-3 max-w-3xl text-slate-400">
+                    {graphErrorMessage ??
+                      "PoliticalPulse could not identify reliable story connections from the available article information."}
+                  </p>
+                </section>
+              )}
+            </ReportBlock>
+
+            {report ? (
+              <>
+                <ReportBlock id="perspective-analysis">
+                  <PerspectiveAnalysis report={report} />
+                </ReportBlock>
+
+                <ReportBlock id="political-debate">
+                  <DebatePanel report={report} />
+                </ReportBlock>
+
+                <ReportBlock id="consensus">
+                  <ConsensusEngine report={report} />
+                </ReportBlock>
+
+                <ReportBlock id="fact-check">
+                  <FactCheck report={report} />
+                </ReportBlock>
+
+                <ReportBlock id="source-comparison">
+                  <SourceComparison report={report} />
+                </ReportBlock>
+
+                <ReportBlock id="evidence">
+                  <EvidencePanel report={report} />
+                </ReportBlock>
+
+                {reportContext ? (
+                  <ReportBlock id="ask-ai">
+                    <AIChat
+                      reportTitle={article.title}
+                      reportContext={reportContext}
+                    />
+                  </ReportBlock>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <ReportBlock id="perspective-analysis">
+                  <IntelligenceSectionSkeleton
+                    label="Perspective Analysis"
+                    title="Comparing political viewpoints"
+                    description="PoliticalPulse is evaluating progressive, centrist, and conservative interpretations."
+                    blocks={3}
+                  />
+                </ReportBlock>
+
+                <ReportBlock id="political-debate">
+                  <IntelligenceSectionSkeleton
+                    label="Political Debate"
+                    title="Mapping agreement and disagreement"
+                    description="PoliticalPulse is identifying the strongest arguments, primary concerns, and areas of common ground."
+                    blocks={3}
+                  />
+                </ReportBlock>
+
+                <ReportBlock id="evidence">
+                  <IntelligenceSectionSkeleton
+                    label="Evidence"
+                    title="Reviewing supporting information"
+                    description="PoliticalPulse is assembling source evidence, methodology, and conflicting reporting."
+                    blocks={3}
+                  />
+                </ReportBlock>
+              </>
+            )}
+          </div>
+        </div>
       </section>
     </main>
   );

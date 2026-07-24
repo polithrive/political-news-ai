@@ -1,5 +1,9 @@
 import type { IntelligenceReport } from "@/app/types/report";
 
+import AnalysisCard from "@/app/components/ui/AnalysisCard";
+
+import { colors } from "@/lib/design/theme";
+
 type ImpactAnalysisProps = {
   report: IntelligenceReport;
 };
@@ -7,111 +11,218 @@ type ImpactAnalysisProps = {
 export default function ImpactAnalysis({
   report,
 }: ImpactAnalysisProps) {
+  const hasAffectedGroups =
+    report.whoIsAffected.length > 0;
+
+  const hasUnansweredQuestions =
+    report.unansweredQuestions.length > 0;
+
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
-          Impact Analysis
-        </p>
+    <section
+      aria-labelledby="impact-analysis-title"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-2xl shadow-black/20 sm:p-8 lg:p-10"
+      style={{
+        backgroundColor: colors.background.surface,
+        borderColor: colors.border.default,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
+        style={{
+          backgroundColor: `${colors.status.info}12`,
+        }}
+      />
 
-        <h2 className="mt-2 text-2xl font-bold text-white">
-          What this story means
-        </h2>
+      <div className="relative">
+        <div
+          className="border-b pb-8"
+          style={{
+            borderColor: colors.border.default,
+          }}
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-[0.24em]"
+            style={{
+              color: colors.brand.primary,
+            }}
+          >
+            Impact Analysis
+          </p>
 
-        <p className="mt-3 max-w-3xl text-slate-400">
-          PoliticalPulse analyzes why the story matters, who may be affected,
-          and what could happen next.
-        </p>
-      </div>
+          <h2
+            id="impact-analysis-title"
+            className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl"
+            style={{
+              color: colors.text.primary,
+            }}
+          >
+            What This Story Means
+          </h2>
 
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-        <h3 className="text-lg font-semibold text-white">
-          Why this story matters
-        </h3>
+          <p
+            className="mt-3 max-w-3xl text-sm leading-6 sm:text-base sm:leading-7"
+            style={{
+              color: colors.text.secondary,
+            }}
+          >
+            PoliticalPulse analyzes why the story matters,
+            who may be affected, and what could happen next.
+          </p>
+        </div>
 
-        <p className="mt-3 leading-7 text-slate-300">
-          {report.whyThisMatters}
-        </p>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-          <h3 className="text-lg font-semibold text-white">
-            Who is most affected
-          </h3>
-
-          {report.whoIsAffected.length > 0 ? (
-            <ul className="mt-4 space-y-3">
-              {report.whoIsAffected.map((group, index) => (
-                <li
-                  key={`${group}-${index}`}
-                  className="flex items-start gap-3 text-slate-300"
-                >
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-red-500" />
-                  <span>{group}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-slate-400">
-              The affected groups could not be determined from the available
-              information.
+        <div className="mt-8">
+          <AnalysisCard
+            eyebrow="Central Significance"
+            title="Why This Story Matters"
+            accent="primary"
+          >
+            <p
+              className="text-base leading-7 sm:text-lg sm:leading-8"
+              style={{
+                color: colors.text.primary,
+              }}
+            >
+              {report.whyThisMatters}
             </p>
-          )}
+          </AnalysisCard>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-          <h3 className="text-lg font-semibold text-white">
-            Questions still unanswered
-          </h3>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <AnalysisCard
+            eyebrow="Stakeholder Impact"
+            title="Who Is Most Affected"
+            accent="info"
+          >
+            {hasAffectedGroups ? (
+              <ul
+                aria-label="Groups most affected"
+                className="space-y-3"
+              >
+                {report.whoIsAffected.map(
+                  (group, index) => (
+                    <li
+                      key={`${group}-${index}`}
+                      className="flex items-start gap-3"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="mt-2.5 h-2 w-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor:
+                            colors.status.info,
+                        }}
+                      />
 
-          {report.unansweredQuestions.length > 0 ? (
-            <ul className="mt-4 space-y-3">
-              {report.unansweredQuestions.map((question, index) => (
-                <li
-                  key={`${question}-${index}`}
-                  className="flex items-start gap-3 text-slate-300"
-                >
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-amber-400" />
-                  <span>{question}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-slate-400">
-              No major unanswered questions were identified.
+                      <span
+                        className="text-sm leading-7 sm:text-base"
+                        style={{
+                          color:
+                            colors.text.secondary,
+                        }}
+                      >
+                        {group}
+                      </span>
+                    </li>
+                  )
+                )}
+              </ul>
+            ) : (
+              <p
+                className="text-sm leading-7 sm:text-base"
+                style={{
+                  color: colors.text.muted,
+                }}
+              >
+                The affected groups could not be
+                determined from the available
+                information.
+              </p>
+            )}
+          </AnalysisCard>
+
+          <AnalysisCard
+            eyebrow="Open Intelligence Gaps"
+            title="Questions Still Unanswered"
+            accent="warning"
+          >
+            {hasUnansweredQuestions ? (
+              <ul
+                aria-label="Unanswered questions"
+                className="space-y-3"
+              >
+                {report.unansweredQuestions.map(
+                  (question, index) => (
+                    <li
+                      key={`${question}-${index}`}
+                      className="flex items-start gap-3"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="mt-2.5 h-2 w-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor:
+                            colors.status.warning,
+                        }}
+                      />
+
+                      <span
+                        className="text-sm leading-7 sm:text-base"
+                        style={{
+                          color:
+                            colors.text.secondary,
+                        }}
+                      >
+                        {question}
+                      </span>
+                    </li>
+                  )
+                )}
+              </ul>
+            ) : (
+              <p
+                className="text-sm leading-7 sm:text-base"
+                style={{
+                  color: colors.text.muted,
+                }}
+              >
+                No major unanswered questions were
+                identified.
+              </p>
+            )}
+          </AnalysisCard>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <AnalysisCard
+            eyebrow="Near-Term Outlook"
+            title="Short-Term Impact"
+            accent="warning"
+          >
+            <p
+              className="text-sm leading-7 sm:text-base"
+              style={{
+                color: colors.text.secondary,
+              }}
+            >
+              {report.shortTermImpact}
             </p>
-          )}
-        </div>
-      </div>
+          </AnalysisCard>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Near-term outlook
-          </p>
-
-          <h3 className="mt-2 text-lg font-semibold text-white">
-            Short-term impact
-          </h3>
-
-          <p className="mt-3 leading-7 text-slate-300">
-            {report.shortTermImpact}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Strategic outlook
-          </p>
-
-          <h3 className="mt-2 text-lg font-semibold text-white">
-            Long-term impact
-          </h3>
-
-          <p className="mt-3 leading-7 text-slate-300">
-            {report.longTermImpact}
-          </p>
+          <AnalysisCard
+            eyebrow="Strategic Outlook"
+            title="Long-Term Impact"
+            accent="success"
+          >
+            <p
+              className="text-sm leading-7 sm:text-base"
+              style={{
+                color: colors.text.secondary,
+              }}
+            >
+              {report.longTermImpact}
+            </p>
+          </AnalysisCard>
         </div>
       </div>
     </section>
