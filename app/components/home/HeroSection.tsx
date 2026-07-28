@@ -16,6 +16,12 @@ type HeroSectionProps = {
   isLoading: boolean;
 };
 
+type ProductBenefitProps = {
+  title: string;
+  description: string;
+  icon: string;
+};
+
 function calculateReadingTime(
   article: Article | null
 ): number {
@@ -38,6 +44,30 @@ function calculateReadingTime(
   return Math.max(
     1,
     Math.ceil(wordCount / 200)
+  );
+}
+
+function ProductBenefit({
+  title,
+  description,
+  icon,
+}: ProductBenefitProps) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-lg">
+        <span aria-hidden="true">{icon}</span>
+      </div>
+
+      <div>
+        <p className="font-semibold text-white">
+          {title}
+        </p>
+
+        <p className="mt-1 text-sm leading-6 text-slate-400">
+          {description}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -67,54 +97,108 @@ export default function HeroSection({
 
   const intelligenceStatus =
     featuredAnalysis
-      ? "AI analysis complete"
+      ? "Analysis ready"
       : isLoading
-        ? "Analyzing top story"
-        : "Awaiting analysis";
+        ? "Analyzing now"
+        : "Analysis unavailable";
 
   return (
-    <section className="relative overflow-hidden border-b border-slate-900">
+    <section
+      aria-labelledby="hero-heading"
+      className="relative overflow-hidden border-b border-slate-900"
+    >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(239,68,68,0.08),transparent_35%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(239,68,68,0.10),transparent_34%)]"
       />
 
-      <div className="relative mx-auto max-w-7xl px-8 py-20 lg:py-24">
-        <div className="grid items-center gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-28 top-24 h-72 w-72 rounded-full bg-blue-500/5 blur-3xl"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-16 sm:px-8 sm:py-20 lg:py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)] lg:gap-16">
           <div>
             <div className="inline-flex items-center gap-3 rounded-full border border-red-500/20 bg-red-500/5 px-4 py-2">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60" />
 
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
               </span>
 
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-400">
                 AI-Powered Political Intelligence
               </p>
             </div>
 
-            <h1 className="mt-7 text-5xl font-bold leading-[1.08] tracking-tight text-white md:text-7xl">
-              Understand Politics.
+            <h1
+              id="hero-heading"
+              className="mt-7 max-w-3xl text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl"
+            >
+              Understand the story.
 
               <span className="mt-2 block text-red-500">
-                Not Just Headlines.
+                See every side.
               </span>
             </h1>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl md:leading-9">
-              PoliticalPulse transforms political
-              news into AI-powered intelligence
-              reports that compare perspectives,
-              identify common ground, evaluate
-              trust, and explain what actually
-              matters.
+            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl sm:leading-9">
+              PoliticalPulse turns complicated political
+              news into clear intelligence reports with
+              key facts, competing perspectives, trust
+              signals, and common ground.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-slate-400">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {featuredArticle ? (
+                <Button
+                  href={intelligenceRoute}
+                  variant="primary"
+                  prefetch={false}
+                  onClick={saveFeaturedArticle}
+                  className="justify-center sm:justify-start"
+                >
+                  View Today&apos;s Intelligence Report
+
+                  <span
+                    aria-hidden="true"
+                    className="ml-2"
+                  >
+                    →
+                  </span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled
+                  className="cursor-not-allowed justify-center opacity-60 sm:justify-start"
+                >
+                  {isLoading
+                    ? "Preparing Today’s Report..."
+                    : "Report Unavailable"}
+                </Button>
+              )}
+
+              <Button
+                href="#live-news"
+                variant="outline"
+                className="justify-center sm:justify-start"
+              >
+                Browse Live News
+              </Button>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-400">
               <span className="font-medium text-slate-300">
-                Today&apos;s intelligence:
+                Featured analysis
               </span>
+
+              <span
+                aria-hidden="true"
+                className="h-1 w-1 rounded-full bg-slate-600"
+              />
 
               <span>{sourceName}</span>
 
@@ -135,94 +219,72 @@ export default function HeroSection({
               <span
                 className={
                   featuredAnalysis
-                    ? "text-emerald-400"
-                    : "text-amber-400"
+                    ? "font-medium text-emerald-400"
+                    : "font-medium text-amber-400"
                 }
               >
                 {intelligenceStatus}
               </span>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-4">
-              {featuredArticle ? (
-                <Button
-                  href={intelligenceRoute}
-                  variant="primary"
-                  prefetch={false}
-                  onClick={saveFeaturedArticle}
-                >
-                  Analyze Today&apos;s Top Story
+            <div className="mt-10 grid gap-6 border-t border-slate-900 pt-8 sm:grid-cols-3">
+              <ProductBenefit
+                icon="⚖️"
+                title="Compare Perspectives"
+                description="See how different viewpoints interpret the same story."
+              />
 
-                  <span
-                    aria-hidden="true"
-                    className="ml-2"
-                  >
-                    →
-                  </span>
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="primary"
-                  disabled
-                  className="cursor-not-allowed opacity-60"
-                >
-                  {isLoading
-                    ? "Loading Top Story..."
-                    : "Top Story Unavailable"}
-                </Button>
-              )}
+              <ProductBenefit
+                icon="✓"
+                title="Verify the Evidence"
+                description="Review confidence, sources, and conflicting reporting."
+              />
 
-              <Button
-                href="#live-news"
-                variant="outline"
-              >
-                Explore Live News
-              </Button>
-            </div>
-
-            <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 text-sm text-slate-400 sm:grid-cols-4">
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">
-                  ✓
-                </span>
-
-                <span>Executive Summaries</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">
-                  ✓
-                </span>
-
-                <span>Bias Analysis</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">
-                  ✓
-                </span>
-
-                <span>Trust Score™</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">
-                  ✓
-                </span>
-
-                <span>Common Ground</span>
-              </div>
+              <ProductBenefit
+                icon="◎"
+                title="Find Common Ground"
+                description="Identify agreements hidden beneath political debate."
+              />
             </div>
           </div>
 
-          <div className="flex justify-center lg:justify-end">
-            <IntelligencePreviewCard
-              article={featuredArticle}
-              analysis={featuredAnalysis}
-              isLoading={isLoading}
-              onOpenReport={saveFeaturedArticle}
+          <div className="relative flex justify-center lg:justify-end">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-8 rounded-full bg-red-500/5 blur-3xl"
             />
+
+            <div className="relative w-full max-w-2xl">
+              <div className="mb-4 flex items-center justify-between px-1">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Today&apos;s Featured Report
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-400">
+                    A preview of the full intelligence
+                    analysis
+                  </p>
+                </div>
+
+                <span
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    featuredAnalysis
+                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"
+                      : "border-amber-500/20 bg-amber-500/5 text-amber-400"
+                  }`}
+                >
+                  {intelligenceStatus}
+                </span>
+              </div>
+
+              <IntelligencePreviewCard
+                article={featuredArticle}
+                analysis={featuredAnalysis}
+                isLoading={isLoading}
+                onOpenReport={saveFeaturedArticle}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import BreakingNews from "./components/BreakingNews";
 import Footer from "./components/Footer";
-import IntelligenceStory from "./components/home/IntelligenceStory";
 import HeroSection from "./components/home/HeroSection";
 import LiveNews from "./components/LiveNews";
 import Navbar from "./components/Navbar";
@@ -43,7 +42,7 @@ export default function Home() {
         }
       />
 
-      <IntelligenceStory />
+    
 
       <SearchBar
         searchTerm={searchTerm}
