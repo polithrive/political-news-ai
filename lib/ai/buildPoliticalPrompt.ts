@@ -33,6 +33,14 @@ function cleanText(
     .slice(0, maximumLength);
 }
 
+function formatOptionalScore(
+  value: number | null
+): string {
+  return value === null
+    ? "Not available"
+    : String(value);
+}
+
 function formatSource(
   source: PromptSource,
   index: number
@@ -55,15 +63,40 @@ function formatSource(
     MAX_DESCRIPTION_LENGTH
   );
 
+  const reliabilityScore =
+    source.sourceRating.isRated
+      ? String(
+          source.sourceRating.reliability
+        )
+      : "Not rated";
+
+  const factualReportingScore =
+    source.sourceRating.isRated
+      ? String(
+          source.sourceRating
+            .factualReporting
+        )
+      : "Not rated";
+
+  const politicalLean =
+    source.sourceRating.isRated
+      ? source.sourceRating.politicalLean
+      : "Not rated";
+
   return `
 <source index="${index + 1}" primary="${source.isPrimary}">
   <name>${sourceName}</name>
   <title>${title}</title>
   <description>${description}</description>
   <published-at>${source.article.publishedAt}</published-at>
-  <reliability-score>${source.sourceRating.reliability}</reliability-score>
-  <factual-reporting-score>${source.sourceRating.factualReporting}</factual-reporting-score>
-  <political-lean>${source.sourceRating.politicalLean}</political-lean>
+  <source-rating-status>${
+    source.sourceRating.isRated
+      ? "Rated"
+      : "Not rated"
+  }</source-rating-status>
+  <reliability-score>${reliabilityScore}</reliability-score>
+  <factual-reporting-score>${factualReportingScore}</factual-reporting-score>
+  <political-lean>${politicalLean}</political-lean>
 </source>
 `.trim();
 }
@@ -81,6 +114,27 @@ export function buildPoliticalPrompt(
     "Title unavailable",
     MAX_TITLE_LENGTH
   );
+
+  const reportingAgreement =
+    formatOptionalScore(
+      input.sourceConsensus.reportingAgreement
+    );
+
+  const sourceQualityScore =
+    formatOptionalScore(
+      input.sourceConsensus.sourceQualityScore
+    );
+
+  const averageReliability =
+    formatOptionalScore(
+      input.sourceConsensus.averageReliability
+    );
+
+  const averageFactualReporting =
+    formatOptionalScore(
+      input.sourceConsensus
+        .averageFactualReporting
+    );
 
   return `
 PoliticalPulse Intelligence Engine — Multi-Source Analysis
@@ -119,11 +173,13 @@ ${sources || "No related reporting was available."}
 
 SOURCE-SET METADATA
 
-<source-consensus>
+<source-set>
   <source-count>${input.sourceConsensus.sourceCount}</source-count>
-  <average-reliability>${input.sourceConsensus.averageReliability}</average-reliability>
-  <average-factual-reporting>${input.sourceConsensus.averageFactualReporting}</average-factual-reporting>
-  <preliminary-source-set-score>${input.sourceConsensus.consensusScore}</preliminary-source-set-score>
+  <rated-source-count>${input.sourceConsensus.ratedSourceCount}</rated-source-count>
+  <average-reliability>${averageReliability}</average-reliability>
+  <average-factual-reporting>${averageFactualReporting}</average-factual-reporting>
+  <source-quality-score>${sourceQualityScore}</source-quality-score>
+  <reporting-agreement>${reportingAgreement}</reporting-agreement>
 
   <political-distribution>
     <left>${input.sourceConsensus.politicalDistribution.left}</left>
@@ -131,7 +187,7 @@ SOURCE-SET METADATA
     <right>${input.sourceConsensus.politicalDistribution.right}</right>
     <mixed>${input.sourceConsensus.politicalDistribution.mixed}</mixed>
   </political-distribution>
-</source-consensus>
+</source-set>
 
 ANALYSIS METHOD
 
@@ -142,14 +198,18 @@ Follow these stages before producing the final report:
 3. Identify differences in wording, emphasis, framing, and factual claims.
 4. Identify missing context and unresolved questions.
 5. Evaluate whether political perspectives are supported by the reporting.
-6. Assess confidence using source count, source quality, and reporting consistency.
+6. Assess confidence using source count, rated-source quality, corroboration, and reporting consistency.
 7. Produce one unified and neutral intelligence report.
 
 IMPORTANT LIMITATIONS
 
 - Source ratings describe general source metadata, not whether a specific claim is true.
-- The preliminary source-set score is not proof of claim-level agreement.
+- A source-quality score is not proof of claim-level agreement.
+- Reporting agreement is unavailable when PoliticalPulse does not have enough independent reporting to measure it.
+- A source marked "Not rated" must not be treated as having a verified reliability or factual-reporting score.
+- Do not infer political lean from placeholder metadata for an unrated source.
 - Do not say a fact was independently verified unless the supplied reporting supports that statement.
+- Do not claim multiple-source corroboration when only one source was supplied.
 - Do not invent sources, quotes, legislation, votes, dates, people, events, or claims.
 - Prefer fewer supported conclusions over more speculative conclusions.
 - When sources do not provide enough information, state that clearly.
@@ -215,13 +275,18 @@ OUTPUT RULES
 - biasScore must be between 0 and 100.
 - confidence must be between 0 and 100.
 - consensusScore must be between 0 and 100.
+- consensusScore represents political/common-ground consensus, not source agreement.
 - sourcesReviewed must reflect the supplied source count.
+- If only one independent source is supplied, confidence should reflect the lack of independent corroboration.
+- Do not describe reporting as corroborated, confirmed across sources, or broadly agreed unless multiple supplied sources support that statement.
 - keyFacts should contain 3 to 5 supported facts when available.
+- Do not use the publication name, source count, or the fact that an article was published as a key fact unless it is substantively relevant to the story itself.
 - whoIsAffected should contain 2 to 5 concise groups when identifiable.
 - unansweredQuestions should contain 2 to 5 meaningful questions.
 - commonGround should contain 2 to 4 meaningful points.
 - Return lean as Left, Center, or Right.
 - Return an empty conflictingReporting array when no meaningful conflict is identifiable.
+- When fewer than two independent sources are supplied, conflictingReporting must be an empty array because cross-source conflict cannot be assessed.
 - Include only source names that were supplied.
 - Use the current date and time for evidence.lastAnalyzedAt.
 `.trim();

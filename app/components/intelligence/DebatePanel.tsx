@@ -3,32 +3,52 @@ import type {
   IntelligenceReport,
 } from "@/app/types/report";
 
+import AnalysisCard from "@/app/components/ui/AnalysisCard";
+import SectionHeader from "@/app/components/ui/SectionHeader";
+
+import { colors } from "@/lib/design/theme";
+
 type DebatePanelProps = {
   report: IntelligenceReport;
 };
+
+type PerspectiveTone =
+  | "info"
+  | "primary"
+  | "warning";
 
 type PerspectiveCardProps = {
   eyebrow: string;
   title: string;
   perspective: DebatePerspective;
-  accentClassName: string;
-  bulletClassName: string;
+  tone: PerspectiveTone;
 };
 
 type InsightListProps = {
   items: string[];
   emptyMessage: string;
-  bulletClassName: string;
+  color: string;
 };
+
+const perspectiveColors = {
+  info: colors.status.info,
+  primary: colors.brand.primary,
+  warning: colors.status.warning,
+} as const;
 
 function InsightList({
   items,
   emptyMessage,
-  bulletClassName,
+  color,
 }: InsightListProps) {
   if (items.length === 0) {
     return (
-      <p className="mt-3 text-sm leading-6 text-slate-500">
+      <p
+        className="mt-3 text-sm leading-6"
+        style={{
+          color: colors.text.muted,
+        }}
+      >
         {emptyMessage}
       </p>
     );
@@ -39,11 +59,17 @@ function InsightList({
       {items.map((item, index) => (
         <li
           key={`${item}-${index}`}
-          className="flex gap-3 text-sm leading-6 text-slate-300"
+          className="flex gap-3 text-sm leading-6"
+          style={{
+            color: colors.text.secondary,
+          }}
         >
           <span
-            className={`mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full ${bulletClassName}`}
             aria-hidden="true"
+            className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{
+              backgroundColor: color,
+            }}
           />
 
           <span>{item}</span>
@@ -57,50 +83,115 @@ function PerspectiveCard({
   eyebrow,
   title,
   perspective,
-  accentClassName,
-  bulletClassName,
+  tone,
 }: PerspectiveCardProps) {
+  const accentColor =
+    perspectiveColors[tone];
+
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+    <article
+      className="relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6"
+      style={{
+        backgroundColor:
+          colors.background.elevated,
+        borderColor:
+          colors.border.default,
+      }}
+    >
       <div
-        className={`absolute inset-x-0 top-0 h-1 ${accentClassName}`}
         aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-1"
+        style={{
+          backgroundColor: accentColor,
+        }}
       />
 
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        {eyebrow}
-      </p>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
+        style={{
+          backgroundColor:
+            `${accentColor}10`,
+        }}
+      />
 
-      <h3 className="mt-3 text-xl font-bold text-white">
-        {title}
-      </h3>
+      <div className="relative">
+        <p
+          className="text-xs font-semibold uppercase tracking-[0.18em]"
+          style={{
+            color: accentColor,
+          }}
+        >
+          {eyebrow}
+        </p>
 
-      <p className="mt-4 leading-7 text-slate-300">
-        {perspective.position}
-      </p>
+        <h3
+          className="mt-2 text-xl font-semibold tracking-tight"
+          style={{
+            color: colors.text.primary,
+          }}
+        >
+          {title}
+        </h3>
 
-      <div className="mt-6 border-t border-slate-800 pt-5">
-        <h4 className="text-sm font-semibold text-white">
-          Strongest arguments
-        </h4>
+        <p
+          className="mt-4 text-sm leading-7 sm:text-base sm:leading-8"
+          style={{
+            color: colors.text.secondary,
+          }}
+        >
+          {perspective.position}
+        </p>
 
-        <InsightList
-          items={perspective.strongestArguments}
-          emptyMessage="The current analysis did not identify distinct supporting arguments."
-          bulletClassName={bulletClassName}
-        />
-      </div>
+        <div
+          className="mt-6 border-t pt-5"
+          style={{
+            borderColor:
+              colors.border.default,
+          }}
+        >
+          <h4
+            className="text-sm font-semibold"
+            style={{
+              color: colors.text.primary,
+            }}
+          >
+            Strongest arguments
+          </h4>
 
-      <div className="mt-6 border-t border-slate-800 pt-5">
-        <h4 className="text-sm font-semibold text-white">
-          Primary concerns
-        </h4>
+          <InsightList
+            items={
+              perspective.strongestArguments
+            }
+            emptyMessage="The current analysis did not identify distinct supporting arguments."
+            color={accentColor}
+          />
+        </div>
 
-        <InsightList
-          items={perspective.primaryConcerns}
-          emptyMessage="The current analysis did not identify distinct concerns."
-          bulletClassName={bulletClassName}
-        />
+        <div
+          className="mt-6 border-t pt-5"
+          style={{
+            borderColor:
+              colors.border.default,
+          }}
+        >
+          <h4
+            className="text-sm font-semibold"
+            style={{
+              color: colors.text.primary,
+            }}
+          >
+            Primary concerns
+          </h4>
+
+          <InsightList
+            items={
+              perspective.primaryConcerns
+            }
+            emptyMessage="The current analysis did not identify distinct concerns."
+            color={accentColor}
+          />
+        </div>
       </div>
     </article>
   );
@@ -126,6 +217,15 @@ function getDebateTemperatureLabel(
   }
 
   return "Broad agreement";
+}
+
+function clampTemperature(
+  temperature: number
+) {
+  return Math.max(
+    0,
+    Math.min(100, temperature)
+  );
 }
 
 export default function DebatePanel({
@@ -162,18 +262,25 @@ export default function DebatePanel({
     };
 
   const areasOfAgreement =
-    perspectiveAnalysis?.areasOfAgreement?.length > 0
+    perspectiveAnalysis
+      ?.areasOfAgreement?.length > 0
       ? perspectiveAnalysis.areasOfAgreement
       : report.commonGround;
 
   const mainDisagreements =
-    perspectiveAnalysis?.mainDisagreements ?? [];
+    perspectiveAnalysis
+      ?.mainDisagreements ?? [];
 
   const debateTemperature =
-    perspectiveAnalysis?.debateTemperature ?? 50;
+    clampTemperature(
+      perspectiveAnalysis
+        ?.debateTemperature ?? 50
+    );
 
   const debateTemperatureLabel =
-    getDebateTemperatureLabel(debateTemperature);
+    getDebateTemperatureLabel(
+      debateTemperature
+    );
 
   const topic =
     perspectiveAnalysis?.topic ||
@@ -181,152 +288,255 @@ export default function DebatePanel({
     "The central political debate";
 
   const politicalPulseAnalysis =
-    perspectiveAnalysis?.politicalPulseAnalysis ||
+    perspectiveAnalysis
+      ?.politicalPulseAnalysis ||
     "PoliticalPulse identified the primary perspectives and areas of agreement, but a dedicated neutral synthesis was not available.";
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
-            PoliticalPulse Debate™
-          </p>
+    <section
+      aria-label="Political debate analysis"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
+      style={{
+        backgroundColor:
+          colors.background.surface,
+        borderColor:
+          colors.border.default,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
+        style={{
+          backgroundColor:
+            `${colors.brand.primary}10`,
+        }}
+      />
 
-          <h2 className="mt-2 text-3xl font-bold text-white">
-            How different perspectives interpret this story
-          </h2>
+      <div className="relative">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <SectionHeader
+            eyebrow="PoliticalPulse Debate™"
+            title="Where the Political Debate Really Stands"
+            subtitle="Compare the strongest progressive, centrist, and conservative interpretations while separating political framing from the underlying facts."
+          />
 
-          <p className="mt-3 leading-7 text-slate-400">
-            PoliticalPulse compares major political
-            interpretations while separating perspective from
-            the underlying facts and evidence.
-          </p>
-        </div>
+          <div
+            className="w-full shrink-0 rounded-2xl border p-5 lg:max-w-xs"
+            style={{
+              backgroundColor:
+                colors.background.elevated,
+              borderColor:
+                colors.border.default,
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p
+                  className="text-xs font-semibold uppercase tracking-[0.16em]"
+                  style={{
+                    color:
+                      colors.text.muted,
+                  }}
+                >
+                  Debate Temperature
+                </p>
 
-        <div className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 p-5 lg:max-w-xs">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Debate temperature
-              </p>
+                <p
+                  className="mt-2 text-lg font-semibold"
+                  style={{
+                    color:
+                      colors.text.primary,
+                  }}
+                >
+                  {debateTemperatureLabel}
+                </p>
+              </div>
 
-              <p className="mt-2 text-lg font-bold text-white">
-                {debateTemperatureLabel}
-              </p>
+              <div className="text-right">
+                <span
+                  className="text-3xl font-bold tracking-tight"
+                  style={{
+                    color:
+                      colors.text.primary,
+                  }}
+                >
+                  {debateTemperature}
+                </span>
+
+                <span
+                  className="ml-1 text-sm font-semibold"
+                  style={{
+                    color:
+                      colors.text.muted,
+                  }}
+                >
+                  /100
+                </span>
+              </div>
             </div>
 
-            <span className="text-3xl font-bold text-white">
-              {debateTemperature}
-            </span>
-          </div>
-
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500"
+              className="mt-5 h-2.5 overflow-hidden rounded-full"
               style={{
-                width: `${debateTemperature}%`,
+                backgroundColor:
+                  colors.background.muted,
               }}
-              aria-hidden="true"
-            />
-          </div>
+            >
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width:
+                    `${debateTemperature}%`,
+                  backgroundColor:
+                    colors.brand.primary,
+                }}
+                aria-hidden="true"
+              />
+            </div>
 
-          <p className="mt-3 text-xs leading-5 text-slate-500">
-            0 represents broad agreement. 100 represents intense
-            political disagreement.
+            <div className="mt-2 flex justify-between">
+              <span
+                className="text-[11px] font-medium"
+                style={{
+                  color: colors.text.muted,
+                }}
+              >
+                Agreement
+              </span>
+
+              <span
+                className="text-[11px] font-medium"
+                style={{
+                  color: colors.text.muted,
+                }}
+              >
+                Polarized
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="mt-8 rounded-2xl border p-5 sm:p-6"
+          style={{
+            backgroundColor:
+              colors.brand.primarySoft,
+            borderColor:
+              colors.border.brand,
+          }}
+        >
+          <p
+            className="text-xs font-bold uppercase tracking-[0.18em]"
+            style={{
+              color:
+                colors.brand.primaryHover,
+            }}
+          >
+            Central Debate
+          </p>
+
+          <p
+            className="mt-3 text-lg font-semibold leading-8 sm:text-xl"
+            style={{
+              color: colors.text.primary,
+            }}
+          >
+            {topic}
           </p>
         </div>
-      </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Central debate
-        </p>
-
-        <p className="mt-3 text-lg font-semibold leading-7 text-white">
-          {topic}
-        </p>
-      </div>
-
-      <div className="mt-8 grid gap-5 lg:grid-cols-3">
-        <PerspectiveCard
-          eyebrow="Progressive analysis"
-          title="Progressive Perspective"
-          perspective={progressive}
-          accentClassName="bg-blue-500"
-          bulletClassName="bg-blue-400"
-        />
-
-        <PerspectiveCard
-          eyebrow="Institutional analysis"
-          title="Centrist Perspective"
-          perspective={centrist}
-          accentClassName="bg-violet-500"
-          bulletClassName="bg-violet-400"
-        />
-
-        <PerspectiveCard
-          eyebrow="Conservative analysis"
-          title="Conservative Perspective"
-          perspective={conservative}
-          accentClassName="bg-red-500"
-          bulletClassName="bg-red-400"
-        />
-      </div>
-
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        <article className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
-            Areas of agreement
-          </p>
-
-          <h3 className="mt-3 text-xl font-bold text-white">
-            PoliticalPulse Consensus
-          </h3>
-
-          <InsightList
-            items={areasOfAgreement}
-            emptyMessage="The current analysis did not identify clear areas of agreement."
-            bulletClassName="bg-emerald-400"
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          <PerspectiveCard
+            eyebrow="Progressive Analysis"
+            title="Progressive Perspective"
+            perspective={progressive}
+            tone="info"
           />
-        </article>
 
-        <article className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">
-            Areas of disagreement
-          </p>
-
-          <h3 className="mt-3 text-xl font-bold text-white">
-            Major Differences
-          </h3>
-
-          <InsightList
-            items={mainDisagreements}
-            emptyMessage="The current analysis did not identify specific disagreements beyond the differences described in the perspective summaries."
-            bulletClassName="bg-amber-400"
+          <PerspectiveCard
+            eyebrow="Centrist Analysis"
+            title="Centrist Perspective"
+            perspective={centrist}
+            tone="primary"
           />
-        </article>
-      </div>
 
-      <article className="mt-8 rounded-2xl border border-cyan-900/60 bg-cyan-950/20 p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-400">
-          PoliticalPulse synthesis
-        </p>
+          <PerspectiveCard
+            eyebrow="Conservative Analysis"
+            title="Conservative Perspective"
+            perspective={conservative}
+            tone="warning"
+          />
+        </div>
 
-        <h3 className="mt-3 text-xl font-bold text-white">
-          What the debate is really about
-        </h3>
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <AnalysisCard
+            eyebrow="Areas of Agreement"
+            title="Where the Sides Agree"
+            accent="success"
+          >
+            <InsightList
+              items={areasOfAgreement}
+              emptyMessage="The current analysis did not identify clear areas of agreement."
+              color={
+                colors.status.success
+              }
+            />
+          </AnalysisCard>
 
-        <p className="mt-4 leading-7 text-slate-300">
-          {politicalPulseAnalysis}
-        </p>
-      </article>
+          <AnalysisCard
+            eyebrow="Areas of Disagreement"
+            title="Where the Sides Diverge"
+            accent="warning"
+          >
+            <InsightList
+              items={mainDisagreements}
+              emptyMessage="The current analysis did not identify specific disagreements beyond the differences described in the perspective summaries."
+              color={
+                colors.status.warning
+              }
+            />
+          </AnalysisCard>
+        </div>
 
-      <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/50 px-5 py-4">
-        <p className="text-sm leading-6 text-slate-500">
-          These perspectives summarize how different political
-          viewpoints may interpret the available information.
-          They do not represent endorsements by PoliticalPulse.
-        </p>
+        <div className="mt-8">
+          <AnalysisCard
+            eyebrow="PoliticalPulse Synthesis"
+            title="What the Debate Is Really About"
+            accent="info"
+          >
+            <p
+              className="text-base leading-8 sm:text-lg"
+              style={{
+                color:
+                  colors.text.primary,
+              }}
+            >
+              {politicalPulseAnalysis}
+            </p>
+          </AnalysisCard>
+        </div>
+
+        <div
+          className="mt-6 rounded-xl border px-5 py-4"
+          style={{
+            backgroundColor:
+              colors.background.elevated,
+            borderColor:
+              colors.border.default,
+          }}
+        >
+          <p
+            className="text-sm leading-6"
+            style={{
+              color: colors.text.muted,
+            }}
+          >
+            These perspectives summarize how different
+            political viewpoints may interpret the available
+            information. They do not represent endorsements
+            by PoliticalPulse.
+          </p>
+        </div>
       </div>
     </section>
   );

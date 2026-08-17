@@ -53,7 +53,16 @@ function formatSection({
   ].join("\n");
 }
 
-function formatPercentage(value: number): string {
+function formatPercentage(
+  value: number | null | undefined
+): string {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "Not available";
+  }
+
   return `${value}%`;
 }
 
@@ -141,6 +150,9 @@ export function buildIntelligenceContext({
         )}`,
         `Source Count: ${formatValue(
           report.trustScore.sourceCount
+        )}`,
+        `Rated Source Count: ${formatValue(
+          report.trustScore.ratedSourceCount
         )}`,
         `Political Diversity: ${formatValue(
           report.trustScore.politicalDiversity

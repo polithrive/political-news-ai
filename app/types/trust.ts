@@ -1,17 +1,30 @@
+export type EvidenceStrength =
+  | "Low"
+  | "Medium"
+  | "High";
+
+export type PoliticalDiversity =
+  | "Low"
+  | "Medium"
+  | "High";
+
 export type TrustScore = {
   overall: number;
 
-  evidenceStrength:
-    | "Low"
-    | "Medium"
-    | "High";
+  evidenceStrength: EvidenceStrength;
 
-  reportingAgreement: number;
+  /*
+   * Cross-source reporting agreement.
+   *
+   * null means PoliticalPulse does not have
+   * enough independent reporting to calculate
+   * a meaningful agreement score.
+   */
+  reportingAgreement: number | null;
 
   sourceCount: number;
 
-  politicalDiversity:
-    | "Low"
-    | "Medium"
-    | "High";
+  ratedSourceCount: number;
+
+  politicalDiversity: PoliticalDiversity;
 };

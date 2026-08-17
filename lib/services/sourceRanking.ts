@@ -13,18 +13,28 @@ export type OwnershipType =
   | "Unknown";
 
 export type SourceRating = {
-  // Existing fields (kept for compatibility)
+  /*
+   * Whether PoliticalPulse has an established
+   * source-quality profile for this publication.
+   *
+   * When false, reliability and factualReporting
+   * must NOT be treated as researched ratings.
+   */
+  isRated: boolean;
+
   reliability: number;
   factualReporting: number;
+
   politicalLean: PoliticalLean;
 
-  // New Source Intelligence™ fields
   displayName: string;
   country: string;
   ownershipType: OwnershipType;
+
   editorialApproach: string;
   description: string;
   website: string;
+
   biasExplanation: string;
   trustSummary: string;
 };
@@ -34,6 +44,8 @@ const SOURCE_DATABASE: Record<
   SourceRating
 > = {
   Reuters: {
+    isRated: true,
+
     reliability: 98,
     factualReporting: 99,
     politicalLean: "Center",
@@ -58,6 +70,8 @@ const SOURCE_DATABASE: Record<
   },
 
   "Associated Press": {
+    isRated: true,
+
     reliability: 98,
     factualReporting: 99,
     politicalLean: "Center",
@@ -82,6 +96,8 @@ const SOURCE_DATABASE: Record<
   },
 
   "AP News": {
+    isRated: true,
+
     reliability: 98,
     factualReporting: 99,
     politicalLean: "Center",
@@ -106,6 +122,8 @@ const SOURCE_DATABASE: Record<
   },
 
   BBC: {
+    isRated: true,
+
     reliability: 95,
     factualReporting: 96,
     politicalLean: "Center",
@@ -130,6 +148,8 @@ const SOURCE_DATABASE: Record<
   },
 
   NPR: {
+    isRated: true,
+
     reliability: 92,
     factualReporting: 95,
     politicalLean: "Center",
@@ -154,6 +174,8 @@ const SOURCE_DATABASE: Record<
   },
 
   CNN: {
+    isRated: true,
+
     reliability: 88,
     factualReporting: 90,
     politicalLean: "Left",
@@ -178,6 +200,8 @@ const SOURCE_DATABASE: Record<
   },
 
   "Fox News": {
+    isRated: true,
+
     reliability: 84,
     factualReporting: 86,
     politicalLean: "Right",
@@ -203,8 +227,18 @@ const SOURCE_DATABASE: Record<
 };
 
 const DEFAULT_SOURCE: SourceRating = {
+  isRated: false,
+
+  /*
+   * These values remain neutral placeholders for
+   * backward compatibility only.
+   *
+   * Code calculating source quality must check
+   * isRated before using them.
+   */
   reliability: 75,
   factualReporting: 75,
+
   politicalLean: "Mixed",
 
   displayName: "Unknown Source",
@@ -212,28 +246,38 @@ const DEFAULT_SOURCE: SourceRating = {
   ownershipType: "Unknown",
 
   editorialApproach:
-    "PoliticalPulse has not yet collected detailed metadata for this source.",
+    "PoliticalPulse has not yet collected enough source metadata to assign a formal editorial profile.",
 
   description:
-    "Limited information is currently available for this publication.",
+    "PoliticalPulse does not currently maintain a verified source profile for this publication.",
 
   website: "",
 
   biasExplanation:
-    "PoliticalPulse does not yet have enough historical information to estimate editorial lean beyond the available reporting.",
+    "PoliticalPulse has not assigned this publication a verified political-lean classification.",
 
   trustSummary:
-    "Source metadata is still being collected.",
+    "This source has not yet been formally rated by PoliticalPulse.",
 };
 
 export function getSourceRating(
   sourceName: string
 ): SourceRating {
-  return (
-    SOURCE_DATABASE[sourceName] ??
-    {
-      ...DEFAULT_SOURCE,
-      displayName: sourceName || "Unknown Source",
-    }
-  );
+  const normalizedSourceName =
+    sourceName.trim();
+
+  const knownSource =
+    SOURCE_DATABASE[normalizedSourceName];
+
+  if (knownSource) {
+    return knownSource;
+  }
+
+  return {
+    ...DEFAULT_SOURCE,
+
+    displayName:
+      normalizedSourceName ||
+      "Unknown Source",
+  };
 }

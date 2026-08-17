@@ -1,6 +1,7 @@
 import type { IntelligenceReport } from "@/app/types/report";
 
 import AnalysisCard from "@/app/components/ui/AnalysisCard";
+import SectionHeader from "@/app/components/ui/SectionHeader";
 
 import { colors } from "@/lib/design/theme";
 
@@ -19,57 +20,30 @@ export default function ImpactAnalysis({
 
   return (
     <section
-      aria-labelledby="impact-analysis-title"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-2xl shadow-black/20 sm:p-8 lg:p-10"
+      aria-label="Impact analysis"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
       style={{
-        backgroundColor: colors.background.surface,
-        borderColor: colors.border.default,
+        backgroundColor:
+          colors.background.surface,
+        borderColor:
+          colors.border.default,
       }}
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
         style={{
-          backgroundColor: `${colors.status.info}12`,
+          backgroundColor:
+            `${colors.status.info}12`,
         }}
       />
 
       <div className="relative">
-        <div
-          className="border-b pb-8"
-          style={{
-            borderColor: colors.border.default,
-          }}
-        >
-          <p
-            className="text-xs font-semibold uppercase tracking-[0.24em]"
-            style={{
-              color: colors.brand.primary,
-            }}
-          >
-            Impact Analysis
-          </p>
-
-          <h2
-            id="impact-analysis-title"
-            className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl"
-            style={{
-              color: colors.text.primary,
-            }}
-          >
-            What This Story Means
-          </h2>
-
-          <p
-            className="mt-3 max-w-3xl text-sm leading-6 sm:text-base sm:leading-7"
-            style={{
-              color: colors.text.secondary,
-            }}
-          >
-            PoliticalPulse analyzes why the story matters,
-            who may be affected, and what could happen next.
-          </p>
-        </div>
+        <SectionHeader
+          eyebrow="Impact Analysis"
+          title="What This Story Means"
+          subtitle="PoliticalPulse analyzes why the story matters, who may be affected, and what could happen next."
+        />
 
         <div className="mt-8">
           <AnalysisCard

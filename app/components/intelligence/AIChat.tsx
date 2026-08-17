@@ -6,10 +6,15 @@ import {
   useRef,
   useState,
 } from "react";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { ChatMessage } from "@/app/types/chat";
+
+import SectionHeader from "@/app/components/ui/SectionHeader";
+
+import { colors } from "@/lib/design/theme";
 
 type AIChatProps = {
   reportContext: string;
@@ -24,14 +29,17 @@ export default function AIChat({
   reportContext,
   reportTitle,
 }: AIChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    []
-  );
-  const [question, setQuestion] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<
-    string | null
-  >(null);
+  const [messages, setMessages] =
+    useState<ChatMessage[]>([]);
+
+  const [question, setQuestion] =
+    useState("");
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
 
   const activeRequestRef =
     useRef<AbortController | null>(null);
@@ -41,7 +49,8 @@ export default function AIChat({
   ) {
     event?.preventDefault();
 
-    const trimmedQuestion = question.trim();
+    const trimmedQuestion =
+      question.trim();
 
     if (
       !trimmedQuestion ||
@@ -58,7 +67,8 @@ export default function AIChat({
       createdAt: new Date().toISOString(),
     };
 
-    const assistantMessageId = crypto.randomUUID();
+    const assistantMessageId =
+      crypto.randomUUID();
 
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
@@ -76,32 +86,43 @@ export default function AIChat({
       ...conversationWithQuestion,
       assistantMessage,
     ]);
+
     setQuestion("");
     setErrorMessage(null);
     setIsLoading(true);
 
-    const abortController = new AbortController();
-    activeRequestRef.current = abortController;
+    const abortController =
+      new AbortController();
+
+    activeRequestRef.current =
+      abortController;
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: abortController.signal,
-        body: JSON.stringify({
-          question: trimmedQuestion,
-          reportTitle,
-          reportContext,
-          messages: conversationWithQuestion.map(
-            (message) => ({
-              role: message.role,
-              content: message.content,
-            })
-          ),
-        }),
-      });
+      const response = await fetch(
+        "/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          signal:
+            abortController.signal,
+          body: JSON.stringify({
+            question: trimmedQuestion,
+            reportTitle,
+            reportContext,
+            messages:
+              conversationWithQuestion.map(
+                (message) => ({
+                  role: message.role,
+                  content:
+                    message.content,
+                })
+              ),
+          }),
+        }
+      );
 
       if (!response.ok) {
         let apiError =
@@ -112,11 +133,11 @@ export default function AIChat({
             (await response.json()) as ChatErrorResponse;
 
           if (data.error?.trim()) {
-            apiError = data.error.trim();
+            apiError =
+              data.error.trim();
           }
         } catch {
-          // Keep the fallback message when the API
-          // response does not contain valid JSON.
+          // Keep fallback error message.
         }
 
         throw new Error(apiError);
@@ -128,21 +149,28 @@ export default function AIChat({
         );
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      const reader =
+        response.body.getReader();
+
+      const decoder =
+        new TextDecoder();
 
       let streamedAnswer = "";
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } =
+          await reader.read();
 
         if (done) {
           break;
         }
 
-        const chunk = decoder.decode(value, {
-          stream: true,
-        });
+        const chunk = decoder.decode(
+          value,
+          {
+            stream: true,
+          }
+        );
 
         if (!chunk) {
           continue;
@@ -152,27 +180,32 @@ export default function AIChat({
 
         setMessages((previous) =>
           previous.map((message) =>
-            message.id === assistantMessageId
+            message.id ===
+            assistantMessageId
               ? {
                   ...message,
-                  content: streamedAnswer,
+                  content:
+                    streamedAnswer,
                 }
               : message
           )
         );
       }
 
-      const finalChunk = decoder.decode();
+      const finalChunk =
+        decoder.decode();
 
       if (finalChunk) {
         streamedAnswer += finalChunk;
 
         setMessages((previous) =>
           previous.map((message) =>
-            message.id === assistantMessageId
+            message.id ===
+            assistantMessageId
               ? {
                   ...message,
-                  content: streamedAnswer,
+                  content:
+                    streamedAnswer,
                 }
               : message
           )
@@ -204,12 +237,16 @@ export default function AIChat({
       setMessages((previous) =>
         previous.filter(
           (message) =>
-            message.id !== assistantMessageId ||
-            message.content.trim().length > 0
+            message.id !==
+              assistantMessageId ||
+            message.content.trim()
+              .length > 0
         )
       );
     } finally {
-      activeRequestRef.current = null;
+      activeRequestRef.current =
+        null;
+
       setIsLoading(false);
     }
   }
@@ -227,271 +264,713 @@ export default function AIChat({
       !isLoading
     ) {
       event.preventDefault();
+
       event.currentTarget.form?.requestSubmit();
     }
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-      <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
-        Ask PoliticalPulse
-      </p>
-
-      <h2 className="mt-2 text-3xl font-bold">
-        Ask questions about this report
-      </h2>
-
-      <p className="mt-3 max-w-3xl text-slate-400">
-        Ask follow-up questions to better understand the
-        story, evidence, political perspectives, and
-        possible outcomes.
-      </p>
-
-      {reportTitle && (
-        <p className="mt-4 text-sm text-slate-500">
-          Report context: {reportTitle}
-        </p>
-      )}
-
+    <section
+      aria-label="Ask PoliticalPulse"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
+      style={{
+        backgroundColor:
+          colors.background.surface,
+        borderColor:
+          colors.border.default,
+      }}
+    >
       <div
-        className="mt-8 space-y-4"
-        aria-live="polite"
-        aria-busy={isLoading}
-      >
-        {messages.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/40 p-5 text-sm text-slate-400">
-            Ask a question about the intelligence report
-            above. PoliticalPulse will answer using the
-            report as its primary source of context.
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
+        style={{
+          backgroundColor:
+            `${colors.brand.primary}10`,
+        }}
+      />
+
+      <div className="relative">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <SectionHeader
+            eyebrow="Ask PoliticalPulse"
+            title="Go Deeper Into This Story"
+            subtitle="Ask follow-up questions about the evidence, political perspectives, implications, or anything else contained in this intelligence report."
+          />
+
+          <div
+            className="flex w-fit shrink-0 items-center gap-2 rounded-full border px-4 py-2"
+            style={{
+              backgroundColor:
+                colors.status.successSoft,
+              borderColor:
+                `${colors.status.success}35`,
+              color:
+                colors.status.success,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full"
+              style={{
+                backgroundColor:
+                  colors.status.success,
+              }}
+            />
+
+            <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+              Report-Aware AI
+            </span>
           </div>
-        )}
-
-        {messages.map((message) => {
-          const isCurrentStreamingMessage =
-            isLoading &&
-            message.role === "assistant" &&
-            message.id ===
-              messages[messages.length - 1]?.id;
-
-          return (
-            <div
-              key={message.id}
-              className={`max-w-3xl rounded-xl p-4 leading-7 ${
-                message.role === "user"
-                  ? "ml-auto bg-red-600 text-white"
-                  : "mr-auto border border-slate-700/70 bg-slate-800 text-slate-200"
-              }`}
-            >
-              {message.role === "assistant" &&
-              !message.content ? (
-                <p className="animate-pulse text-slate-400">
-                  PoliticalPulse is analyzing the report...
-                </p>
-              ) : message.role === "assistant" ? (
-                <div>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="mb-3 mt-5 text-2xl font-bold text-white first:mt-0">
-                          {children}
-                        </h1>
-                      ),
-
-                      h2: ({ children }) => (
-                        <h2 className="mb-3 mt-5 text-xl font-bold text-white first:mt-0">
-                          {children}
-                        </h2>
-                      ),
-
-                      h3: ({ children }) => (
-                        <h3 className="mb-2 mt-4 text-lg font-semibold text-white first:mt-0">
-                          {children}
-                        </h3>
-                      ),
-
-                      p: ({ children }) => (
-                        <p className="mb-4 leading-7 last:mb-0">
-                          {children}
-                        </p>
-                      ),
-
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-white">
-                          {children}
-                        </strong>
-                      ),
-
-                      em: ({ children }) => (
-                        <em className="text-slate-300">
-                          {children}
-                        </em>
-                      ),
-
-                      ul: ({ children }) => (
-                        <ul className="mb-4 ml-6 list-disc space-y-2 marker:text-red-500">
-                          {children}
-                        </ul>
-                      ),
-
-                      ol: ({ children }) => (
-                        <ol className="mb-4 ml-6 list-decimal space-y-2 marker:font-semibold marker:text-red-400">
-                          {children}
-                        </ol>
-                      ),
-
-                      li: ({ children }) => (
-                        <li className="pl-1 leading-7">
-                          {children}
-                        </li>
-                      ),
-
-                      blockquote: ({ children }) => (
-                        <blockquote className="my-4 border-l-4 border-red-500 bg-slate-900/70 px-4 py-3 text-slate-300">
-                          {children}
-                        </blockquote>
-                      ),
-
-                      hr: () => (
-                        <hr className="my-5 border-slate-700" />
-                      ),
-
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-medium text-red-400 underline decoration-red-500/50 underline-offset-4 transition hover:text-red-300"
-                        >
-                          {children}
-                        </a>
-                      ),
-
-                      table: ({ children }) => (
-                        <div className="my-5 overflow-x-auto rounded-lg border border-slate-700">
-                          <table className="min-w-full border-collapse text-left text-sm">
-                            {children}
-                          </table>
-                        </div>
-                      ),
-
-                      thead: ({ children }) => (
-                        <thead className="bg-slate-900 text-white">
-                          {children}
-                        </thead>
-                      ),
-
-                      tbody: ({ children }) => (
-                        <tbody className="divide-y divide-slate-700">
-                          {children}
-                        </tbody>
-                      ),
-
-                      tr: ({ children }) => (
-                        <tr className="transition hover:bg-slate-700/30">
-                          {children}
-                        </tr>
-                      ),
-
-                      th: ({ children }) => (
-                        <th className="border-r border-slate-700 px-4 py-3 font-semibold last:border-r-0">
-                          {children}
-                        </th>
-                      ),
-
-                      td: ({ children }) => (
-                        <td className="border-r border-slate-700 px-4 py-3 align-top last:border-r-0">
-                          {children}
-                        </td>
-                      ),
-
-                      code: ({ children }) => (
-                        <code className="rounded bg-slate-950 px-1.5 py-0.5 font-mono text-sm text-red-300">
-                          {children}
-                        </code>
-                      ),
-
-                      pre: ({ children }) => (
-                        <pre className="my-4 overflow-x-auto rounded-xl border border-slate-700 bg-slate-950 p-4 text-sm leading-6">
-                          {children}
-                        </pre>
-                      ),
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-
-                  {isCurrentStreamingMessage && (
-                    <span
-                      className="ml-1 inline-block animate-pulse text-red-400"
-                      aria-hidden="true"
-                    >
-                      ▍
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <p className="whitespace-pre-wrap">
-                  {message.content}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {errorMessage && (
-        <div
-          role="alert"
-          className="mt-5 rounded-xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300"
-        >
-          {errorMessage}
         </div>
-      )}
 
-      <form
-        onSubmit={askQuestion}
-        className="mt-8 flex flex-col gap-3 sm:flex-row"
-      >
-        <input
-          value={question}
-          onChange={(event) =>
-            setQuestion(event.target.value)
-          }
-          onKeyDown={handleKeyDown}
-          placeholder="Ask PoliticalPulse..."
-          disabled={isLoading}
-          aria-label="Ask a question about this report"
-          className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-        />
-
-        {isLoading ? (
-          <button
-            type="button"
-            onClick={stopResponse}
-            className="rounded-xl border border-slate-600 bg-slate-800 px-6 py-3 font-bold text-white transition hover:bg-slate-700"
+        {reportTitle ? (
+          <div
+            className="mt-7 rounded-xl border px-4 py-3"
+            style={{
+              backgroundColor:
+                colors.background.elevated,
+              borderColor:
+                colors.border.default,
+            }}
           >
-            Stop
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={
-              !question.trim() ||
-              !reportContext.trim()
-            }
-            className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Ask
-          </button>
-        )}
-      </form>
+            <p
+              className="text-xs font-semibold uppercase tracking-[0.16em]"
+              style={{
+                color: colors.text.muted,
+              }}
+            >
+              Current Report
+            </p>
 
-      <p className="mt-3 text-xs text-slate-500">
-        AI-generated responses may contain errors. Review
-        the report evidence and cited sources when making
-        conclusions.
-      </p>
+            <p
+              className="mt-1 line-clamp-2 text-sm font-medium"
+              style={{
+                color:
+                  colors.text.secondary,
+              }}
+            >
+              {reportTitle}
+            </p>
+          </div>
+        ) : null}
+
+        <div
+          className="mt-8 min-h-[220px] rounded-2xl border p-4 sm:p-6"
+          style={{
+            backgroundColor:
+              colors.background.elevated,
+            borderColor:
+              colors.border.default,
+          }}
+          aria-live="polite"
+          aria-busy={isLoading}
+        >
+          {messages.length === 0 ? (
+            <div className="flex min-h-[170px] items-center justify-center">
+              <div className="max-w-xl text-center">
+                <div
+                  aria-hidden="true"
+                  className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border text-xl font-bold"
+                  style={{
+                    backgroundColor:
+                      colors.brand.primarySoft,
+                    borderColor:
+                      colors.border.brand,
+                    color:
+                      colors.brand.primary,
+                  }}
+                >
+                  ✦
+                </div>
+
+                <h3
+                  className="mt-4 text-lg font-semibold"
+                  style={{
+                    color:
+                      colors.text.primary,
+                  }}
+                >
+                  What would you like to
+                  understand?
+                </h3>
+
+                <p
+                  className="mt-2 text-sm leading-6"
+                  style={{
+                    color:
+                      colors.text.secondary,
+                  }}
+                >
+                  Ask a question about this
+                  intelligence report.
+                  PoliticalPulse will use the
+                  report as its primary source
+                  of context.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {messages.map((message) => {
+                const isAssistant =
+                  message.role ===
+                  "assistant";
+
+                const isCurrentStreamingMessage =
+                  isLoading &&
+                  isAssistant &&
+                  message.id ===
+                    messages[
+                      messages.length - 1
+                    ]?.id;
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      isAssistant
+                        ? "justify-start"
+                        : "justify-end"
+                    }`}
+                  >
+                    <article
+                      className="max-w-3xl rounded-2xl border px-4 py-4 sm:px-5"
+                      style={
+                        isAssistant
+                          ? {
+                              backgroundColor:
+                                colors
+                                  .background
+                                  .surface,
+                              borderColor:
+                                colors.border
+                                  .default,
+                              color:
+                                colors.text
+                                  .secondary,
+                            }
+                          : {
+                              backgroundColor:
+                                colors.brand
+                                  .primary,
+                              borderColor:
+                                colors.brand
+                                  .primary,
+                              color: "#ffffff",
+                            }
+                      }
+                    >
+                      <div className="mb-3 flex items-center gap-2">
+                        <span
+                          className="text-[11px] font-bold uppercase tracking-[0.15em]"
+                          style={{
+                            color:
+                              isAssistant
+                                ? colors
+                                    .brand
+                                    .primary
+                                : "rgba(255,255,255,0.75)",
+                          }}
+                        >
+                          {isAssistant
+                            ? "PoliticalPulse AI"
+                            : "You"}
+                        </span>
+                      </div>
+
+                      {isAssistant &&
+                      !message.content ? (
+                        <div className="flex items-center gap-3">
+                          <span
+                            aria-hidden="true"
+                            className="h-2.5 w-2.5 animate-pulse rounded-full"
+                            style={{
+                              backgroundColor:
+                                colors.brand
+                                  .primary,
+                            }}
+                          />
+
+                          <p
+                            className="text-sm"
+                            style={{
+                              color:
+                                colors.text
+                                  .muted,
+                            }}
+                          >
+                            PoliticalPulse is
+                            analyzing the
+                            report...
+                          </p>
+                        </div>
+                      ) : isAssistant ? (
+                        <div>
+                          <ReactMarkdown
+                            remarkPlugins={[
+                              remarkGfm,
+                            ]}
+                            components={{
+                              h1: ({
+                                children,
+                              }) => (
+                                <h1
+                                  className="mb-3 mt-5 text-2xl font-bold first:mt-0"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </h1>
+                              ),
+
+                              h2: ({
+                                children,
+                              }) => (
+                                <h2
+                                  className="mb-3 mt-5 text-xl font-bold first:mt-0"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </h2>
+                              ),
+
+                              h3: ({
+                                children,
+                              }) => (
+                                <h3
+                                  className="mb-2 mt-4 text-lg font-semibold first:mt-0"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </h3>
+                              ),
+
+                              p: ({
+                                children,
+                              }) => (
+                                <p className="mb-4 leading-7 last:mb-0">
+                                  {children}
+                                </p>
+                              ),
+
+                              strong: ({
+                                children,
+                              }) => (
+                                <strong
+                                  className="font-semibold"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </strong>
+                              ),
+
+                              em: ({
+                                children,
+                              }) => (
+                                <em
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .secondary,
+                                  }}
+                                >
+                                  {children}
+                                </em>
+                              ),
+
+                              ul: ({
+                                children,
+                              }) => (
+                                <ul
+                                  className="mb-4 ml-6 list-disc space-y-2"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .secondary,
+                                  }}
+                                >
+                                  {children}
+                                </ul>
+                              ),
+
+                              ol: ({
+                                children,
+                              }) => (
+                                <ol
+                                  className="mb-4 ml-6 list-decimal space-y-2"
+                                  style={{
+                                    color:
+                                      colors
+                                        .text
+                                        .secondary,
+                                  }}
+                                >
+                                  {children}
+                                </ol>
+                              ),
+
+                              li: ({
+                                children,
+                              }) => (
+                                <li className="pl-1 leading-7">
+                                  {children}
+                                </li>
+                              ),
+
+                              blockquote: ({
+                                children,
+                              }) => (
+                                <blockquote
+                                  className="my-4 rounded-r-xl border-l-4 px-4 py-3"
+                                  style={{
+                                    backgroundColor:
+                                      colors
+                                        .background
+                                        .elevated,
+                                    borderColor:
+                                      colors
+                                        .brand
+                                        .primary,
+                                    color:
+                                      colors
+                                        .text
+                                        .secondary,
+                                  }}
+                                >
+                                  {children}
+                                </blockquote>
+                              ),
+
+                              hr: () => (
+                                <hr
+                                  className="my-5"
+                                  style={{
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                  }}
+                                />
+                              ),
+
+                              a: ({
+                                href,
+                                children,
+                              }) => (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-medium underline underline-offset-4 transition hover:opacity-80"
+                                  style={{
+                                    color:
+                                      colors
+                                        .brand
+                                        .secondary,
+                                  }}
+                                >
+                                  {children}
+                                </a>
+                              ),
+
+                              table: ({
+                                children,
+                              }) => (
+                                <div
+                                  className="my-5 overflow-x-auto rounded-xl border"
+                                  style={{
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                  }}
+                                >
+                                  <table className="min-w-full border-collapse text-left text-sm">
+                                    {children}
+                                  </table>
+                                </div>
+                              ),
+
+                              thead: ({
+                                children,
+                              }) => (
+                                <thead
+                                  style={{
+                                    backgroundColor:
+                                      colors
+                                        .background
+                                        .elevated,
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </thead>
+                              ),
+
+                              tbody: ({
+                                children,
+                              }) => (
+                                <tbody>
+                                  {children}
+                                </tbody>
+                              ),
+
+                              tr: ({
+                                children,
+                              }) => (
+                                <tr
+                                  className="border-t"
+                                  style={{
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                  }}
+                                >
+                                  {children}
+                                </tr>
+                              ),
+
+                              th: ({
+                                children,
+                              }) => (
+                                <th
+                                  className="border-r px-4 py-3 font-semibold last:border-r-0"
+                                  style={{
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                  }}
+                                >
+                                  {children}
+                                </th>
+                              ),
+
+                              td: ({
+                                children,
+                              }) => (
+                                <td
+                                  className="border-r px-4 py-3 align-top last:border-r-0"
+                                  style={{
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                  }}
+                                >
+                                  {children}
+                                </td>
+                              ),
+
+                              code: ({
+                                children,
+                              }) => (
+                                <code
+                                  className="rounded px-1.5 py-0.5 font-mono text-sm"
+                                  style={{
+                                    backgroundColor:
+                                      colors
+                                        .background
+                                        .muted,
+                                    color:
+                                      colors
+                                        .brand
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </code>
+                              ),
+
+                              pre: ({
+                                children,
+                              }) => (
+                                <pre
+                                  className="my-4 overflow-x-auto rounded-xl border p-4 text-sm leading-6"
+                                  style={{
+                                    backgroundColor:
+                                      colors
+                                        .background
+                                        .elevated,
+                                    borderColor:
+                                      colors
+                                        .border
+                                        .default,
+                                    color:
+                                      colors
+                                        .text
+                                        .primary,
+                                  }}
+                                >
+                                  {children}
+                                </pre>
+                              ),
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+
+                          {isCurrentStreamingMessage ? (
+                            <span
+                              className="ml-1 inline-block animate-pulse"
+                              style={{
+                                color:
+                                  colors.brand
+                                    .primary,
+                              }}
+                              aria-hidden="true"
+                            >
+                              ▍
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap leading-7">
+                          {message.content}
+                        </p>
+                      )}
+                    </article>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="mt-5 rounded-xl border px-4 py-3"
+            style={{
+              backgroundColor:
+                colors.status.dangerSoft,
+              borderColor:
+                `${colors.status.danger}35`,
+              color:
+                colors.status.danger,
+            }}
+          >
+            <p className="text-sm leading-6">
+              {errorMessage}
+            </p>
+          </div>
+        ) : null}
+
+        <form
+          onSubmit={askQuestion}
+          className="mt-6"
+        >
+          <div
+            className="flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row"
+            style={{
+              backgroundColor:
+                colors.background.elevated,
+              borderColor:
+                colors.border.default,
+            }}
+          >
+            <input
+              value={question}
+              onChange={(event) =>
+                setQuestion(
+                  event.target.value
+                )
+              }
+              onKeyDown={handleKeyDown}
+              placeholder="Ask PoliticalPulse about this report..."
+              disabled={isLoading}
+              aria-label="Ask a question about this report"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              style={{
+                color: colors.text.primary,
+              }}
+            />
+
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={stopResponse}
+                className="rounded-xl border px-6 py-3 text-sm font-bold transition hover:opacity-80"
+                style={{
+                  backgroundColor:
+                    colors.background
+                      .surface,
+                  borderColor:
+                    colors.border.default,
+                  color:
+                    colors.text.primary,
+                }}
+              >
+                Stop Response
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={
+                  !question.trim() ||
+                  !reportContext.trim()
+                }
+                className="rounded-xl px-6 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  backgroundColor:
+                    colors.brand.primary,
+                }}
+              >
+                Ask PoliticalPulse
+              </button>
+            )}
+          </div>
+        </form>
+
+        <div className="mt-4 flex items-start gap-2">
+          <span
+            aria-hidden="true"
+            className="mt-1 text-xs"
+            style={{
+              color: colors.text.muted,
+            }}
+          >
+            ⓘ
+          </span>
+
+          <p
+            className="text-xs leading-5"
+            style={{
+              color: colors.text.muted,
+            }}
+          >
+            AI-generated responses may contain
+            errors. Review the report evidence
+            and original sources before making
+            important conclusions.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

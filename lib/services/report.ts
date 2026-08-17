@@ -114,21 +114,6 @@ function toClampedScore(
   );
 }
 
-function toPositiveCount(
-  value: unknown,
-  fallback: number
-): number {
-  const numericValue = toNumberValue(
-    value,
-    fallback
-  );
-
-  return Math.max(
-    0,
-    Math.round(numericValue)
-  );
-}
-
 function toStringArray(
   value: unknown
 ): string[] {
@@ -344,8 +329,9 @@ export function getMockIntelligenceReport(): IntelligenceReport {
     trustScore: {
       overall: 0,
       evidenceStrength: "Low",
-      reportingAgreement: 0,
+      reportingAgreement: null,
       sourceCount: 1,
+      ratedSourceCount: 0,
       politicalDiversity: "Low",
     },
 
@@ -430,9 +416,12 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       primarySources: [
         "PoliticalPulse AI",
       ],
+
       conflictingReporting: [],
+
       methodology:
         "PoliticalPulse AI is gathering and evaluating available reporting.",
+
       lastAnalyzedAt:
         new Date().toISOString(),
     },
@@ -448,6 +437,11 @@ export async function generateIntelligenceReport(
   let sourceGatheringMs = 0;
   let aiAnalysisMs = 0;
 
+  /*
+   * Source gathering and AI analysis remain
+   * parallel so the integrity improvements do
+   * not unnecessarily slow report generation.
+   */
   const sourceGatheringPromise =
     (async () => {
       const startedAt =
@@ -502,6 +496,11 @@ export async function generateIntelligenceReport(
       consensusStartedAt
     );
 
+  /*
+   * Source names are derived from the sources
+   * PoliticalPulse actually gathered rather
+   * than from an AI-estimated source count.
+   */
   const sourceNames = Array.from(
     new Set(
       rankedSources
@@ -519,25 +518,67 @@ export async function generateIntelligenceReport(
 
   const analyzedSourceCount =
     sourceNames.length ||
+    sourceConsensus.sourceCount ||
     rankedSources.length ||
     1;
 
-  const confidence = toClampedScore(
-    analysis.confidence,
-    sourceConsensus.averageReliability
-  );
+  /*
+   * AI confidence remains an analysis signal,
+   * but unknown source quality no longer becomes
+   * an artificial 75% confidence fallback.
+   */
+  const confidenceFallback =
+    sourceConsensus.averageReliability ??
+    50;
 
+  const rawConfidence =
+    toClampedScore(
+      analysis.confidence,
+      confidenceFallback
+    );
+
+  /*
+   * A single-source report should not present
+   * very high report-level confidence because
+   * independent corroboration is unavailable.
+   *
+   * This is separate from Trust Score. The AI
+   * may be confident in its interpretation, but
+   * PoliticalPulse should communicate evidence
+   * limitations consistently throughout the UI.
+   */
+  const confidence =
+    analyzedSourceCount <= 1
+      ? Math.min(
+          rawConfidence,
+          65
+        )
+      : analyzedSourceCount === 2
+        ? Math.min(
+            rawConfidence,
+            80
+          )
+        : rawConfidence;
+
+  /*
+   * Political consensus is its own concept.
+   * It measures agreement across political
+   * perspectives and must never fall back to
+   * source quality or reporting agreement.
+   */
   const consensusScore =
     toClampedScore(
       analysis.consensusScore,
-      sourceConsensus.consensusScore
+      0
     );
 
+  /*
+   * Use the actual gathered source count as the
+   * authoritative number shown in the report.
+   * The AI response is not authoritative here.
+   */
   const sourcesReviewed =
-    toPositiveCount(
-      analysis.sourcesReviewed,
-      analyzedSourceCount
-    );
+    analyzedSourceCount;
 
   const returnedCommonGround =
     toStringArray(
@@ -548,8 +589,8 @@ export async function generateIntelligenceReport(
     returnedCommonGround.length > 0
       ? returnedCommonGround
       : [
-          "Multiple reports identify the story as relevant to the public discussion.",
-          "Further developments may change how the issue is understood.",
+          "PoliticalPulse identified potential areas of agreement in the available analysis.",
+          "Additional reporting may change how the issue is understood.",
         ];
 
   const analysisPrimarySources =
@@ -558,11 +599,18 @@ export async function generateIntelligenceReport(
         ?.primarySources
     );
 
+  /*
+   * Conflicting reporting can only be meaningfully
+   * assessed when multiple independent sources
+   * were actually gathered.
+   */
   const conflictingReporting =
-    toStringArray(
-      analysis.evidence
-        ?.conflictingReporting
-    );
+    analyzedSourceCount >= 2
+      ? toStringArray(
+          analysis.evidence
+            ?.conflictingReporting
+        )
+      : [];
 
   const trustScoreStartedAt =
     performance.now();
@@ -570,11 +618,24 @@ export async function generateIntelligenceReport(
   const trustScore =
     calculateTrustScore({
       confidence,
-      consensusScore,
+
       sourceCount:
         sourceConsensus.sourceCount,
+
+      ratedSourceCount:
+        sourceConsensus.ratedSourceCount,
+
       averageReliability:
         sourceConsensus.averageReliability,
+
+      averageFactualReporting:
+        sourceConsensus
+          .averageFactualReporting,
+
+      reportingAgreement:
+        sourceConsensus
+          .reportingAgreement,
+
       politicalDistribution:
         sourceConsensus
           .politicalDistribution,
@@ -591,6 +652,15 @@ export async function generateIntelligenceReport(
       article,
       commonGround
     );
+
+  /*
+   * Evidence language must reflect the amount of
+   * corroboration actually available.
+   */
+  const evidenceMethodology =
+    analyzedSourceCount <= 1
+      ? "PoliticalPulse analyzed the available source, evaluated available source metadata, generated parallel AI assessments, and limited report-level trust because independent corroboration was not available."
+      : `PoliticalPulse gathered ${analyzedSourceCount} independent sources, removed duplicate coverage, evaluated available source metadata, compared the reporting set, and generated a neutral intelligence assessment.`;
 
   const report: IntelligenceReport = {
     article,
@@ -664,7 +734,9 @@ export async function generateIntelligenceReport(
       explanation: toStringValue(
         analysis.factCheck
           ?.explanation,
-        "Fact-checking details are not currently available."
+        analyzedSourceCount <= 1
+          ? "Independent corroboration is not currently available, so the central claims require additional verification."
+          : "Fact-checking details are not currently available."
       ),
     },
 
@@ -688,22 +760,20 @@ export async function generateIntelligenceReport(
     perspectiveAnalysis,
 
     evidence: {
+      /*
+       * Prefer the sources PoliticalPulse actually
+       * gathered. AI-provided source names are used
+       * only when the gathered list is unavailable.
+       */
       primarySources:
-        analysisPrimarySources.length >
-        0
-          ? analysisPrimarySources
-          : sourceNames,
+        sourceNames.length > 0
+          ? sourceNames
+          : analysisPrimarySources,
 
       conflictingReporting,
 
-      methodology: toStringValue(
-        analysis.evidence?.methodology,
-        `PoliticalPulse gathered ${analyzedSourceCount} source${
-          analyzedSourceCount === 1
-            ? ""
-            : "s"
-        }, removed duplicate coverage, evaluated source metadata, calculated a preliminary source-set confidence score, and generated a neutral intelligence assessment.`
-      ),
+      methodology:
+        evidenceMethodology,
 
       lastAnalyzedAt:
         toStringValue(
@@ -732,6 +802,9 @@ export async function generateIntelligenceReport(
 
       sourceCount:
         rankedSources.length,
+
+      ratedSourceCount:
+        sourceConsensus.ratedSourceCount,
 
       sourceGatheringMs,
       aiAnalysisMs,

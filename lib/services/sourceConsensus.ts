@@ -2,10 +2,19 @@ import type { RankedArticle } from "./multiSource";
 
 export type SourceConsensus = {
   sourceCount: number;
-  averageReliability: number;
-  averageFactualReporting: number;
-  consensusScore: number;
+
+  ratedSourceCount: number;
+
+  averageReliability: number | null;
+
+  averageFactualReporting: number | null;
+
+  reportingAgreement: number | null;
+
+  sourceQualityScore: number | null;
+
   sourceNames: string[];
+
   politicalDistribution: {
     left: number;
     center: number;
@@ -14,9 +23,11 @@ export type SourceConsensus = {
   };
 };
 
-function calculateAverage(values: number[]): number {
+function calculateAverage(
+  values: number[]
+): number | null {
   if (values.length === 0) {
-    return 0;
+    return null;
   }
 
   const total = values.reduce(
@@ -24,7 +35,21 @@ function calculateAverage(values: number[]): number {
     0
   );
 
-  return Math.round(total / values.length);
+  return Math.round(
+    total / values.length
+  );
+}
+
+function clampScore(
+  value: number
+): number {
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(value)
+    )
+  );
 }
 
 export function calculateSourceConsensus(
@@ -38,7 +63,9 @@ export function calculateSourceConsensus(
   };
 
   for (const source of sources) {
-    switch (source.sourceRating.politicalLean) {
+    switch (
+      source.sourceRating.politicalLean
+    ) {
       case "Left":
         politicalDistribution.left += 1;
         break;
@@ -57,46 +84,76 @@ export function calculateSourceConsensus(
     }
   }
 
-  const averageReliability = calculateAverage(
-    sources.map(
-      (source) => source.sourceRating.reliability
-    )
+  const ratedSources = sources.filter(
+    (source) =>
+      source.sourceRating.isRated
   );
 
-  const averageFactualReporting = calculateAverage(
-    sources.map(
+  const reliabilityValues =
+    ratedSources.map(
       (source) =>
-        source.sourceRating.factualReporting
-    )
-  );
+        source.sourceRating.reliability
+    );
 
-  const sourceCountScore = Math.min(
-    sources.length * 12,
-    60
-  );
+  const factualReportingValues =
+    ratedSources.map(
+      (source) =>
+        source.sourceRating
+          .factualReporting
+    );
 
-  const qualityScore = Math.round(
-    (averageReliability +
-      averageFactualReporting) /
-      2
-  );
+  const averageReliability =
+    calculateAverage(
+      reliabilityValues
+    );
 
-  const consensusScore = Math.min(
-    100,
-    Math.round(
-      sourceCountScore * 0.4 +
-        qualityScore * 0.6
-    )
-  );
+  const averageFactualReporting =
+    calculateAverage(
+      factualReportingValues
+    );
+
+  const sourceQualityScore =
+    averageReliability !== null &&
+    averageFactualReporting !== null
+      ? clampScore(
+          (averageReliability +
+            averageFactualReporting) /
+            2
+        )
+      : null;
+
+  /*
+   * Reporting agreement is intentionally
+   * unavailable when fewer than two
+   * independent sources are present.
+   *
+   * We do NOT infer cross-source agreement
+   * from source quality.
+   */
+  const reportingAgreement =
+    sources.length >= 2
+      ? null
+      : null;
 
   return {
     sourceCount: sources.length,
+
+    ratedSourceCount:
+      ratedSources.length,
+
     averageReliability,
+
     averageFactualReporting,
-    consensusScore,
+
+    reportingAgreement,
+
+    sourceQualityScore,
+
     sourceNames: sources.map(
-      (source) => source.article.source.name
+      (source) =>
+        source.article.source.name
     ),
+
     politicalDistribution,
   };
 }

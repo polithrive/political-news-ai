@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import type { Article } from "@/app/types/article";
 
+import AnimatedCounter from "@/app/components/ui/AnimatedCounter";
+import FadeIn from "@/app/components/ui/FadeIn";
 import SectionHeader from "@/app/components/ui/SectionHeader";
 
 import {
@@ -29,8 +31,13 @@ function TimelineItem({
   index,
   isLast,
 }: TimelineItemProps) {
+  const factNumber = String(index + 1).padStart(
+    2,
+    "0"
+  );
+
   return (
-    <li className="relative grid gap-4 sm:grid-cols-[88px_32px_1fr] sm:gap-5">
+    <li className="relative grid gap-4 sm:grid-cols-[88px_32px_minmax(0,1fr)] sm:gap-5">
       <div className="hidden pt-1 text-right sm:block">
         <p
           className="text-xs font-semibold uppercase tracking-[0.14em]"
@@ -47,7 +54,7 @@ function TimelineItem({
             color: colors.text.primary,
           }}
         >
-          {String(index + 1).padStart(2, "0")}
+          {factNumber}
         </p>
       </div>
 
@@ -58,29 +65,34 @@ function TimelineItem({
         <div
           className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-4"
           style={{
-            backgroundColor: colors.brand.primary,
-            borderColor: colors.background.surface,
-            boxShadow: `0 0 0 1px ${colors.brand.primary}55`,
+            backgroundColor:
+              colors.brand.primary,
+            borderColor:
+              colors.background.surface,
+            boxShadow: `0 0 0 1px ${colors.border.brand}`,
           }}
         >
           <span className="h-2 w-2 rounded-full bg-white" />
         </div>
 
-        {!isLast && (
+        {!isLast ? (
           <div
             className="absolute left-1/2 top-8 h-[calc(100%+1.5rem)] w-px -translate-x-1/2"
             style={{
-              backgroundColor: colors.border.default,
+              backgroundColor:
+                colors.border.default,
             }}
           />
-        )}
+        ) : null}
       </div>
 
       <article
-        className="ml-12 overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:ml-0 sm:p-6"
+        className="ml-12 overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:ml-0 sm:p-6"
         style={{
-          backgroundColor: colors.background.elevated,
-          borderColor: colors.border.default,
+          backgroundColor:
+            colors.background.elevated,
+          borderColor:
+            colors.border.default,
         }}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -107,12 +119,15 @@ function TimelineItem({
           <span
             className="rounded-full border px-3 py-1 text-xs font-semibold sm:hidden"
             style={{
-              backgroundColor: `${colors.brand.primary}10`,
-              borderColor: `${colors.brand.primary}30`,
-              color: colors.brand.primary,
+              backgroundColor:
+                colors.brand.primarySoft,
+              borderColor:
+                colors.border.brand,
+              color:
+                colors.brand.primaryHover,
             }}
           >
-            {String(index + 1).padStart(2, "0")}
+            {factNumber}
           </span>
         </div>
 
@@ -133,9 +148,12 @@ export default function StoryTimeline({
   article,
 }: StoryTimelineProps) {
   const [timelineEvents, setTimelineEvents] =
-    useState<TimelineEvent[]>(getMockTimeline());
+    useState<TimelineEvent[]>(
+      getMockTimeline()
+    );
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] =
+    useState(true);
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
@@ -152,7 +170,9 @@ export default function StoryTimeline({
           await generateTimeline(article);
 
         if (!isCancelled) {
-          setTimelineEvents(generatedTimeline);
+          setTimelineEvents(
+            generatedTimeline
+          );
         }
       } catch (error) {
         console.error(
@@ -172,7 +192,7 @@ export default function StoryTimeline({
       }
     }
 
-    loadTimeline();
+    void loadTimeline();
 
     return () => {
       isCancelled = true;
@@ -183,17 +203,20 @@ export default function StoryTimeline({
     <section
       aria-label="Story timeline"
       aria-busy={isLoading}
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-2xl shadow-black/20 sm:p-8 lg:p-10"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
       style={{
-        backgroundColor: colors.background.surface,
-        borderColor: colors.border.default,
+        backgroundColor:
+          colors.background.surface,
+        borderColor:
+          colors.border.default,
       }}
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
         style={{
-          backgroundColor: `${colors.brand.primary}10`,
+          backgroundColor:
+            `${colors.brand.primary}10`,
         }}
       />
 
@@ -206,11 +229,12 @@ export default function StoryTimeline({
           />
 
           <div
-            className="shrink-0 rounded-xl border px-4 py-3"
+            className="shrink-0 rounded-2xl border px-5 py-4"
             style={{
               backgroundColor:
                 colors.background.elevated,
-              borderColor: colors.border.default,
+              borderColor:
+                colors.border.default,
             }}
           >
             <p
@@ -223,24 +247,27 @@ export default function StoryTimeline({
             </p>
 
             <p
-              className="mt-1 text-2xl font-bold"
+              className="mt-1 text-3xl font-bold tracking-tight"
               style={{
                 color: colors.text.primary,
               }}
             >
-              {timelineEvents.length}
+              <AnimatedCounter
+                value={timelineEvents.length}
+              />
             </p>
           </div>
         </div>
 
-        {isLoading && (
+        {isLoading ? (
           <div
             role="status"
             className="mt-7 flex items-center gap-3 rounded-xl border px-4 py-3"
             style={{
               backgroundColor:
                 colors.background.elevated,
-              borderColor: colors.border.default,
+              borderColor:
+                colors.border.default,
             }}
           >
             <span
@@ -262,15 +289,17 @@ export default function StoryTimeline({
               available story context…
             </p>
           </div>
-        )}
+        ) : null}
 
-        {errorMessage && (
+        {errorMessage ? (
           <div
             role="status"
             className="mt-7 rounded-xl border px-4 py-3"
             style={{
-              backgroundColor: `${colors.status.warning}0D`,
-              borderColor: `${colors.status.warning}35`,
+              backgroundColor:
+                colors.status.warningSoft,
+              borderColor:
+                `${colors.status.warning}35`,
             }}
           >
             <p
@@ -282,20 +311,30 @@ export default function StoryTimeline({
               {errorMessage}
             </p>
           </div>
-        )}
+        ) : null}
 
         {timelineEvents.length > 0 ? (
           <ol className="mt-8 space-y-6">
-            {timelineEvents.map((event, index) => (
-              <TimelineItem
-                key={`${event.date}-${event.title}-${index}`}
-                event={event}
-                index={index}
-                isLast={
-                  index === timelineEvents.length - 1
-                }
-              />
-            ))}
+            {timelineEvents.map(
+              (event, index) => (
+                <FadeIn
+                  key={`${event.date}-${event.title}-${index}`}
+                  delay={Math.min(
+                    index * 80,
+                    320
+                  )}
+                >
+                  <TimelineItem
+                    event={event}
+                    index={index}
+                    isLast={
+                      index ===
+                      timelineEvents.length - 1
+                    }
+                  />
+                </FadeIn>
+              )
+            )}
           </ol>
         ) : (
           <div
@@ -304,7 +343,8 @@ export default function StoryTimeline({
             style={{
               backgroundColor:
                 colors.background.elevated,
-              borderColor: colors.border.default,
+              borderColor:
+                colors.border.default,
             }}
           >
             <p

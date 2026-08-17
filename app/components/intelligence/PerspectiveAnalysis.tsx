@@ -1,10 +1,9 @@
 import type { IntelligenceReport } from "../../types/report";
 
 import AnalysisCard from "../ui/AnalysisCard";
+import SectionHeader from "../ui/SectionHeader";
 
 import { colors } from "@/lib/design/theme";
-
-import ReportSection from "./ReportSection";
 
 type PerspectiveAnalysisProps = {
   report: IntelligenceReport;
@@ -29,14 +28,17 @@ function PerspectiveCard({
   perspective,
   accent,
 }: PerspectiveCardProps) {
-  const accentColor = accentColors[accent];
+  const accentColor =
+    accentColors[accent];
 
   return (
     <article
-      className="group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-6"
+      className="group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6"
       style={{
-        backgroundColor: colors.background.elevated,
-        borderColor: colors.border.default,
+        backgroundColor:
+          colors.background.elevated,
+        borderColor:
+          colors.border.default,
       }}
     >
       <div
@@ -51,7 +53,8 @@ function PerspectiveCard({
         aria-hidden="true"
         className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
         style={{
-          backgroundColor: `${accentColor}12`,
+          backgroundColor:
+            `${accentColor}10`,
         }}
       />
 
@@ -81,8 +84,10 @@ function PerspectiveCard({
             aria-hidden="true"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
             style={{
-              backgroundColor: `${accentColor}10`,
-              borderColor: `${accentColor}35`,
+              backgroundColor:
+                `${accentColor}10`,
+              borderColor:
+                `${accentColor}35`,
               color: accentColor,
             }}
           >
@@ -93,7 +98,8 @@ function PerspectiveCard({
         <div
           className="my-5 h-px"
           style={{
-            backgroundColor: colors.border.default,
+            backgroundColor:
+              colors.border.default,
           }}
         />
 
@@ -114,54 +120,84 @@ export default function PerspectiveAnalysis({
   report,
 }: PerspectiveAnalysisProps) {
   return (
-    <ReportSection
-      title="Perspective Analysis"
-      subtitle="How different political viewpoints may interpret the same reporting"
-      icon="⚖️"
+    <section
+      aria-label="Perspective analysis"
+      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
+      style={{
+        backgroundColor:
+          colors.background.surface,
+        borderColor:
+          colors.border.default,
+      }}
     >
-      <div className="grid gap-6 lg:grid-cols-3">
-        <PerspectiveCard
-          title="Left Perspective"
-          label="Progressive Framing"
-          perspective={report.perspectives.left}
-          accent="info"
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
+        style={{
+          backgroundColor:
+            `${colors.status.info}10`,
+        }}
+      />
+
+      <div className="relative">
+        <SectionHeader
+          eyebrow="Perspective Analysis"
+          title="How Different Sides May See This Story"
+          subtitle="Compare how progressive, centrist, and conservative viewpoints may interpret the same reporting."
         />
 
-        <PerspectiveCard
-          title="Center Perspective"
-          label="Centrist Framing"
-          perspective={report.perspectives.center}
-          accent="primary"
-        />
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <PerspectiveCard
+            title="Left Perspective"
+            label="Progressive Framing"
+            perspective={
+              report.perspectives.left
+            }
+            accent="info"
+          />
 
-        <PerspectiveCard
-          title="Right Perspective"
-          label="Conservative Framing"
-          perspective={report.perspectives.right}
-          accent="warning"
-        />
-      </div>
+          <PerspectiveCard
+            title="Center Perspective"
+            label="Centrist Framing"
+            perspective={
+              report.perspectives.center
+            }
+            accent="primary"
+          />
 
-      <div className="mt-6">
-        <AnalysisCard
-          eyebrow="Reading the Landscape"
-          title="How to Use These Perspectives"
-          accent="primary"
-        >
-          <p
-            className="text-sm leading-7 sm:text-base sm:leading-8"
-            style={{
-              color: colors.text.secondary,
-            }}
+          <PerspectiveCard
+            title="Right Perspective"
+            label="Conservative Framing"
+            perspective={
+              report.perspectives.right
+            }
+            accent="warning"
+          />
+        </div>
+
+        <div className="mt-6">
+          <AnalysisCard
+            eyebrow="Reading the Landscape"
+            title="How to Use These Perspectives"
+            accent="primary"
           >
-            These summaries show how the same facts may be
-            emphasized, interpreted, or prioritized differently.
-            They are intended to clarify political framing—not to
-            suggest that every person within a political group
-            holds the same view.
-          </p>
-        </AnalysisCard>
+            <p
+              className="text-sm leading-7 sm:text-base sm:leading-8"
+              style={{
+                color:
+                  colors.text.secondary,
+              }}
+            >
+              These summaries show how the same facts may
+              be emphasized, interpreted, or prioritized
+              differently. They are intended to clarify
+              political framing—not to suggest that every
+              person within a political group holds the
+              same view.
+            </p>
+          </AnalysisCard>
+        </div>
       </div>
-    </ReportSection>
+    </section>
   );
 }

@@ -3,8 +3,53 @@ const NEWS_API_BASE_URL =
 
 const DEFAULT_PAGE_SIZE = 40;
 const MAX_HOMEPAGE_ARTICLES = 10;
-const RELATED_PAGE_SIZE = 8;
-const MAX_SEARCH_QUERY_LENGTH = 200;
+
+const RELATED_FETCH_SIZE = 30;
+const RELATED_RETURN_SIZE = 12;
+
+const MAX_SEARCH_QUERY_LENGTH = 500;
+
+const RELATED_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "been",
+  "being",
+  "but",
+  "by",
+  "for",
+  "from",
+  "has",
+  "have",
+  "he",
+  "her",
+  "his",
+  "in",
+  "into",
+  "is",
+  "it",
+  "its",
+  "of",
+  "on",
+  "or",
+  "said",
+  "says",
+  "she",
+  "that",
+  "the",
+  "their",
+  "they",
+  "this",
+  "to",
+  "was",
+  "were",
+  "will",
+  "with",
+]);
 
 const POLITICAL_NEWS_QUERY = [
   "(",
@@ -136,7 +181,7 @@ function cleanSearchQuery(
 
   return value
     .replace(
-      /[^\p{L}\p{N}\s'"-]/gu,
+      /[^\p{L}\p{N}\s'"()-]/gu,
       " "
     )
     .replace(/\s+/g, " ")
@@ -145,6 +190,62 @@ function cleanSearchQuery(
       0,
       MAX_SEARCH_QUERY_LENGTH
     );
+}
+
+function buildRelatedQuery(
+  rawQuery: string
+): string {
+  const cleaned =
+    cleanSearchQuery(rawQuery);
+
+  if (!cleaned) {
+    return "";
+  }
+
+  const words = cleaned
+    .replace(/["()]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
+
+  const meaningfulWords =
+    words.filter((word) => {
+      const normalized =
+        word.toLowerCase();
+
+      return (
+        normalized.length >= 3 &&
+        !RELATED_STOP_WORDS.has(
+          normalized
+        )
+      );
+    });
+
+  const uniqueWords =
+    Array.from(
+      new Set(meaningfulWords)
+    );
+
+  /*
+   * Keep the search intentionally concise.
+   * A full headline is often too specific and
+   * can prevent NewsAPI from finding alternate
+   * coverage of the same event.
+   */
+  const selectedWords =
+    uniqueWords.slice(0, 8);
+
+  if (selectedWords.length === 0) {
+    return cleaned;
+  }
+
+  return selectedWords
+    .map((word) =>
+      word.includes(" ")
+        ? `"${word}"`
+        : word
+    )
+    .join(" AND ");
 }
 
 function getDurationMs(
@@ -223,34 +324,45 @@ function isPoliticalArticle(
 function deduplicateArticles(
   articles: NewsApiArticle[]
 ): NewsApiArticle[] {
-  const seenUrls = new Set<string>();
-  const seenTitles = new Set<string>();
+  const seenUrls =
+    new Set<string>();
 
-  return articles.filter((article) => {
-    const normalizedUrl =
-      article.url
-        ?.trim()
-        .toLowerCase() ?? "";
+  const seenTitles =
+    new Set<string>();
 
-    const normalizedTitle =
-      article.title
-        ?.trim()
-        .toLowerCase() ?? "";
+  return articles.filter(
+    (article) => {
+      const normalizedUrl =
+        article.url
+          ?.trim()
+          .toLowerCase() ?? "";
 
-    if (
-      !normalizedUrl ||
-      !normalizedTitle ||
-      seenUrls.has(normalizedUrl) ||
-      seenTitles.has(normalizedTitle)
-    ) {
-      return false;
+      const normalizedTitle =
+        article.title
+          ?.trim()
+          .toLowerCase() ?? "";
+
+      if (
+        !normalizedUrl ||
+        !normalizedTitle ||
+        seenUrls.has(
+          normalizedUrl
+        ) ||
+        seenTitles.has(
+          normalizedTitle
+        )
+      ) {
+        return false;
+      }
+
+      seenUrls.add(normalizedUrl);
+      seenTitles.add(
+        normalizedTitle
+      );
+
+      return true;
     }
-
-    seenUrls.add(normalizedUrl);
-    seenTitles.add(normalizedTitle);
-
-    return true;
-  });
+  );
 }
 
 function prepareHomepageArticles(
@@ -261,7 +373,10 @@ function prepareHomepageArticles(
       .filter(isNewsApiArticle)
       .filter(isUsableArticle)
       .filter(isPoliticalArticle)
-  ).slice(0, MAX_HOMEPAGE_ARTICLES);
+  ).slice(
+    0,
+    MAX_HOMEPAGE_ARTICLES
+  );
 }
 
 function prepareRelatedArticles(
@@ -271,7 +386,10 @@ function prepareRelatedArticles(
     articles
       .filter(isNewsApiArticle)
       .filter(isUsableArticle)
-  ).slice(0, RELATED_PAGE_SIZE);
+  ).slice(
+    0,
+    RELATED_RETURN_SIZE
+  );
 }
 
 async function fetchNewsApi(
@@ -303,7 +421,8 @@ export async function GET(
       return Response.json(
         {
           status: "error",
-          code: "missingApiKey",
+          code:
+            "missingApiKey",
           message:
             "NEWS_API_KEY is not configured.",
           articles: [],
@@ -322,18 +441,25 @@ export async function GET(
         "mode"
       ) === "related";
 
-    const query = cleanSearchQuery(
-      requestUrl.searchParams.get("q")
-    );
+    const rawQuery =
+      requestUrl.searchParams.get(
+        "q"
+      );
 
     let newsApiUrl: URL;
 
     if (isRelatedMode) {
-      if (!query) {
+      const relatedQuery =
+        buildRelatedQuery(
+          rawQuery ?? ""
+        );
+
+      if (!relatedQuery) {
         return Response.json(
           {
             status: "error",
-            code: "missingQuery",
+            code:
+              "missingQuery",
             message:
               "A search query is required when mode is related.",
             articles: [],
@@ -344,20 +470,23 @@ export async function GET(
         );
       }
 
-      newsApiUrl = new URL(
-        `${NEWS_API_BASE_URL}/everything`
-      );
+      newsApiUrl =
+        new URL(
+          `${NEWS_API_BASE_URL}/everything`
+        );
 
       newsApiUrl.searchParams.set(
         "q",
-        query
+        relatedQuery
       );
 
-      newsApiUrl.searchParams.set(
-        "searchIn",
-        "title,description"
-      );
-
+      /*
+       * Do not restrict searchIn for related
+       * reporting. NewsAPI's default searches
+       * all supported fields, which gives us a
+       * better chance of finding independent
+       * coverage using the compact query.
+       */
       newsApiUrl.searchParams.set(
         "language",
         "en"
@@ -370,12 +499,24 @@ export async function GET(
 
       newsApiUrl.searchParams.set(
         "pageSize",
-        String(RELATED_PAGE_SIZE)
+        String(
+          RELATED_FETCH_SIZE
+        )
+      );
+
+      console.info(
+        "PoliticalPulse related-news query:",
+        {
+          originalQuery:
+            rawQuery,
+          relatedQuery,
+        }
       );
     } else {
-      newsApiUrl = new URL(
-        `${NEWS_API_BASE_URL}/everything`
-      );
+      newsApiUrl =
+        new URL(
+          `${NEWS_API_BASE_URL}/everything`
+        );
 
       newsApiUrl.searchParams.set(
         "q",
@@ -399,7 +540,9 @@ export async function GET(
 
       newsApiUrl.searchParams.set(
         "pageSize",
-        String(DEFAULT_PAGE_SIZE)
+        String(
+          DEFAULT_PAGE_SIZE
+        )
       );
     }
 
@@ -428,9 +571,11 @@ export async function GET(
       console.error(
         "NewsAPI request failed:",
         {
-          status: response.status,
+          status:
+            response.status,
           code: data.code,
-          message: data.message,
+          message:
+            data.message,
           newsApiFetchMs,
         }
       );
@@ -447,35 +592,47 @@ export async function GET(
           articles: [],
         },
         {
-          status: response.status,
+          status:
+            response.status,
         }
       );
     }
 
     const rawArticles =
-      Array.isArray(data.articles)
+      Array.isArray(
+        data.articles
+      )
         ? data.articles
         : [];
 
-    const articles = isRelatedMode
-      ? prepareRelatedArticles(
-          rawArticles
-        )
-      : prepareHomepageArticles(
-          rawArticles
-        );
+    const articles =
+      isRelatedMode
+        ? prepareRelatedArticles(
+            rawArticles
+          )
+        : prepareHomepageArticles(
+            rawArticles
+          );
 
     console.info(
       "PoliticalPulse news performance:",
       {
-        mode: isRelatedMode
-          ? "related"
-          : "political",
+        mode:
+          isRelatedMode
+            ? "related"
+            : "political",
+
         rawArticleCount:
           rawArticles.length,
+
         articleCount:
           articles.length,
+
+        totalResults:
+          data.totalResults ?? 0,
+
         newsApiFetchMs,
+
         totalRouteMs:
           getDurationMs(
             routeStartedAt
@@ -485,7 +642,8 @@ export async function GET(
 
     return Response.json({
       status: "ok",
-      totalResults: articles.length,
+      totalResults:
+        articles.length,
       articles,
     });
   } catch (error) {
@@ -493,6 +651,7 @@ export async function GET(
       "News API route error:",
       {
         error,
+
         totalRouteMs:
           getDurationMs(
             routeStartedAt
@@ -503,7 +662,8 @@ export async function GET(
     return Response.json(
       {
         status: "error",
-        code: "internalError",
+        code:
+          "internalError",
         message:
           "PoliticalPulse could not retrieve news at this time.",
         articles: [],
