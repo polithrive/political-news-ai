@@ -2,17 +2,26 @@ import { openai } from "@/lib/ai/client";
 
 export type SummaryAnalysis = {
   summary: string;
+
   whyThisMatters: string;
+
   whoIsAffected: string[];
+
   shortTermImpact: string;
+
   longTermImpact: string;
+
   unansweredQuestions: string[];
+
   keyFacts: string[];
+
   factCheck: {
     verdict: string;
     explanation: string;
   };
+
   category: string;
+
   confidence: number;
 };
 
@@ -130,5 +139,7 @@ Rules:
     );
   }
 
-  return JSON.parse(content) as SummaryAnalysis;
+  return JSON.parse(
+    content
+  ) as SummaryAnalysis;
 }
