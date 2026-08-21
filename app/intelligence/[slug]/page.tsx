@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  useLayoutEffect,
+  useState,
+} from "react";
 
 import AIChat from "@/app/components/intelligence/AIChat";
 import ConsensusEngine from "@/app/components/intelligence/ConsensusEngine";
@@ -44,50 +47,66 @@ export default function IntelligenceReportPage() {
     useState<Article | null>(null);
 
   const [report, setReport] =
-    useState<IntelligenceReport | null>(null);
+    useState<IntelligenceReport | null>(
+      null
+    );
 
   const [graph, setGraph] =
-    useState<IntelligenceGraphData | null>(null);
+    useState<IntelligenceGraphData | null>(
+      null
+    );
 
   const [
     isInitializingArticle,
     setIsInitializingArticle,
   ] = useState(true);
 
-  const [isReportLoading, setIsReportLoading] =
-    useState(true);
+  const [
+    isReportLoading,
+    setIsReportLoading,
+  ] = useState(true);
 
-  const [isGraphLoading, setIsGraphLoading] =
-    useState(false);
+  const [
+    isGraphLoading,
+    setIsGraphLoading,
+  ] = useState(false);
 
-  const [errorMessage, setErrorMessage] =
-    useState<string | null>(null);
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState<string | null>(null);
 
   const [
     graphErrorMessage,
     setGraphErrorMessage,
   ] = useState<string | null>(null);
 
-  useEffect(() => {
+  /*
+   * useLayoutEffect is intentional here.
+   *
+   * The selected article, completed report,
+   * and Intelligence Graph may already exist
+   * in browser storage.
+   *
+   * Restoring them during the layout phase
+   * allows React to update the page before
+   * the browser paints the hydrated client
+   * view, reducing unnecessary skeleton
+   * flashes for cached reports.
+   *
+   * We do not initialize useState directly
+   * from localStorage because doing so could
+   * create a server/client hydration mismatch.
+   */
+  useLayoutEffect(() => {
     let isCancelled = false;
 
-    async function loadReport(
+    async function generateReport(
       selectedArticle: Article
     ) {
       try {
         setIsReportLoading(true);
         setErrorMessage(null);
-
-        const cachedReport =
-          getCachedReport(selectedArticle);
-
-        if (cachedReport) {
-          if (!isCancelled) {
-            setReport(cachedReport);
-          }
-
-          return;
-        }
 
         const generatedReport =
           await generateIntelligenceReport(
@@ -122,25 +141,12 @@ export default function IntelligenceReportPage() {
       }
     }
 
-    async function loadGraph(
+    async function generateGraph(
       selectedArticle: Article
     ) {
       try {
         setIsGraphLoading(true);
         setGraphErrorMessage(null);
-
-        const cachedGraph =
-          getCachedIntelligenceGraph(
-            selectedArticle
-          );
-
-        if (cachedGraph) {
-          if (!isCancelled) {
-            setGraph(cachedGraph);
-          }
-
-          return;
-        }
 
         const generatedGraph =
           await generateIntelligenceGraph(
@@ -176,6 +182,12 @@ export default function IntelligenceReportPage() {
     }
 
     function initializeIntelligence() {
+      /*
+       * Restore the selected article first.
+       *
+       * This is a synchronous browser-storage
+       * read and should complete immediately.
+       */
       const selectedArticle =
         getSelectedArticle();
 
@@ -183,17 +195,62 @@ export default function IntelligenceReportPage() {
         return;
       }
 
-      setIsInitializingArticle(false);
-
       if (!selectedArticle) {
+        setIsInitializingArticle(false);
         setIsReportLoading(false);
+        setIsGraphLoading(false);
+
         return;
       }
 
       setArticle(selectedArticle);
 
-      void loadReport(selectedArticle);
-      void loadGraph(selectedArticle);
+      /*
+       * Restore the completed report
+       * synchronously when available.
+       */
+      const cachedReport =
+        getCachedReport(
+          selectedArticle
+        );
+
+      if (cachedReport) {
+        setReport(cachedReport);
+        setIsReportLoading(false);
+      } else {
+        setIsReportLoading(true);
+
+        void generateReport(
+          selectedArticle
+        );
+      }
+
+      /*
+       * Restore the Intelligence Graph
+       * synchronously when available.
+       */
+      const cachedGraph =
+        getCachedIntelligenceGraph(
+          selectedArticle
+        );
+
+      if (cachedGraph) {
+        setGraph(cachedGraph);
+        setIsGraphLoading(false);
+      } else {
+        setIsGraphLoading(true);
+
+        void generateGraph(
+          selectedArticle
+        );
+      }
+
+      /*
+       * Initialization is complete only
+       * after all available cached state
+       * has been restored.
+       */
+      setIsInitializingArticle(false);
     }
 
     initializeIntelligence();
@@ -223,14 +280,16 @@ export default function IntelligenceReportPage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-bold">
-              Open an Intelligence Report from the
-              PoliticalPulse homepage.
+              Open an Intelligence Report
+              from the PoliticalPulse
+              homepage.
             </h1>
 
             <p className="mt-4 max-w-2xl text-slate-400">
-              PoliticalPulse needs a selected news story
-              before it can generate a complete intelligence
-              report.
+              PoliticalPulse needs a
+              selected news story before it
+              can generate a complete
+              intelligence report.
             </p>
 
             <Link
@@ -252,7 +311,9 @@ export default function IntelligenceReportPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
         <section className="mx-auto max-w-7xl px-6 py-12">
-          <ReportHeader article={article} />
+          <ReportHeader
+            article={article}
+          />
 
           <ReportBlock>
             <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-8">
@@ -261,7 +322,8 @@ export default function IntelligenceReportPage() {
               </p>
 
               <h2 className="mt-4 text-3xl font-bold">
-                We could not complete this intelligence report.
+                We could not complete this
+                intelligence report.
               </h2>
 
               <p className="mt-4 max-w-2xl text-slate-300">
@@ -304,10 +366,14 @@ export default function IntelligenceReportPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-7xl px-6 py-12">
-        <ReportHeader article={article} />
+        <ReportHeader
+          article={article}
+        />
 
         <div className="mt-8 grid gap-8 xl:grid-cols-[260px_minmax(0,1fr)]">
-         <StickyReportNavigation report={report} />
+          <StickyReportNavigation
+            report={report}
+          />
 
           <div className="min-w-0">
             {report ? (
@@ -317,24 +383,34 @@ export default function IntelligenceReportPage() {
                   className="mt-0"
                 >
                   <TrustScore
-                    trustScore={report.trustScore}
+                    trustScore={
+                      report.trustScore
+                    }
                   />
                 </ReportBlock>
 
                 <ReportBlock id="executive-summary">
-                  <ExecutiveSummary report={report} />
+                  <ExecutiveSummary
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="intelligence-overview">
-                  <IntelligenceOverview report={report} />
+                  <IntelligenceOverview
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="impact-analysis">
-                  <ImpactAnalysis report={report} />
+                  <ImpactAnalysis
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="key-facts">
-                  <KeyFacts report={report} />
+                  <KeyFacts
+                    report={report}
+                  />
                 </ReportBlock>
               </>
             ) : (
@@ -390,12 +466,16 @@ export default function IntelligenceReportPage() {
             )}
 
             <ReportBlock id="story-timeline">
-              <StoryTimeline article={article} />
+              <StoryTimeline
+                article={article}
+              />
             </ReportBlock>
 
             <ReportBlock id="intelligence-graph">
               {graph ? (
-                <IntelligenceGraph graph={graph} />
+                <IntelligenceGraph
+                  graph={graph}
+                />
               ) : isGraphLoading ? (
                 <IntelligenceSectionSkeleton
                   label="Intelligence Graph"
@@ -410,7 +490,8 @@ export default function IntelligenceReportPage() {
                   </p>
 
                   <h2 className="mt-2 text-2xl font-bold text-white">
-                    Connected context unavailable
+                    Connected context
+                    unavailable
                   </h2>
 
                   <p className="mt-3 max-w-3xl text-slate-400">
@@ -424,34 +505,50 @@ export default function IntelligenceReportPage() {
             {report ? (
               <>
                 <ReportBlock id="perspective-analysis">
-                  <PerspectiveAnalysis report={report} />
+                  <PerspectiveAnalysis
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="political-debate">
-                  <DebatePanel report={report} />
+                  <DebatePanel
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="consensus">
-                  <ConsensusEngine report={report} />
+                  <ConsensusEngine
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="fact-check">
-                  <FactCheck report={report} />
+                  <FactCheck
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="source-comparison">
-                  <SourceComparison report={report} />
+                  <SourceComparison
+                    report={report}
+                  />
                 </ReportBlock>
 
                 <ReportBlock id="evidence">
-                  <EvidencePanel report={report} />
+                  <EvidencePanel
+                    report={report}
+                  />
                 </ReportBlock>
 
                 {reportContext ? (
                   <ReportBlock id="ask-ai">
                     <AIChat
-                      reportTitle={article.title}
-                      reportContext={reportContext}
+                      reportTitle={
+                        article.title
+                      }
+                      reportContext={
+                        reportContext
+                      }
                     />
                   </ReportBlock>
                 ) : null}

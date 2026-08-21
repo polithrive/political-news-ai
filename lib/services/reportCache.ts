@@ -23,7 +23,10 @@ function normalizeCacheValue(
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ")
-    .replace(/[^\p{L}\p{N}\s]/gu, "");
+    .replace(
+      /[^\p{L}\p{N}\s]/gu,
+      ""
+    );
 }
 
 function createArticleIdentifier(
@@ -52,18 +55,42 @@ function createCacheKey(
   return [
     REPORT_CACHE_PREFIX,
     REPORT_CACHE_VERSION,
-    encodeURIComponent(articleIdentifier),
+    encodeURIComponent(
+      articleIdentifier
+    ),
   ].join(":");
 }
 
-function isSessionStorageAvailable(): boolean {
+function isBrowser(): boolean {
+  return typeof window !==
+    "undefined";
+}
+
+function getLocalStorage():
+  | Storage
+  | null {
+  if (!isBrowser()) {
+    return null;
+  }
+
   try {
-    return (
-      typeof window !== "undefined" &&
-      window.sessionStorage !== undefined
-    );
+    return window.localStorage;
   } catch {
-    return false;
+    return null;
+  }
+}
+
+function getSessionStorage():
+  | Storage
+  | null {
+  if (!isBrowser()) {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
   }
 }
 
@@ -83,157 +110,276 @@ function isCachedReport(
   return (
     candidate.version ===
       REPORT_CACHE_VERSION &&
-    typeof candidate.cachedAt === "number" &&
-    typeof candidate.expiresAt === "number" &&
+    typeof candidate.cachedAt ===
+      "number" &&
+    typeof candidate.expiresAt ===
+      "number" &&
     candidate.report !== null &&
-    typeof candidate.report === "object"
+    typeof candidate.report ===
+      "object"
   );
+}
+
+function parseCachedReport(
+  storage: Storage,
+  cacheKey: string
+): CachedReport | null {
+  const cachedValue =
+    storage.getItem(cacheKey);
+
+  if (!cachedValue) {
+    return null;
+  }
+
+  const parsedValue: unknown =
+    JSON.parse(cachedValue);
+
+  if (
+    !isCachedReport(parsedValue)
+  ) {
+    storage.removeItem(
+      cacheKey
+    );
+
+    return null;
+  }
+
+  if (
+    Date.now() >=
+    parsedValue.expiresAt
+  ) {
+    storage.removeItem(
+      cacheKey
+    );
+
+    return null;
+  }
+
+  return parsedValue;
 }
 
 export function getCachedReport(
   article: Article
 ): IntelligenceReport | null {
-  if (!isSessionStorageAvailable()) {
-    return null;
-  }
-
   const cacheKey =
     createCacheKey(article);
 
-  try {
-    const cachedValue =
-      window.sessionStorage.getItem(
-        cacheKey
-      );
+  const localStorage =
+    getLocalStorage();
 
-    if (!cachedValue) {
-      console.info(
-        "PoliticalPulse report cache miss:",
-        cacheKey
-      );
-
-      return null;
-    }
-
-    const parsedValue: unknown =
-      JSON.parse(cachedValue);
-
-    if (!isCachedReport(parsedValue)) {
-      window.sessionStorage.removeItem(
-        cacheKey
-      );
-
-      console.info(
-        "PoliticalPulse removed an invalid cached report:",
-        cacheKey
-      );
-
-      return null;
-    }
-
-    if (
-      Date.now() >=
-      parsedValue.expiresAt
-    ) {
-      window.sessionStorage.removeItem(
-        cacheKey
-      );
-
-      console.info(
-        "PoliticalPulse removed an expired cached report:",
-        cacheKey
-      );
-
-      return null;
-    }
-
-    console.info(
-      "PoliticalPulse report cache hit:",
-      cacheKey
-    );
-
-    return parsedValue.report;
-  } catch (error) {
-    console.warn(
-      "PoliticalPulse could not read the cached intelligence report:",
-      error
-    );
-
+  /*
+   * Primary cache:
+   * persistent across refreshes,
+   * navigation, tabs, and browser restarts.
+   */
+  if (localStorage) {
     try {
-      window.sessionStorage.removeItem(
-        cacheKey
-      );
-    } catch {
-      // Storage is unavailable. Nothing else to do.
-    }
+      const cachedReport =
+        parseCachedReport(
+          localStorage,
+          cacheKey
+        );
 
-    return null;
+      if (cachedReport) {
+        console.info(
+          "PoliticalPulse persistent report cache hit:",
+          cacheKey
+        );
+
+        return cachedReport.report;
+      }
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not read the persistent report cache:",
+        error
+      );
+    }
   }
+
+  const sessionStorage =
+    getSessionStorage();
+
+  /*
+   * Backward-compatible fallback.
+   *
+   * If an existing report is found in
+   * sessionStorage, migrate it into
+   * localStorage automatically.
+   */
+  if (sessionStorage) {
+    try {
+      const cachedReport =
+        parseCachedReport(
+          sessionStorage,
+          cacheKey
+        );
+
+      if (cachedReport) {
+        console.info(
+          "PoliticalPulse session report cache hit:",
+          cacheKey
+        );
+
+        if (localStorage) {
+          try {
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify(
+                cachedReport
+              )
+            );
+
+            console.info(
+              "PoliticalPulse migrated report cache to persistent storage:",
+              cacheKey
+            );
+          } catch (error) {
+            console.warn(
+              "PoliticalPulse could not migrate the report cache:",
+              error
+            );
+          }
+        }
+
+        return cachedReport.report;
+      }
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not read the session report cache:",
+        error
+      );
+    }
+  }
+
+  console.info(
+    "PoliticalPulse report cache miss:",
+    cacheKey
+  );
+
+  return null;
 }
 
 export function cacheReport(
   article: Article,
   report: IntelligenceReport
 ): void {
-  if (!isSessionStorageAvailable()) {
-    return;
-  }
-
   const cacheKey =
     createCacheKey(article);
 
-  const cachedAt = Date.now();
+  const cachedAt =
+    Date.now();
 
-  const cachedReport: CachedReport = {
-    version: REPORT_CACHE_VERSION,
+  const cachedReport:
+    CachedReport = {
+    version:
+      REPORT_CACHE_VERSION,
+
     cachedAt,
+
     expiresAt:
       cachedAt +
       REPORT_CACHE_TTL_MS,
+
     report,
   };
 
-  try {
-    window.sessionStorage.setItem(
-      cacheKey,
-      JSON.stringify(cachedReport)
+  const serializedReport =
+    JSON.stringify(
+      cachedReport
     );
 
-    console.info(
-      "PoliticalPulse report cached:",
-      cacheKey
-    );
-  } catch (error) {
-    console.warn(
-      "PoliticalPulse could not cache the intelligence report:",
-      error
-    );
+  const localStorage =
+    getLocalStorage();
+
+  if (localStorage) {
+    try {
+      localStorage.setItem(
+        cacheKey,
+        serializedReport
+      );
+
+      console.info(
+        "PoliticalPulse report cached persistently:",
+        cacheKey
+      );
+
+      return;
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not persist the intelligence report:",
+        error
+      );
+    }
+  }
+
+  /*
+   * Fall back to sessionStorage if
+   * persistent browser storage is
+   * unavailable or full.
+   */
+  const sessionStorage =
+    getSessionStorage();
+
+  if (sessionStorage) {
+    try {
+      sessionStorage.setItem(
+        cacheKey,
+        serializedReport
+      );
+
+      console.info(
+        "PoliticalPulse report cached for this session:",
+        cacheKey
+      );
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not cache the intelligence report:",
+        error
+      );
+    }
   }
 }
 
 export function removeCachedReport(
   article: Article
 ): void {
-  if (!isSessionStorageAvailable()) {
-    return;
-  }
-
   const cacheKey =
     createCacheKey(article);
 
-  try {
-    window.sessionStorage.removeItem(
-      cacheKey
-    );
+  const localStorage =
+    getLocalStorage();
 
-    console.info(
-      "PoliticalPulse cached report removed:",
-      cacheKey
-    );
-  } catch (error) {
-    console.warn(
-      "PoliticalPulse could not remove the cached intelligence report:",
-      error
-    );
+  if (localStorage) {
+    try {
+      localStorage.removeItem(
+        cacheKey
+      );
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not remove the persistent cached report:",
+        error
+      );
+    }
   }
+
+  const sessionStorage =
+    getSessionStorage();
+
+  if (sessionStorage) {
+    try {
+      sessionStorage.removeItem(
+        cacheKey
+      );
+    } catch (error) {
+      console.warn(
+        "PoliticalPulse could not remove the session cached report:",
+        error
+      );
+    }
+  }
+
+  console.info(
+    "PoliticalPulse cached report removed:",
+    cacheKey
+  );
 }
