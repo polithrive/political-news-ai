@@ -227,10 +227,19 @@ function buildRelatedQuery(
     );
 
   /*
-   * Keep the search intentionally concise.
-   * A full headline is often too specific and
-   * can prevent NewsAPI from finding alternate
-   * coverage of the same event.
+   * multiSource.ts already reduces the
+   * original headline into a focused set
+   * of story-identifying keywords.
+   *
+   * Keep the NewsAPI query broad enough
+   * to retrieve alternate coverage of
+   * the same event.
+   *
+   * PoliticalPulse performs its own
+   * relevance scoring, deduplication,
+   * source-quality analysis, and
+   * publisher-diversity selection after
+   * NewsAPI returns the candidate pool.
    */
   const selectedWords =
     uniqueWords.slice(0, 8);
@@ -239,13 +248,7 @@ function buildRelatedQuery(
     return cleaned;
   }
 
-  return selectedWords
-    .map((word) =>
-      word.includes(" ")
-        ? `"${word}"`
-        : word
-    )
-    .join(" AND ");
+  return selectedWords.join(" ");
 }
 
 function getDurationMs(
@@ -421,10 +424,13 @@ export async function GET(
       return Response.json(
         {
           status: "error",
+
           code:
             "missingApiKey",
+
           message:
             "NEWS_API_KEY is not configured.",
+
           articles: [],
         },
         {
@@ -458,10 +464,13 @@ export async function GET(
         return Response.json(
           {
             status: "error",
+
             code:
               "missingQuery",
+
             message:
               "A search query is required when mode is related.",
+
             articles: [],
           },
           {
@@ -481,17 +490,27 @@ export async function GET(
       );
 
       /*
-       * Do not restrict searchIn for related
-       * reporting. NewsAPI's default searches
-       * all supported fields, which gives us a
-       * better chance of finding independent
-       * coverage using the compact query.
+       * Do not restrict searchIn for
+       * related reporting.
+       *
+       * NewsAPI can search all supported
+       * article fields, which gives us a
+       * larger candidate pool for
+       * independent coverage.
        */
       newsApiUrl.searchParams.set(
         "language",
         "en"
       );
 
+      /*
+       * Let NewsAPI provide a relevancy-
+       * ordered candidate pool.
+       *
+       * PoliticalPulse performs its own
+       * final relevance and source
+       * diversity scoring afterward.
+       */
       newsApiUrl.searchParams.set(
         "sortBy",
         "relevancy"
@@ -509,6 +528,7 @@ export async function GET(
         {
           originalQuery:
             rawQuery,
+
           relatedQuery,
         }
       );
@@ -573,9 +593,13 @@ export async function GET(
         {
           status:
             response.status,
-          code: data.code,
+
+          code:
+            data.code,
+
           message:
             data.message,
+
           newsApiFetchMs,
         }
       );
@@ -583,12 +607,15 @@ export async function GET(
       return Response.json(
         {
           status: "error",
+
           code:
             data.code ??
             "newsApiError",
+
           message:
             data.message ??
             "PoliticalPulse could not retrieve news.",
+
           articles: [],
         },
         {
@@ -642,8 +669,10 @@ export async function GET(
 
     return Response.json({
       status: "ok",
+
       totalResults:
         articles.length,
+
       articles,
     });
   } catch (error) {
@@ -655,17 +684,20 @@ export async function GET(
         totalRouteMs:
           getDurationMs(
             routeStartedAt
-          ),
+        ),
       }
     );
 
     return Response.json(
       {
         status: "error",
+
         code:
           "internalError",
+
         message:
           "PoliticalPulse could not retrieve news at this time.",
+
         articles: [],
       },
       {
