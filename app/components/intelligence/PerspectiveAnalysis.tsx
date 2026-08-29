@@ -1,117 +1,69 @@
 import type { IntelligenceReport } from "../../types/report";
 
-import AnalysisCard from "../ui/AnalysisCard";
-import SectionHeader from "../ui/SectionHeader";
-
-import { colors } from "@/lib/design/theme";
-
 type PerspectiveAnalysisProps = {
   report: IntelligenceReport;
 };
 
 type PerspectiveCardProps = {
-  title: string;
   label: string;
+  title: string;
   perspective: string;
-  accent: "info" | "primary" | "warning";
+  tone: "blue" | "slate" | "red";
 };
 
-const accentColors = {
-  info: colors.status.info,
-  primary: colors.brand.primary,
-  warning: colors.status.warning,
+const toneStyles = {
+  blue: {
+    label: "text-blue-300",
+    border: "border-blue-500/20",
+    background: "bg-blue-500/[0.06]",
+    dot: "bg-blue-400",
+  },
+  slate: {
+    label: "text-slate-300",
+    border: "border-slate-700",
+    background: "bg-slate-950/60",
+    dot: "bg-slate-400",
+  },
+  red: {
+    label: "text-red-300",
+    border: "border-red-500/20",
+    background: "bg-red-500/[0.06]",
+    dot: "bg-red-400",
+  },
 } as const;
 
 function PerspectiveCard({
-  title,
   label,
+  title,
   perspective,
-  accent,
+  tone,
 }: PerspectiveCardProps) {
-  const accentColor =
-    accentColors[accent];
+  const styles = toneStyles[tone];
 
   return (
     <article
-      className="group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6"
-      style={{
-        backgroundColor:
-          colors.background.elevated,
-        borderColor:
-          colors.border.default,
-      }}
+      className={`rounded-2xl border ${styles.border} ${styles.background} p-5`}
     >
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-1"
-        style={{
-          backgroundColor: accentColor,
-        }}
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${accentColor}10`,
-        }}
-      />
-
-      <div className="relative">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.18em]"
-              style={{
-                color: accentColor,
-              }}
-            >
-              {label}
-            </p>
-
-            <h3
-              className="mt-2 text-xl font-semibold tracking-tight"
-              style={{
-                color: colors.text.primary,
-              }}
-            >
-              {title}
-            </h3>
-          </div>
-
-          <div
-            aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
-            style={{
-              backgroundColor:
-                `${accentColor}10`,
-              borderColor:
-                `${accentColor}35`,
-              color: accentColor,
-            }}
-          >
-            <span className="h-2.5 w-2.5 rounded-full bg-current" />
-          </div>
-        </div>
-
-        <div
-          className="my-5 h-px"
-          style={{
-            backgroundColor:
-              colors.border.default,
-          }}
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className={`h-2 w-2 rounded-full ${styles.dot}`}
         />
 
         <p
-          className="text-sm leading-7 sm:text-base sm:leading-8"
-          style={{
-            color: colors.text.secondary,
-          }}
+          className={`text-[11px] font-extrabold uppercase tracking-[0.16em] ${styles.label}`}
         >
-          {perspective}
+          {label}
         </p>
       </div>
+
+      <h3 className="mt-2 text-lg font-extrabold tracking-tight text-white">
+        {title}
+      </h3>
+
+      <p className="mt-3 text-sm leading-6 text-slate-300">
+        {perspective}
+      </p>
     </article>
   );
 }
@@ -122,80 +74,64 @@ export default function PerspectiveAnalysis({
   return (
     <section
       aria-label="Perspective analysis"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
-      style={{
-        backgroundColor:
-          colors.background.surface,
-        borderColor:
-          colors.border.default,
-      }}
+      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-sm"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${colors.status.info}10`,
-        }}
-      />
+      <div className="border-b border-slate-800 px-5 py-4 sm:px-6">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-400">
+          Perspective Analysis
+        </p>
 
-      <div className="relative">
-        <SectionHeader
-          eyebrow="Perspective Analysis"
-          title="How Different Sides May See This Story"
-          subtitle="Compare how progressive, centrist, and conservative viewpoints may interpret the same reporting."
-        />
+        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <h2 className="text-2xl font-extrabold tracking-tight text-white">
+            How different sides may see this story
+          </h2>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <p className="max-w-xl text-sm leading-6 text-slate-400">
+            Compare how progressive, centrist, and
+            conservative viewpoints may interpret the
+            same reporting.
+          </p>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-3">
           <PerspectiveCard
+            label="Progressive framing"
             title="Left Perspective"
-            label="Progressive Framing"
-            perspective={
-              report.perspectives.left
-            }
-            accent="info"
+            perspective={report.perspectives.left}
+            tone="blue"
           />
 
           <PerspectiveCard
+            label="Centrist framing"
             title="Center Perspective"
-            label="Centrist Framing"
-            perspective={
-              report.perspectives.center
-            }
-            accent="primary"
+            perspective={report.perspectives.center}
+            tone="slate"
           />
 
           <PerspectiveCard
+            label="Conservative framing"
             title="Right Perspective"
-            label="Conservative Framing"
-            perspective={
-              report.perspectives.right
-            }
-            accent="warning"
+            perspective={report.perspectives.right}
+            tone="red"
           />
         </div>
 
-        <div className="mt-6">
-          <AnalysisCard
-            eyebrow="Reading the Landscape"
-            title="How to Use These Perspectives"
-            accent="primary"
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-3">
+          <div
+            aria-hidden="true"
+            className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-bold text-slate-400"
           >
-            <p
-              className="text-sm leading-7 sm:text-base sm:leading-8"
-              style={{
-                color:
-                  colors.text.secondary,
-              }}
-            >
-              These summaries show how the same facts may
-              be emphasized, interpreted, or prioritized
-              differently. They are intended to clarify
-              political framing—not to suggest that every
-              person within a political group holds the
-              same view.
-            </p>
-          </AnalysisCard>
+            i
+          </div>
+
+          <p className="text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+            These summaries illustrate differences in
+            political framing and emphasis. They do not
+            imply that everyone within a political group
+            holds the same view.
+          </p>
         </div>
       </div>
     </section>

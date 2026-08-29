@@ -1,202 +1,138 @@
 import type { IntelligenceReport } from "@/app/types/report";
 
-import AnalysisCard from "@/app/components/ui/AnalysisCard";
-import SectionHeader from "@/app/components/ui/SectionHeader";
-
-import { colors } from "@/lib/design/theme";
-
 type ImpactAnalysisProps = {
   report: IntelligenceReport;
 };
 
+function BulletList({
+  items,
+  emptyMessage,
+  tone,
+}: {
+  items: string[];
+  emptyMessage: string;
+  tone: "blue" | "amber";
+}) {
+  const dotClass =
+    tone === "blue"
+      ? "bg-blue-400"
+      : "bg-amber-400";
+
+  if (items.length === 0) {
+    return (
+      <p className="text-sm leading-6 text-slate-500">
+        {emptyMessage}
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-2.5">
+      {items.map((item, index) => (
+        <li
+          key={`${item}-${index}`}
+          className="flex items-start gap-3"
+        >
+          <span
+            aria-hidden="true"
+            className={`mt-2 h-2 w-2 shrink-0 rounded-full ${dotClass}`}
+          />
+
+          <span className="text-sm leading-6 text-slate-300">
+            {item}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function ImpactAnalysis({
   report,
 }: ImpactAnalysisProps) {
-  const hasAffectedGroups =
-    report.whoIsAffected.length > 0;
-
-  const hasUnansweredQuestions =
-    report.unansweredQuestions.length > 0;
-
   return (
     <section
       aria-label="Impact analysis"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
-      style={{
-        backgroundColor:
-          colors.background.surface,
-        borderColor:
-          colors.border.default,
-      }}
+      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-sm"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${colors.status.info}12`,
-        }}
-      />
+      <div className="border-b border-slate-800 px-5 py-4 sm:px-6">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-400">
+          Impact Analysis
+        </p>
 
-      <div className="relative">
-        <SectionHeader
-          eyebrow="Impact Analysis"
-          title="What This Story Means"
-          subtitle="PoliticalPulse analyzes why the story matters, who may be affected, and what could happen next."
-        />
+        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <h2 className="text-2xl font-extrabold tracking-tight text-white">
+            What this story means
+          </h2>
 
-        <div className="mt-8">
-          <AnalysisCard
-            eyebrow="Central Significance"
-            title="Why This Story Matters"
-            accent="primary"
-          >
-            <p
-              className="text-base leading-7 sm:text-lg sm:leading-8"
-              style={{
-                color: colors.text.primary,
-              }}
-            >
-              {report.whyThisMatters}
+          <p className="max-w-xl text-sm leading-6 text-slate-400">
+            Why the story matters, who may be affected,
+            and what could happen next.
+          </p>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-red-300">
+            Why this matters
+          </p>
+
+          <p className="mt-3 text-base leading-7 text-slate-100">
+            {report.whyThisMatters}
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-blue-300">
+              Who is most affected
             </p>
-          </AnalysisCard>
+
+            <div className="mt-3">
+              <BulletList
+                items={report.whoIsAffected}
+                emptyMessage="The affected groups could not be determined from the available information."
+                tone="blue"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300">
+              Questions still unanswered
+            </p>
+
+            <div className="mt-3">
+              <BulletList
+                items={report.unansweredQuestions}
+                emptyMessage="No major unanswered questions were identified."
+                tone="amber"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <AnalysisCard
-            eyebrow="Stakeholder Impact"
-            title="Who Is Most Affected"
-            accent="info"
-          >
-            {hasAffectedGroups ? (
-              <ul
-                aria-label="Groups most affected"
-                className="space-y-3"
-              >
-                {report.whoIsAffected.map(
-                  (group, index) => (
-                    <li
-                      key={`${group}-${index}`}
-                      className="flex items-start gap-3"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-2.5 h-2 w-2 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor:
-                            colors.status.info,
-                        }}
-                      />
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300">
+              Short-term impact
+            </p>
 
-                      <span
-                        className="text-sm leading-7 sm:text-base"
-                        style={{
-                          color:
-                            colors.text.secondary,
-                        }}
-                      >
-                        {group}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            ) : (
-              <p
-                className="text-sm leading-7 sm:text-base"
-                style={{
-                  color: colors.text.muted,
-                }}
-              >
-                The affected groups could not be
-                determined from the available
-                information.
-              </p>
-            )}
-          </AnalysisCard>
-
-          <AnalysisCard
-            eyebrow="Open Intelligence Gaps"
-            title="Questions Still Unanswered"
-            accent="warning"
-          >
-            {hasUnansweredQuestions ? (
-              <ul
-                aria-label="Unanswered questions"
-                className="space-y-3"
-              >
-                {report.unansweredQuestions.map(
-                  (question, index) => (
-                    <li
-                      key={`${question}-${index}`}
-                      className="flex items-start gap-3"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-2.5 h-2 w-2 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor:
-                            colors.status.warning,
-                        }}
-                      />
-
-                      <span
-                        className="text-sm leading-7 sm:text-base"
-                        style={{
-                          color:
-                            colors.text.secondary,
-                        }}
-                      >
-                        {question}
-                      </span>
-                    </li>
-                  )
-                )}
-              </ul>
-            ) : (
-              <p
-                className="text-sm leading-7 sm:text-base"
-                style={{
-                  color: colors.text.muted,
-                }}
-              >
-                No major unanswered questions were
-                identified.
-              </p>
-            )}
-          </AnalysisCard>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <AnalysisCard
-            eyebrow="Near-Term Outlook"
-            title="Short-Term Impact"
-            accent="warning"
-          >
-            <p
-              className="text-sm leading-7 sm:text-base"
-              style={{
-                color: colors.text.secondary,
-              }}
-            >
+            <p className="mt-3 text-sm leading-6 text-slate-300">
               {report.shortTermImpact}
             </p>
-          </AnalysisCard>
+          </div>
 
-          <AnalysisCard
-            eyebrow="Strategic Outlook"
-            title="Long-Term Impact"
-            accent="success"
-          >
-            <p
-              className="text-sm leading-7 sm:text-base"
-              style={{
-                color: colors.text.secondary,
-              }}
-            >
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-300">
+              Long-term impact
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-slate-300">
               {report.longTermImpact}
             </p>
-          </AnalysisCard>
+          </div>
         </div>
       </div>
     </section>

@@ -42,6 +42,32 @@ import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
 
+function SectionIntro({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-5">
+      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-400">
+        {eyebrow}
+      </p>
+
+      <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+        {title}
+      </h2>
+
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400 sm:text-base">
+        {description}
+      </p>
+    </div>
+  );
+}
+
 export default function IntelligenceReportPage() {
   const [article, setArticle] =
     useState<Article | null>(null);
@@ -81,23 +107,6 @@ export default function IntelligenceReportPage() {
     setGraphErrorMessage,
   ] = useState<string | null>(null);
 
-  /*
-   * useLayoutEffect is intentional here.
-   *
-   * The selected article, completed report,
-   * and Intelligence Graph may already exist
-   * in browser storage.
-   *
-   * Restoring them during the layout phase
-   * allows React to update the page before
-   * the browser paints the hydrated client
-   * view, reducing unnecessary skeleton
-   * flashes for cached reports.
-   *
-   * We do not initialize useState directly
-   * from localStorage because doing so could
-   * create a server/client hydration mismatch.
-   */
   useLayoutEffect(() => {
     let isCancelled = false;
 
@@ -182,12 +191,6 @@ export default function IntelligenceReportPage() {
     }
 
     function initializeIntelligence() {
-      /*
-       * Restore the selected article first.
-       *
-       * This is a synchronous browser-storage
-       * read and should complete immediately.
-       */
       const selectedArticle =
         getSelectedArticle();
 
@@ -199,16 +202,11 @@ export default function IntelligenceReportPage() {
         setIsInitializingArticle(false);
         setIsReportLoading(false);
         setIsGraphLoading(false);
-
         return;
       }
 
       setArticle(selectedArticle);
 
-      /*
-       * Restore the completed report
-       * synchronously when available.
-       */
       const cachedReport =
         getCachedReport(
           selectedArticle
@@ -219,16 +217,11 @@ export default function IntelligenceReportPage() {
         setIsReportLoading(false);
       } else {
         setIsReportLoading(true);
-
         void generateReport(
           selectedArticle
         );
       }
 
-      /*
-       * Restore the Intelligence Graph
-       * synchronously when available.
-       */
       const cachedGraph =
         getCachedIntelligenceGraph(
           selectedArticle
@@ -239,17 +232,11 @@ export default function IntelligenceReportPage() {
         setIsGraphLoading(false);
       } else {
         setIsGraphLoading(true);
-
         void generateGraph(
           selectedArticle
         );
       }
 
-      /*
-       * Initialization is complete only
-       * after all available cached state
-       * has been restored.
-       */
       setIsInitializingArticle(false);
     }
 
@@ -263,8 +250,8 @@ export default function IntelligenceReportPage() {
   if (isInitializingArticle) {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-7xl px-6 py-12">
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-800 bg-slate-900/70" />
+        <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8">
+          <div className="h-48 animate-pulse rounded-3xl border border-slate-800 bg-slate-900/70" />
         </section>
       </main>
     );
@@ -273,28 +260,23 @@ export default function IntelligenceReportPage() {
   if (!article) {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-7xl px-6 py-12">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
-            <p className="font-semibold uppercase tracking-wide text-red-500">
+        <section className="mx-auto max-w-4xl px-6 py-16">
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-400">
               No article selected
             </p>
 
-            <h1 className="mt-4 text-4xl font-bold">
-              Open an Intelligence Report
-              from the PoliticalPulse
-              homepage.
+            <h1 className="mt-4 text-4xl font-extrabold">
+              Open an Intelligence Report from the PoliticalPulse homepage.
             </h1>
 
             <p className="mt-4 max-w-2xl text-slate-400">
-              PoliticalPulse needs a
-              selected news story before it
-              can generate a complete
-              intelligence report.
+              PoliticalPulse needs a selected news story before it can generate a complete intelligence report.
             </p>
 
             <Link
               href="/"
-              className="mt-6 inline-flex rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
+              className="mt-6 inline-flex rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
             >
               Return to homepage
             </Link>
@@ -310,47 +292,44 @@ export default function IntelligenceReportPage() {
   ) {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-7xl px-6 py-12">
+        <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8">
           <ReportHeader
             article={article}
           />
 
-          <ReportBlock>
-            <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-8">
-              <p className="font-semibold uppercase tracking-wide text-red-500">
-                Report generation failed
-              </p>
+          <div className="mt-6 rounded-3xl border border-red-900/60 bg-red-950/20 p-8">
+            <p className="font-semibold uppercase tracking-wide text-red-400">
+              Report generation failed
+            </p>
 
-              <h2 className="mt-4 text-3xl font-bold">
-                We could not complete this
-                intelligence report.
-              </h2>
+            <h2 className="mt-4 text-3xl font-extrabold">
+              We could not complete this intelligence report.
+            </h2>
 
-              <p className="mt-4 max-w-2xl text-slate-300">
-                {errorMessage ??
-                  "An unexpected error occurred while generating the report."}
-              </p>
+            <p className="mt-4 max-w-2xl text-slate-300">
+              {errorMessage ??
+                "An unexpected error occurred while generating the report."}
+            </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.location.reload()
-                  }
-                  className="rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
-                >
-                  Try again
-                </button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  window.location.reload()
+                }
+                className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
+              >
+                Try again
+              </button>
 
-                <Link
-                  href="/"
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
-                >
-                  Return to homepage
-                </Link>
-              </div>
+              <Link
+                href="/"
+                className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+              >
+                Return to homepage
+              </Link>
             </div>
-          </ReportBlock>
+          </div>
         </section>
       </main>
     );
@@ -365,224 +344,268 @@ export default function IntelligenceReportPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-7xl px-6 py-12">
+      <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8 lg:py-10">
         <ReportHeader
           article={article}
         />
 
-        <div className="mt-8 grid gap-8 xl:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="mt-7 grid gap-7 xl:grid-cols-[215px_minmax(0,1fr)]">
           <StickyReportNavigation
             report={report}
           />
 
           <div className="min-w-0">
-            {report ? (
-              <>
-                <ReportBlock
-                  id="trust-score"
-                  className="mt-0"
-                >
-                  <TrustScore
-                    trustScore={
-                      report.trustScore
-                    }
-                  />
-                </ReportBlock>
+            <section id="executive-intelligence">
+              <SectionIntro
+                eyebrow="Executive Intelligence"
+                title="The story at a glance"
+                description="Start with the central assessment, trust signals, and the most important facts before exploring the deeper analysis."
+              />
 
-                <ReportBlock id="executive-summary">
-                  <ExecutiveSummary
-                    report={report}
-                  />
-                </ReportBlock>
+              {report ? (
+                <>
+                  <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+                    <ReportBlock
+                      id="executive-summary"
+                      className="mt-0"
+                    >
+                      <ExecutiveSummary
+                        report={report}
+                      />
+                    </ReportBlock>
 
-                <ReportBlock id="intelligence-overview">
-                  <IntelligenceOverview
-                    report={report}
-                  />
-                </ReportBlock>
+                    <ReportBlock
+                      id="trust-score"
+                      className="mt-0"
+                    >
+                      <TrustScore
+                        trustScore={
+                          report.trustScore
+                        }
+                      />
+                    </ReportBlock>
+                  </div>
 
-                <ReportBlock id="impact-analysis">
-                  <ImpactAnalysis
-                    report={report}
-                  />
-                </ReportBlock>
+                  <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                    <ReportBlock
+                      id="key-facts"
+                      className="mt-0"
+                    >
+                      <KeyFacts
+                        report={report}
+                      />
+                    </ReportBlock>
 
-                <ReportBlock id="key-facts">
-                  <KeyFacts
-                    report={report}
-                  />
-                </ReportBlock>
-              </>
-            ) : (
-              <>
-                <ReportBlock
-                  id="trust-score"
-                  className="mt-0"
-                >
-                  <IntelligenceSectionSkeleton
-                    label="Trust Score"
-                    title="Evaluating source confidence"
-                    description="PoliticalPulse is reviewing source quality, reporting agreement, and evidence strength."
-                    blocks={2}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="executive-summary">
+                    <ReportBlock
+                      id="intelligence-overview"
+                      className="mt-0"
+                    >
+                      <IntelligenceOverview
+                        report={report}
+                      />
+                    </ReportBlock>
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
                   <IntelligenceSectionSkeleton
                     label="Executive Brief"
                     title="Building the executive summary"
                     description="PoliticalPulse is identifying the central facts, context, and significance of this story."
                     blocks={3}
                   />
-                </ReportBlock>
 
-                <ReportBlock id="intelligence-overview">
                   <IntelligenceSectionSkeleton
-                    label="Intelligence Overview"
-                    title="Assessing the report"
-                    description="PoliticalPulse is calculating confidence, category, bias indicators, and source coverage."
+                    label="Trust Score"
+                    title="Evaluating source confidence"
+                    description="PoliticalPulse is reviewing source quality, reporting agreement, and evidence strength."
                     blocks={2}
                   />
-                </ReportBlock>
-
-                <ReportBlock id="impact-analysis">
-                  <IntelligenceSectionSkeleton
-                    label="Impact Analysis"
-                    title="Evaluating potential impact"
-                    description="PoliticalPulse is identifying who may be affected and the likely short- and long-term consequences."
-                    blocks={3}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="key-facts">
-                  <IntelligenceSectionSkeleton
-                    label="Key Facts"
-                    title="Extracting supported facts"
-                    description="PoliticalPulse is separating reported claims, established facts, and remaining uncertainties."
-                    blocks={3}
-                  />
-                </ReportBlock>
-              </>
-            )}
-
-            <ReportBlock id="story-timeline">
-              <StoryTimeline
-                article={article}
-              />
-            </ReportBlock>
-
-            <ReportBlock id="intelligence-graph">
-              {graph ? (
-                <IntelligenceGraph
-                  graph={graph}
-                />
-              ) : isGraphLoading ? (
-                <IntelligenceSectionSkeleton
-                  label="Intelligence Graph"
-                  title="Building connected context"
-                  description="PoliticalPulse is identifying the people, organizations, events, and issues connected to this story."
-                  blocks={3}
-                />
-              ) : (
-                <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-red-500">
-                    Intelligence Graph
-                  </p>
-
-                  <h2 className="mt-2 text-2xl font-bold text-white">
-                    Connected context
-                    unavailable
-                  </h2>
-
-                  <p className="mt-3 max-w-3xl text-slate-400">
-                    {graphErrorMessage ??
-                      "PoliticalPulse could not identify reliable story connections from the available article information."}
-                  </p>
-                </section>
+                </div>
               )}
-            </ReportBlock>
+            </section>
 
-            {report ? (
-              <>
-                <ReportBlock id="perspective-analysis">
-                  <PerspectiveAnalysis
-                    report={report}
-                  />
-                </ReportBlock>
+            <section className="mt-12">
+              <SectionIntro
+                eyebrow="Understand the Story"
+                title="What it means and where perspectives differ"
+                description="Move from the core facts into political framing, impact, verification, and the strongest areas of agreement and disagreement."
+              />
 
-                <ReportBlock id="political-debate">
-                  <DebatePanel
-                    report={report}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="consensus">
-                  <ConsensusEngine
-                    report={report}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="fact-check">
-                  <FactCheck
-                    report={report}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="source-comparison">
-                  <SourceComparison
-                    report={report}
-                  />
-                </ReportBlock>
-
-                <ReportBlock id="evidence">
-                  <EvidencePanel
-                    report={report}
-                  />
-                </ReportBlock>
-
-                {reportContext ? (
-                  <ReportBlock id="ask-ai">
-                    <AIChat
-                      reportTitle={
-                        article.title
-                      }
-                      reportContext={
-                        reportContext
-                      }
+              {report ? (
+                <div className="space-y-5">
+                  <ReportBlock
+                    id="perspective-analysis"
+                    className="mt-0"
+                  >
+                    <PerspectiveAnalysis
+                      report={report}
                     />
                   </ReportBlock>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <ReportBlock id="perspective-analysis">
+
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <ReportBlock
+                      id="impact-analysis"
+                      className="mt-0"
+                    >
+                      <ImpactAnalysis
+                        report={report}
+                      />
+                    </ReportBlock>
+
+                    <ReportBlock
+                      id="fact-check"
+                      className="mt-0"
+                    >
+                      <FactCheck
+                        report={report}
+                      />
+                    </ReportBlock>
+                  </div>
+
+                  <ReportBlock
+                    id="consensus"
+                    className="mt-0"
+                  >
+                    <ConsensusEngine
+                      report={report}
+                    />
+                  </ReportBlock>
+                </div>
+              ) : (
+                <div className="space-y-5">
                   <IntelligenceSectionSkeleton
                     label="Perspective Analysis"
                     title="Comparing political viewpoints"
                     description="PoliticalPulse is evaluating progressive, centrist, and conservative interpretations."
                     blocks={3}
                   />
-                </ReportBlock>
 
-                <ReportBlock id="political-debate">
                   <IntelligenceSectionSkeleton
-                    label="Political Debate"
-                    title="Mapping agreement and disagreement"
-                    description="PoliticalPulse is identifying the strongest arguments, primary concerns, and areas of common ground."
+                    label="Impact Analysis"
+                    title="Evaluating potential impact"
+                    description="PoliticalPulse is identifying who may be affected and the likely short- and long-term consequences."
                     blocks={3}
+                  />
+                </div>
+              )}
+            </section>
+
+            <section className="mt-12">
+              <SectionIntro
+                eyebrow="Explore Deeper"
+                title="Context, chronology, sources, and evidence"
+                description="Use the deeper intelligence tools when you want to understand how the story developed, what connects to it, and how the reporting compares."
+              />
+
+              <div className="space-y-5">
+                <ReportBlock
+                  id="story-timeline"
+                  className="mt-0"
+                >
+                  <StoryTimeline
+                    article={article}
                   />
                 </ReportBlock>
 
-                <ReportBlock id="evidence">
+                <ReportBlock
+                  id="intelligence-graph"
+                  className="mt-0"
+                >
+                  {graph ? (
+                    <IntelligenceGraph
+                      graph={graph}
+                    />
+                  ) : isGraphLoading ? (
+                    <IntelligenceSectionSkeleton
+                      label="Intelligence Graph"
+                      title="Building connected context"
+                      description="PoliticalPulse is identifying the people, organizations, events, and issues connected to this story."
+                      blocks={3}
+                    />
+                  ) : (
+                    <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
+                      <p className="text-sm font-semibold uppercase tracking-wide text-red-400">
+                        Intelligence Graph
+                      </p>
+
+                      <h2 className="mt-2 text-2xl font-extrabold text-white">
+                        Connected context unavailable
+                      </h2>
+
+                      <p className="mt-3 max-w-3xl text-slate-400">
+                        {graphErrorMessage ??
+                          "PoliticalPulse could not identify reliable story connections from the available article information."}
+                      </p>
+                    </section>
+                  )}
+                </ReportBlock>
+
+                {report ? (
+                  <>
+                    <ReportBlock
+                      id="political-debate"
+                      className="mt-0"
+                    >
+                      <DebatePanel
+                        report={report}
+                      />
+                    </ReportBlock>
+
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      <ReportBlock
+                        id="source-comparison"
+                        className="mt-0"
+                      >
+                        <SourceComparison
+                          report={report}
+                        />
+                      </ReportBlock>
+
+                      <ReportBlock
+                        id="evidence"
+                        className="mt-0"
+                      >
+                        <EvidencePanel
+                          report={report}
+                        />
+                      </ReportBlock>
+                    </div>
+                  </>
+                ) : (
                   <IntelligenceSectionSkeleton
                     label="Evidence"
                     title="Reviewing supporting information"
                     description="PoliticalPulse is assembling source evidence, methodology, and conflicting reporting."
                     blocks={3}
                   />
+                )}
+              </div>
+            </section>
+
+            {report && reportContext ? (
+              <section className="mt-12">
+                <SectionIntro
+                  eyebrow="Ask PoliticalPulse"
+                  title="Continue the analysis"
+                  description="Ask follow-up questions about this report using the same intelligence context shown above."
+                />
+
+                <ReportBlock
+                  id="ask-ai"
+                  className="mt-0"
+                >
+                  <AIChat
+                    reportTitle={
+                      article.title
+                    }
+                    reportContext={
+                      reportContext
+                    }
+                  />
                 </ReportBlock>
-              </>
-            )}
+              </section>
+            ) : null}
           </div>
         </div>
       </section>

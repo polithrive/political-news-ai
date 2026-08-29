@@ -1,11 +1,5 @@
 import type { IntelligenceReport } from "../../types/report";
 
-import AnalysisCard from "../ui/AnalysisCard";
-import AnimatedCounter from "../ui/AnimatedCounter";
-import SectionHeader from "../ui/SectionHeader";
-
-import { colors } from "@/lib/design/theme";
-
 type ConsensusEngineProps = {
   report: IntelligenceReport;
 };
@@ -17,7 +11,9 @@ function clampScore(score: number) {
   );
 }
 
-function getConsensusLabel(score: number) {
+function getConsensusLabel(
+  score: number
+) {
   if (score >= 80) {
     return "Strong Common Ground";
   }
@@ -48,253 +44,121 @@ export default function ConsensusEngine({
       report.consensusScore ?? 0
     );
 
-  const hasCommonGround =
-    commonGround.length > 0;
-
   const consensusLabel =
-    getConsensusLabel(consensusScore);
+    getConsensusLabel(
+      consensusScore
+    );
 
   return (
     <section
       aria-label="Consensus analysis"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
-      style={{
-        backgroundColor:
-          colors.background.surface,
-        borderColor:
-          colors.border.default,
-      }}
+      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-sm"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${colors.status.success}10`,
-        }}
-      />
+      <div className="border-b border-slate-800 px-5 py-4 sm:px-6">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-400">
+          Consensus Engine
+        </p>
 
-      <div className="relative">
-        <SectionHeader
-          eyebrow="Consensus Engine"
-          title="Where the Sides Find Common Ground"
-          subtitle="Identify the facts, concerns, and conclusions that different political perspectives share."
-        />
+        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <h2 className="text-2xl font-extrabold tracking-tight text-white">
+            Where the sides find common ground
+          </h2>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-          <AnalysisCard
-            eyebrow="Areas of Agreement"
-            title="Shared Conclusions"
-            accent="success"
-          >
-            {hasCommonGround ? (
-              <ol
-                aria-label="Areas of political agreement"
-                className="space-y-4"
-              >
-                {commonGround.map(
-                  (item, index) => (
-                    <li
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-4"
-                    >
-                      <div
-                        aria-hidden="true"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs font-bold"
-                        style={{
-                          backgroundColor:
-                            colors.status
-                              .successSoft,
-                          borderColor:
-                            `${colors.status.success}35`,
-                          color:
-                            colors.status.success,
-                        }}
-                      >
-                        {String(
-                          index + 1
-                        ).padStart(2, "0")}
-                      </div>
+          <p className="max-w-xl text-sm leading-6 text-slate-400">
+            Shared facts, concerns, and conclusions
+            across the analyzed political perspectives.
+          </p>
+        </div>
+      </div>
 
-                      <p
-                        className="pt-0.5 text-sm leading-7 sm:text-base"
-                        style={{
-                          color:
-                            colors.text.secondary,
-                        }}
-                      >
-                        {item}
-                      </p>
-                    </li>
-                  )
-                )}
-              </ol>
-            ) : (
-              <div
-                role="status"
-                className="rounded-xl border border-dashed p-5"
-                style={{
-                  backgroundColor:
-                    colors.background.surface,
-                  borderColor:
-                    colors.border.default,
-                }}
-              >
-                <p
-                  className="text-sm leading-6"
-                  style={{
-                    color: colors.text.muted,
-                  }}
-                >
-                  Common-ground analysis is still
-                  being generated for this report.
-                </p>
-              </div>
-            )}
-          </AnalysisCard>
+      <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-300">
+            Shared conclusions
+          </p>
 
-          <article
-            aria-label={`Consensus score: ${consensusScore} percent`}
-            className="relative overflow-hidden rounded-2xl border p-6"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor:
-                colors.border.default,
-            }}
-          >
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-0 top-0 h-1"
-              style={{
-                backgroundColor:
-                  colors.status.success,
-              }}
-            />
+          {commonGround.length > 0 ? (
+            <ol className="mt-4 space-y-3">
+              {commonGround.map(
+                (item, index) => (
+                  <li
+                    key={`${item}-${index}`}
+                    className="flex items-start gap-3"
+                  >
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-extrabold text-emerald-300">
+                      {index + 1}
+                    </div>
 
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.18em]"
-              style={{
-                color: colors.text.muted,
-              }}
-            >
-              Consensus Score
+                    <p className="pt-0.5 text-sm leading-6 text-slate-300">
+                      {item}
+                    </p>
+                  </li>
+                )
+              )}
+            </ol>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-slate-500">
+              Common-ground analysis is still being
+              generated for this report.
             </p>
-
-            <div className="mt-5 flex items-end gap-2">
-              <span
-                className="text-5xl font-bold tracking-tight"
-                style={{
-                  color: colors.text.primary,
-                }}
-              >
-                <AnimatedCounter
-                  value={consensusScore}
-                />
-              </span>
-
-              <span
-                className="pb-1 text-lg font-semibold"
-                style={{
-                  color: colors.text.muted,
-                }}
-              >
-                %
-              </span>
-            </div>
-
-            <p
-              className="mt-3 text-sm font-semibold"
-              style={{
-                color:
-                  colors.status.success,
-              }}
-            >
-              {consensusLabel}
-            </p>
-
-            <div
-              className="mt-6 h-2.5 overflow-hidden rounded-full"
-              style={{
-                backgroundColor:
-                  colors.background.muted,
-              }}
-            >
-              <div
-                className="h-full rounded-full transition-[width] duration-700 ease-out"
-                style={{
-                  width: `${consensusScore}%`,
-                  backgroundColor:
-                    colors.status.success,
-                }}
-              />
-            </div>
-
-            <p
-              className="mt-5 text-sm leading-6"
-              style={{
-                color: colors.text.secondary,
-              }}
-            >
-              Measures how strongly the analyzed
-              perspectives converge on shared facts,
-              concerns, or conclusions.
-            </p>
-          </article>
+          )}
         </div>
 
-        <div
-          className="mt-6 rounded-2xl border p-5 sm:p-6"
-          style={{
-            backgroundColor:
-              colors.background.elevated,
-            borderColor:
-              colors.border.default,
-          }}
+        <aside
+          aria-label={`Consensus score: ${consensusScore} percent`}
+          className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5"
         >
-          <div className="flex items-start gap-4">
-            <div
-              aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-lg font-semibold"
-              style={{
-                backgroundColor:
-                  colors.status.infoSoft,
-                borderColor:
-                  `${colors.status.info}35`,
-                color: colors.status.info,
-              }}
-            >
-              ≈
-            </div>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            Consensus Score
+          </p>
 
-            <div>
-              <h3
-                className="text-base font-semibold"
-                style={{
-                  color:
-                    colors.text.primary,
-                }}
-              >
-                What consensus means here
-              </h3>
+          <div className="mt-3 flex items-end gap-2">
+            <span className="text-5xl font-black leading-none text-white">
+              {consensusScore}
+            </span>
 
-              <p
-                className="mt-2 text-sm leading-6 sm:text-base sm:leading-7"
-                style={{
-                  color:
-                    colors.text.secondary,
-                }}
-              >
-                Consensus does not mean every
-                political perspective agrees on the
-                causes, solutions, or broader
-                implications. It identifies the
-                points where differing viewpoints
-                reach the same underlying
-                conclusion.
-              </p>
-            </div>
+            <span className="pb-1 text-lg font-bold text-slate-500">
+              %
+            </span>
           </div>
+
+          <p className="mt-3 text-sm font-bold text-emerald-300">
+            {consensusLabel}
+          </p>
+
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+              style={{
+                width: `${consensusScore}%`,
+              }}
+            />
+          </div>
+
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            Measures how strongly the analyzed
+            perspectives converge on shared facts,
+            concerns, or conclusions.
+          </p>
+        </aside>
+      </div>
+
+      <div className="border-t border-slate-800 px-5 py-4 sm:px-6">
+        <div className="flex items-start gap-3">
+          <div
+            aria-hidden="true"
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-xs font-bold text-slate-500"
+          >
+            i
+          </div>
+
+          <p className="text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+            Consensus does not mean every political
+            perspective agrees on causes, solutions, or
+            broader implications. It identifies points
+            where differing viewpoints reach the same
+            underlying conclusion.
+          </p>
         </div>
       </div>
     </section>
