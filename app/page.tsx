@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import BreakingNews from "./components/BreakingNews";
 import Footer from "./components/Footer";
 import HomeDashboard from "./components/home/HomeDashboard";
@@ -9,7 +10,9 @@ import SearchResults from "./components/SearchResults";
 import { useHomepageIntelligence } from "./hooks/useHomepageIntelligence";
 
 export default function Home() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
   const {
     articles,
     analysisResults,
@@ -22,17 +25,32 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <Navbar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
+
       <BreakingNews />
-      {searchTerm.trim() ? <SearchResults searchTerm={searchTerm} /> : null}
+
+      {searchTerm.trim() ? (
+        <SearchResults
+          searchTerm={searchTerm}
+          articles={articles}
+        />
+      ) : null}
+
       <HomeDashboard
         articles={articles}
         analysisResults={analysisResults}
         featuredArticle={featuredArticle}
         featuredAnalysis={featuredAnalysis}
-        isLoading={isNewsLoading || isFeaturedAnalysisLoading}
+        isLoading={
+          isNewsLoading ||
+          isFeaturedAnalysisLoading
+        }
         errorMessage={errorMessage}
       />
+
       <Footer />
     </main>
   );

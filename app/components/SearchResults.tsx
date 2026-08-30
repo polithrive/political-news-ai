@@ -1,7 +1,10 @@
-import { searchResults } from "../data/searchResults";
+"use client";
+
+import type { Article } from "@/app/types/article";
 
 type SearchResultsProps = {
   searchTerm: string;
+  articles: Article[];
 };
 
 function normalizeSearchTerm(value: string): string {
@@ -10,6 +13,7 @@ function normalizeSearchTerm(value: string): string {
 
 export default function SearchResults({
   searchTerm,
+  articles,
 }: SearchResultsProps) {
   const normalizedSearchTerm =
     normalizeSearchTerm(searchTerm);
@@ -18,12 +22,12 @@ export default function SearchResults({
     return null;
   }
 
-  const filteredResults = searchResults.filter(
-    (result) => {
+  const filteredResults = articles.filter(
+    (article) => {
       const searchableContent = [
-        result.title,
-        result.category,
-        result.summary,
+        article.title,
+        article.description,
+        article.source?.name ?? "",
       ]
         .join(" ")
         .toLowerCase();
@@ -34,9 +38,9 @@ export default function SearchResults({
     }
   );
 
-  const categoryCount = new Set(
+  const sourceCount = new Set(
     filteredResults.map(
-      (result) => result.category
+      (article) => article.source?.name
     )
   ).size;
 
@@ -128,8 +132,8 @@ export default function SearchResults({
               </h2>
 
               <p className="mt-4 max-w-2xl leading-7 text-slate-400">
-                Review the available intelligence
-                summaries related to your search.
+                Review the current PoliticalPulse
+                stories related to your search.
               </p>
             </div>
 
@@ -146,11 +150,11 @@ export default function SearchResults({
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Categories
+                  Sources
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-white">
-                  {categoryCount}
+                  {sourceCount}
                 </p>
               </div>
             </div>
@@ -158,9 +162,9 @@ export default function SearchResults({
 
           <div className="mt-7 space-y-4">
             {filteredResults.map(
-              (result, index) => (
+              (article, index) => (
                 <article
-                  key={`${result.title}-${index}`}
+                  key={`${article.url}-${index}`}
                   className="group rounded-2xl border border-slate-800 bg-slate-950/60 p-6 transition duration-200 hover:border-slate-700 hover:bg-slate-950"
                 >
                   <div className="flex gap-4">
@@ -174,21 +178,32 @@ export default function SearchResults({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-red-300">
-                          {result.category}
+                          {article.source?.name ||
+                            "Unknown Source"}
                         </span>
 
                         <span className="text-xs font-medium uppercase tracking-[0.12em] text-slate-600">
-                          Intelligence summary
+                          Live article
                         </span>
                       </div>
 
                       <h3 className="mt-4 text-xl font-bold leading-8 text-white transition group-hover:text-red-400 sm:text-2xl">
-                        {result.title}
+                        {article.title}
                       </h3>
 
                       <p className="mt-3 max-w-3xl leading-7 text-slate-400">
-                        {result.summary}
+                        {article.description}
                       </p>
+
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-red-400 transition hover:text-red-300"
+                      >
+                        View original source
+                        <span aria-hidden="true">→</span>
+                      </a>
                     </div>
                   </div>
                 </article>
@@ -201,11 +216,8 @@ export default function SearchResults({
               <span className="font-semibold text-slate-200">
                 Search note:
               </span>{" "}
-              These results come from the intelligence
-              topics currently indexed by
-              PoliticalPulse. Live article analysis is
-              available in the Live Intelligence feed
-              below.
+              These results are filtered from the live
+              PoliticalPulse homepage news feed.
             </p>
           </div>
         </div>
