@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  useEffect,
   useLayoutEffect,
   useState,
 } from "react";
@@ -246,6 +247,57 @@ export default function IntelligenceReportPage() {
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!report) {
+      return;
+    }
+
+    const hash =
+      window.location.hash.replace("#", "");
+
+    if (!hash) {
+      return;
+    }
+
+    let attempts = 0;
+    let timeoutId: ReturnType<
+      typeof setTimeout
+    > | null = null;
+
+    const scrollToRequestedSection = () => {
+      const target =
+        document.getElementById(hash);
+
+      if (target) {
+        requestAnimationFrame(() => {
+          target.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+
+        return;
+      }
+
+      attempts += 1;
+
+      if (attempts < 10) {
+        timeoutId = setTimeout(
+          scrollToRequestedSection,
+          100
+        );
+      }
+    };
+
+    scrollToRequestedSection();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [report]);
 
   if (isInitializingArticle) {
     return (

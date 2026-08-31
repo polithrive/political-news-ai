@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -36,10 +40,17 @@ function formatPublishedDate(
 export default function ReportHeader({
   article,
 }: ReportHeaderProps) {
+  const [imageFailed, setImageFailed] =
+    useState(false);
+
   const publishedDate =
     formatPublishedDate(
       article.publishedAt
     );
+
+  const hasUsableImage =
+    Boolean(article.urlToImage) &&
+    !imageFailed;
 
   return (
     <header className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
@@ -115,23 +126,42 @@ export default function ReportHeader({
           </div>
         </div>
 
-        {article.urlToImage ? (
-          <div className="relative h-44 overflow-hidden rounded-2xl border border-slate-800 bg-slate-800 sm:h-52 lg:h-48">
-            <Image
-              src={article.urlToImage}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="300px"
-              unoptimized
-              priority
-            />
+        <div className="relative h-44 overflow-hidden rounded-2xl border border-slate-800 bg-slate-800 sm:h-52 lg:h-48">
+          {hasUsableImage ? (
+            <>
+              <Image
+                src={article.urlToImage}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="300px"
+                unoptimized
+                priority
+                onError={() =>
+                  setImageFailed(true)
+                }
+              />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
-          </div>
-        ) : (
-          <div className="hidden h-48 rounded-2xl border border-slate-800 bg-gradient-to-br from-red-500/10 to-slate-900 lg:block" />
-        )}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
+            </>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-red-500/10 via-slate-900 to-slate-950">
+              <div className="text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-600 text-sm font-black text-white shadow-lg">
+                  P
+                </div>
+
+                <p className="mt-3 text-xs font-extrabold uppercase tracking-[0.18em] text-red-400">
+                  PoliticalPulse
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Intelligence Report
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

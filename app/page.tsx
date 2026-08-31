@@ -23,6 +23,19 @@ export default function Home() {
     errorMessage,
   } = useHomepageIntelligence();
 
+  function handleTopicSelect(
+    topic: string
+  ) {
+    setSearchTerm(topic);
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    });
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <Navbar
@@ -49,6 +62,7 @@ export default function Home() {
           isFeaturedAnalysisLoading
         }
         errorMessage={errorMessage}
+        onTopicSelect={handleTopicSelect}
       />
 
       <Footer />

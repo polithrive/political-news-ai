@@ -134,22 +134,7 @@ function PerspectiveCard({
           {title}
         </h3>
 
-        <p
-          className="mt-4 text-sm leading-7 sm:text-base sm:leading-8"
-          style={{
-            color: colors.text.secondary,
-          }}
-        >
-          {perspective.position}
-        </p>
-
-        <div
-          className="mt-6 border-t pt-5"
-          style={{
-            borderColor:
-              colors.border.default,
-          }}
-        >
+        <div className="mt-6">
           <h4
             className="text-sm font-semibold"
             style={{
@@ -261,12 +246,6 @@ export default function DebatePanel({
       primaryConcerns: [],
     };
 
-  const areasOfAgreement =
-    perspectiveAnalysis
-      ?.areasOfAgreement?.length > 0
-      ? perspectiveAnalysis.areasOfAgreement
-      : report.commonGround;
-
   const mainDisagreements =
     perspectiveAnalysis
       ?.mainDisagreements ?? [];
@@ -290,7 +269,7 @@ export default function DebatePanel({
   const politicalPulseAnalysis =
     perspectiveAnalysis
       ?.politicalPulseAnalysis ||
-    "PoliticalPulse identified the primary perspectives and areas of agreement, but a dedicated neutral synthesis was not available.";
+    "PoliticalPulse identified the primary arguments and areas of disagreement, but a dedicated neutral synthesis was not available.";
 
   return (
     <section
@@ -317,7 +296,7 @@ export default function DebatePanel({
           <SectionHeader
             eyebrow="PoliticalPulse Debate™"
             title="Where the Political Debate Really Stands"
-            subtitle="Compare the strongest progressive, centrist, and conservative interpretations while separating political framing from the underlying facts."
+            subtitle="Compare the strongest arguments and concerns across progressive, centrist, and conservative viewpoints while identifying the central areas of disagreement."
           />
 
           <div
@@ -448,41 +427,27 @@ export default function DebatePanel({
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
           <PerspectiveCard
             eyebrow="Progressive Analysis"
-            title="Progressive Perspective"
+            title="Progressive Arguments"
             perspective={progressive}
             tone="info"
           />
 
           <PerspectiveCard
             eyebrow="Centrist Analysis"
-            title="Centrist Perspective"
+            title="Centrist Arguments"
             perspective={centrist}
             tone="primary"
           />
 
           <PerspectiveCard
             eyebrow="Conservative Analysis"
-            title="Conservative Perspective"
+            title="Conservative Arguments"
             perspective={conservative}
             tone="warning"
           />
         </div>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <AnalysisCard
-            eyebrow="Areas of Agreement"
-            title="Where the Sides Agree"
-            accent="success"
-          >
-            <InsightList
-              items={areasOfAgreement}
-              emptyMessage="The current analysis did not identify clear areas of agreement."
-              color={
-                colors.status.success
-              }
-            />
-          </AnalysisCard>
-
+        <div className="mt-8">
           <AnalysisCard
             eyebrow="Areas of Disagreement"
             title="Where the Sides Diverge"
@@ -490,7 +455,7 @@ export default function DebatePanel({
           >
             <InsightList
               items={mainDisagreements}
-              emptyMessage="The current analysis did not identify specific disagreements beyond the differences described in the perspective summaries."
+              emptyMessage="The current analysis did not identify specific disagreements beyond the arguments described above."
               color={
                 colors.status.warning
               }
@@ -531,10 +496,7 @@ export default function DebatePanel({
               color: colors.text.muted,
             }}
           >
-            These perspectives summarize how different
-            political viewpoints may interpret the available
-            information. They do not represent endorsements
-            by PoliticalPulse.
+            These arguments summarize how different political viewpoints may interpret and debate the available information. They do not represent endorsements by PoliticalPulse.
           </p>
         </div>
       </div>

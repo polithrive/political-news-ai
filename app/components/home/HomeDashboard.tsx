@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,6 +19,19 @@ type HomeDashboardProps = {
   featuredAnalysis: IntelligencePreview | null;
   isLoading: boolean;
   errorMessage: string | null;
+  onTopicSelect: (topic: string) => void;
+};
+
+type ArticleImageProps = {
+  src?: string;
+  sizes: string;
+  priority?: boolean;
+  className?: string;
+  fallbackLabel?: string;
+};
+
+type SidebarProps = {
+  featuredArticle: Article | null;
 };
 
 const topics = [
@@ -28,6 +43,51 @@ const topics = [
   "Foreign Policy",
 ];
 
+function ArticleImage({
+  src,
+  sizes,
+  priority = false,
+  className = "object-cover",
+  fallbackLabel = "PoliticalPulse",
+}: ArticleImageProps) {
+  const [imageFailed, setImageFailed] =
+    useState(false);
+
+  const hasUsableImage =
+    Boolean(src) && !imageFailed;
+
+  if (!hasUsableImage) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-500/10 via-slate-900 to-slate-950">
+        <div className="text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-xs font-black text-white shadow-lg">
+            P
+          </div>
+
+          <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-red-400">
+            {fallbackLabel}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={src as string}
+      alt=""
+      fill
+      priority={priority}
+      unoptimized
+      sizes={sizes}
+      className={className}
+      onError={() =>
+        setImageFailed(true)
+      }
+    />
+  );
+}
+
 function StoryLink({
   article,
   label = "Open Intelligence Report",
@@ -37,9 +97,13 @@ function StoryLink({
 }) {
   return (
     <Link
-      href={`/intelligence/${createSlug(article.title)}`}
+      href={`/intelligence/${createSlug(
+        article.title
+      )}`}
       prefetch={false}
-      onClick={() => saveSelectedArticle(article)}
+      onClick={() =>
+        saveSelectedArticle(article)
+      }
       className="inline-flex items-center gap-2 text-sm font-bold text-red-400 transition hover:text-red-300"
     >
       {label}
@@ -82,67 +146,144 @@ function MetricBar({
   );
 }
 
-function Sidebar() {
-  const groups = [
+function Sidebar({
+  featuredArticle,
+}: SidebarProps) {
+  const reportBaseHref =
+    featuredArticle
+      ? `/intelligence/${createSlug(
+          featuredArticle.title
+        )}`
+      : null;
+
+  const intelligenceItems = [
     {
-      title: "Discover",
-      items: [
-        ["Home", "/"],
-        ["Top Stories", "/#top-stories"],
-        ["Trending", "/#top-stories"],
-        ["Topics", "/#topics"],
-      ],
+      label: "Trust Score",
+      section: "trust-score",
     },
     {
-      title: "Intelligence",
-      items: [
-        ["Trust Score", "/#intelligence"],
-        ["Perspective Analysis", "/#intelligence"],
-        ["Fact Check", "/#intelligence"],
-        ["Source Comparison", "/#intelligence"],
-      ],
+      label: "Perspective Analysis",
+      section: "perspective-analysis",
     },
     {
-      title: "More",
-      items: [
-        ["About", "/about"],
-        ["Contact", "/contact"],
-        ["Privacy", "/privacy"],
-      ],
+      label: "Fact Check",
+      section: "fact-check",
+    },
+    {
+      label: "Source Comparison",
+      section: "source-comparison",
     },
   ];
 
   return (
     <aside className="hidden xl:block">
       <div className="sticky top-28 rounded-3xl border border-slate-800 bg-slate-900/50 p-4">
-        {groups.map((group, groupIndex) => (
-          <div
-            key={group.title}
-            className={
-              groupIndex === 0
-                ? ""
-                : "mt-6 border-t border-slate-800 pt-6"
-            }
-          >
-            <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
-              {group.title}
-            </p>
+        <div>
+          <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+            Discover
+          </p>
 
-            <div className="space-y-1">
-              {group.items.map(
-                ([label, href]) => (
+          <div className="space-y-1">
+            <Link
+              href="/"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/#top-stories"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Top Stories
+            </Link>
+
+            <Link
+              href="/#top-stories"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Trending
+            </Link>
+
+            <Link
+              href="/#topics"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Topics
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-slate-800 pt-6">
+          <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+            Intelligence
+          </p>
+
+          <div className="space-y-1">
+            {intelligenceItems.map(
+              (item) => {
+                if (
+                  !featuredArticle ||
+                  !reportBaseHref
+                ) {
+                  return (
+                    <span
+                      key={item.label}
+                      className="block cursor-not-allowed rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600"
+                    >
+                      {item.label}
+                    </span>
+                  );
+                }
+
+                return (
                   <Link
-                    key={label}
-                    href={href}
+                    key={item.label}
+                    href={`${reportBaseHref}#${item.section}`}
+                    prefetch={false}
+                    onClick={() =>
+                      saveSelectedArticle(
+                        featuredArticle
+                      )
+                    }
                     className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
                   >
-                    {label}
+                    {item.label}
                   </Link>
-                )
-              )}
-            </div>
+                );
+              }
+            )}
           </div>
-        ))}
+        </div>
+
+        <div className="mt-6 border-t border-slate-800 pt-6">
+          <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+            More
+          </p>
+
+          <div className="space-y-1">
+            <Link
+              href="/about"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              About
+            </Link>
+
+            <Link
+              href="/contact"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Contact
+            </Link>
+
+            <Link
+              href="/privacy"
+              className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/80 hover:text-white"
+            >
+              Privacy
+            </Link>
+          </div>
+        </div>
       </div>
     </aside>
   );
@@ -151,7 +292,9 @@ function Sidebar() {
 function RightRail({
   featuredAnalysis,
 }: {
-  featuredAnalysis: IntelligencePreview | null;
+  featuredAnalysis:
+    | IntelligencePreview
+    | null;
 }) {
   const trust =
     featuredAnalysis?.trustScore ?? 0;
@@ -296,6 +439,7 @@ export default function HomeDashboard({
   featuredAnalysis,
   isLoading,
   errorMessage,
+  onTopicSelect,
 }: HomeDashboardProps) {
   const storyPool =
     articles.filter(
@@ -312,7 +456,11 @@ export default function HomeDashboard({
 
   return (
     <div className="mx-auto grid max-w-[1520px] gap-7 px-5 py-8 sm:px-8 xl:grid-cols-[185px_minmax(0,1fr)_290px]">
-      <Sidebar />
+      <Sidebar
+        featuredArticle={
+          featuredArticle
+        }
+      />
 
       <div className="min-w-0">
         <section>
@@ -340,22 +488,14 @@ export default function HomeDashboard({
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.52fr)_minmax(250px,0.48fr)]">
               <article className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
                 <div className="relative min-h-[455px] bg-slate-800">
-                  {featuredArticle?.urlToImage ? (
-                    <Image
-                      src={
-                        featuredArticle
-                          .urlToImage
-                      }
-                      alt=""
-                      fill
-                      priority
-                      unoptimized
-                      sizes="(max-width: 1024px) 100vw, 62vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-slate-900 to-slate-950" />
-                  )}
+                  <ArticleImage
+                    src={
+                      featuredArticle
+                        ?.urlToImage
+                    }
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 62vw"
+                  />
 
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
 
@@ -498,20 +638,13 @@ export default function HomeDashboard({
                   >
                     <div className="grid h-full sm:grid-cols-[150px_1fr]">
                       <div className="relative min-h-[165px] bg-slate-800">
-                        {article.urlToImage ? (
-                          <Image
-                            src={
-                              article.urlToImage
-                            }
-                            alt=""
-                            fill
-                            unoptimized
-                            sizes="150px"
-                            className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-slate-900" />
-                        )}
+                        <ArticleImage
+                          src={
+                            article.urlToImage
+                          }
+                          sizes="150px"
+                          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                        />
 
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
                       </div>
@@ -584,12 +717,16 @@ export default function HomeDashboard({
 
             <div className="mt-5 flex flex-wrap gap-2">
               {topics.map((topic) => (
-                <span
+                <button
                   key={topic}
-                  className="rounded-full border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-semibold text-slate-300"
+                  type="button"
+                  onClick={() =>
+                    onTopicSelect(topic)
+                  }
+                  className="rounded-full border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/40"
                 >
                   {topic}
-                </span>
+                </button>
               ))}
             </div>
           </div>

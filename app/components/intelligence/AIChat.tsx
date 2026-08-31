@@ -25,6 +25,82 @@ type ChatErrorResponse = {
   error?: string;
 };
 
+const SUGGESTED_QUESTIONS_DELIMITER =
+  "<<<POLITICALPULSE_SUGGESTED_QUESTIONS>>>";
+
+function getVisibleAnswer(value: string): string {
+  const delimiterIndex = value.indexOf(
+    SUGGESTED_QUESTIONS_DELIMITER
+  );
+
+  if (delimiterIndex >= 0) {
+    return value.slice(0, delimiterIndex).trimEnd();
+  }
+
+  // Prevent a partially streamed delimiter from flashing in the UI.
+  const maxPrefixLength = Math.min(
+    value.length,
+    SUGGESTED_QUESTIONS_DELIMITER.length - 1
+  );
+
+  for (
+    let prefixLength = maxPrefixLength;
+    prefixLength > 0;
+    prefixLength -= 1
+  ) {
+    if (
+      value.endsWith(
+        SUGGESTED_QUESTIONS_DELIMITER.slice(
+          0,
+          prefixLength
+        )
+      )
+    ) {
+      return value.slice(0, -prefixLength);
+    }
+  }
+
+  return value;
+}
+
+function getSuggestedQuestions(
+  value: string
+): string[] {
+  const delimiterIndex = value.indexOf(
+    SUGGESTED_QUESTIONS_DELIMITER
+  );
+
+  if (delimiterIndex < 0) {
+    return [];
+  }
+
+  const rawQuestions = value
+    .slice(
+      delimiterIndex +
+        SUGGESTED_QUESTIONS_DELIMITER.length
+    )
+    .trim();
+
+  try {
+    const parsed = JSON.parse(rawQuestions);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter(
+        (item): item is string =>
+          typeof item === "string" &&
+          item.trim().length > 0
+      )
+      .map((item) => item.trim())
+      .slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
 export default function AIChat({
   reportContext,
   reportTitle,
@@ -41,16 +117,20 @@ export default function AIChat({
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
 
+  const [suggestedQuestions, setSuggestedQuestions] =
+    useState<Record<string, string[]>>({});
+
   const activeRequestRef =
     useRef<AbortController | null>(null);
 
   async function askQuestion(
-    event?: FormEvent<HTMLFormElement>
+    event?: FormEvent<HTMLFormElement>,
+    suggestedQuestion?: string
   ) {
     event?.preventDefault();
 
     const trimmedQuestion =
-      question.trim();
+      (suggestedQuestion ?? question).trim();
 
     if (
       !trimmedQuestion ||
@@ -178,6 +258,9 @@ export default function AIChat({
 
         streamedAnswer += chunk;
 
+        const visibleAnswer =
+          getVisibleAnswer(streamedAnswer);
+
         setMessages((previous) =>
           previous.map((message) =>
             message.id ===
@@ -185,7 +268,7 @@ export default function AIChat({
               ? {
                   ...message,
                   content:
-                    streamedAnswer,
+                    visibleAnswer,
                 }
               : message
           )
@@ -198,6 +281,9 @@ export default function AIChat({
       if (finalChunk) {
         streamedAnswer += finalChunk;
 
+        const visibleAnswer =
+          getVisibleAnswer(streamedAnswer);
+
         setMessages((previous) =>
           previous.map((message) =>
             message.id ===
@@ -205,14 +291,39 @@ export default function AIChat({
               ? {
                   ...message,
                   content:
-                    streamedAnswer,
+                    visibleAnswer,
                 }
               : message
           )
         );
       }
 
-      if (!streamedAnswer.trim()) {
+      const finalVisibleAnswer =
+        getVisibleAnswer(streamedAnswer);
+
+      const finalSuggestedQuestions =
+        getSuggestedQuestions(streamedAnswer);
+
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                content: finalVisibleAnswer,
+              }
+            : message
+        )
+      );
+
+      if (finalSuggestedQuestions.length > 0) {
+        setSuggestedQuestions((previous) => ({
+          ...previous,
+          [assistantMessageId]:
+            finalSuggestedQuestions,
+        }));
+      }
+
+      if (!finalVisibleAnswer.trim()) {
         throw new Error(
           "PoliticalPulse returned an empty response."
         );
@@ -847,6 +958,62 @@ export default function AIChat({
                             >
                               ▍
                             </span>
+                          ) : null}
+
+                          {!isCurrentStreamingMessage &&
+                          suggestedQuestions[message.id]
+                            ?.length ? (
+                            <div
+                              className="mt-6 border-t pt-5"
+                              style={{
+                                borderColor:
+                                  colors.border.default,
+                              }}
+                            >
+                              <p
+                                className="mb-3 text-xs font-bold uppercase tracking-[0.14em]"
+                                style={{
+                                  color:
+                                    colors.text.muted,
+                                }}
+                              >
+                                Continue exploring
+                              </p>
+
+                              <div className="flex flex-wrap gap-2">
+                                {suggestedQuestions[
+                                  message.id
+                                ].map(
+                                  (suggestion) => (
+                                    <button
+                                      key={suggestion}
+                                      type="button"
+                                      disabled={isLoading}
+                                      onClick={() =>
+                                        void askQuestion(
+                                          undefined,
+                                          suggestion
+                                        )
+                                      }
+                                      className="rounded-xl border px-3 py-2 text-left text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                                      style={{
+                                        backgroundColor:
+                                          colors.background
+                                            .elevated,
+                                        borderColor:
+                                          colors.border
+                                            .brand,
+                                        color:
+                                          colors.brand
+                                            .secondary,
+                                      }}
+                                    >
+                                      {suggestion}
+                                    </button>
+                                  )
+                                )}
+                              </div>
+                            </div>
                           ) : null}
                         </div>
                       ) : (
