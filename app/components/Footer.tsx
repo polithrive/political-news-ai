@@ -4,34 +4,69 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-800 bg-slate-950">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-8 py-14 md:flex-row md:justify-between">
-        <div className="max-w-md">
-          <h2 className="text-2xl font-bold text-white">
-            Political<span className="text-red-500">Pulse</span>
-          </h2>
+    <footer className="border-t border-[#17446D]/65 bg-[#020D21]">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-12 px-6 py-14 sm:px-8 lg:flex-row lg:justify-between">
+        {/* Brand */}
+        <div className="max-w-lg">
+          <Link
+            href="/"
+            className="inline-block"
+            aria-label="The Angle Report home"
+          >
+            <div className="font-serif text-[34px] font-black leading-[0.84] tracking-[-0.05em] text-white">
+              <span className="block text-[24px] text-[#38BDF8]">
+                the
+              </span>
 
-          <p className="mt-4 text-sm leading-7 text-slate-400">
-            AI-powered political intelligence designed to help people understand
-            the news—not just consume it.
+              <span className="block">
+                angle
+              </span>
+
+              <span className="block">
+                report
+                <span className="text-[#FF2638]">.</span>
+              </span>
+            </div>
+          </Link>
+
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.34em] text-[#55C8FF]">
+            Ideas from every side.
           </p>
 
-          <p className="mt-6 text-sm text-slate-500">
-            Independent • Transparent • Nonpartisan AI Analysis
+          <p className="mt-6 max-w-md text-sm leading-7 text-[#9CB0C5]">
+            AI-powered news intelligence designed to help people
+            understand the story behind the headline, evaluate the
+            evidence, compare perspectives, and see the full picture.
           </p>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {[
+              "Independent",
+              "Transparent",
+              "Multi-perspective",
+            ].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-[#17446D]/70 bg-[#061A31] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8FB4D3]"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-10 text-sm md:grid-cols-3">
+        {/* Navigation */}
+        <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3 lg:gap-14">
           <div>
-            <h3 className="mb-4 font-semibold text-white">
-              Platform
+            <h3 className="mb-4 text-xs font-black uppercase tracking-[0.18em] text-white">
+              Explore
             </h3>
 
-            <ul className="space-y-3 text-slate-400">
+            <ul className="space-y-3 text-[#8EA3B7]">
               <li>
                 <Link
                   href="/"
-                  className="transition hover:text-white"
+                  className="transition hover:text-[#55C8FF]"
                 >
                   Home
                 </Link>
@@ -39,34 +74,43 @@ export default function Footer() {
 
               <li>
                 <Link
-                  href="/news"
-                  className="transition hover:text-white"
+                  href="/#top-stories"
+                  className="transition hover:text-[#55C8FF]"
                 >
-                  Live News
+                  Top Stories
                 </Link>
               </li>
 
               <li>
                 <Link
-                  href="/analysis"
-                  className="transition hover:text-white"
+                  href="/#intelligence"
+                  className="transition hover:text-[#55C8FF]"
                 >
                   Intelligence Reports
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href="/#topics"
+                  className="transition hover:text-[#55C8FF]"
+                >
+                  Topics
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-white">
-              Resources
+            <h3 className="mb-4 text-xs font-black uppercase tracking-[0.18em] text-white">
+              Company
             </h3>
 
-            <ul className="space-y-3 text-slate-400">
+            <ul className="space-y-3 text-[#8EA3B7]">
               <li>
                 <Link
                   href="/about"
-                  className="transition hover:text-white"
+                  className="transition hover:text-[#55C8FF]"
                 >
                   About
                 </Link>
@@ -74,8 +118,17 @@ export default function Footer() {
 
               <li>
                 <Link
+                  href="/contact"
+                  className="transition hover:text-[#55C8FF]"
+                >
+                  Contact
+                </Link>
+              </li>
+
+              <li>
+                <Link
                   href="/privacy"
-                  className="transition hover:text-white"
+                  className="transition hover:text-[#55C8FF]"
                 >
                   Privacy
                 </Link>
@@ -84,7 +137,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/terms"
-                  className="transition hover:text-white"
+                  className="transition hover:text-[#55C8FF]"
                 >
                   Terms
                 </Link>
@@ -93,28 +146,30 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-white">
+            <h3 className="mb-4 text-xs font-black uppercase tracking-[0.18em] text-white">
               Intelligence
             </h3>
 
-            <ul className="space-y-3 text-slate-400">
-              <li>Bias Analysis</li>
+            <ul className="space-y-3 text-[#8EA3B7]">
+              <li>Trust Score</li>
+              <li>Perspective Analysis</li>
+              <li>Fact Check</li>
               <li>Consensus Engine</li>
+              <li>Source Comparison</li>
               <li>AI Intelligence</li>
             </ul>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-slate-800">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-8 py-6 text-sm text-slate-500 md:flex-row">
+      <div className="border-t border-[#17446D]/55">
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col items-center justify-between gap-4 px-6 py-6 text-xs text-[#647B92] sm:px-8 md:flex-row">
           <p>
-            © {year} PoliticalPulse. All rights reserved.
+            © {year} The Angle Report. All rights reserved.
           </p>
 
-          <p>
-            Built with AI to help people understand politics through evidence,
-            context, and multiple perspectives.
+          <p className="text-center md:text-right">
+            Evidence. Context. Perspectives. Understanding.
           </p>
         </div>
       </div>

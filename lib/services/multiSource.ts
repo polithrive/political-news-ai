@@ -13,6 +13,28 @@ const MIN_RELEVANCE_SCORE = 30;
 const MAX_QUERY_KEYWORDS = 5;
 const MIN_QUERY_KEYWORDS = 3;
 
+function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  const vercelUrl =
+    process.env.VERCEL_URL?.trim();
+
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/\/$/, "")}`;
+  }
+
+  return "http://localhost:3000";
+}
+
 const STOP_WORDS = new Set([
   "a",
   "an",
@@ -846,9 +868,12 @@ export async function gatherStorySources(
                   relatedStoryQuery
                 );
 
+              const apiBaseUrl =
+                getApiBaseUrl();
+
               const response =
                 await fetch(
-                  `/api/news?mode=related&q=${query}`,
+                  `${apiBaseUrl}/api/news?mode=related&q=${query}`,
                   {
                     signal:
                       controller.signal,

@@ -93,15 +93,23 @@ export default function TrustScore({
     );
 
   return (
-    <section className="h-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-sm">
-      <div className="border-b border-slate-800 px-5 py-4">
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-400">
-          PoliticalPulse Trust Score
-        </p>
+    <section className="h-full overflow-hidden rounded-3xl border border-[#17446D]/70 bg-[#04162C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+      <div className="border-b border-[#17446D]/60 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#55C8FF]">
+              The Angle Report
+            </p>
 
-        <h2 className="mt-2 text-xl font-extrabold text-white">
-          Report confidence
-        </h2>
+            <h2 className="mt-2 text-xl font-extrabold text-white">
+              Trust Score™
+            </h2>
+          </div>
+
+          <span className="rounded-full border border-[#38BDF8]/20 bg-[#38BDF8]/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#7DD3FC]">
+            Report Confidence
+          </span>
+        </div>
       </div>
 
       <div className="p-5">
@@ -112,18 +120,18 @@ export default function TrustScore({
                 {score}
               </span>
 
-              <span className="pb-1 text-lg font-bold text-slate-500">
+              <span className="pb-1 text-lg font-bold text-[#58748E]">
                 /100
               </span>
             </div>
 
-            <p className="mt-2 text-sm font-bold text-slate-300">
+            <p className="mt-2 text-sm font-bold text-[#C5D2DE]">
               {getScoreLabel(score)} confidence
             </p>
           </div>
 
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-red-300">
+          <div className="rounded-2xl border border-[#FF2638]/25 bg-[#FF2638]/10 px-4 py-3 text-center">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#FF7A86]">
               Evidence
             </p>
 
@@ -133,9 +141,9 @@ export default function TrustScore({
           </div>
         </div>
 
-        <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-800">
+        <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#0A2947]">
           <div
-            className="h-full rounded-full bg-red-500"
+            className="h-full rounded-full bg-[#FF2638] shadow-[0_0_12px_rgba(255,38,56,0.25)]"
             style={{
               width: `${score}%`,
             }}
@@ -143,8 +151,8 @@ export default function TrustScore({
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <p className="text-xs font-bold text-slate-500">
+          <div className="rounded-2xl border border-[#17446D]/65 bg-[#020D21]/70 p-4">
+            <p className="text-xs font-bold text-[#6F879F]">
               Sources
             </p>
 
@@ -153,8 +161,8 @@ export default function TrustScore({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <p className="text-xs font-bold text-slate-500">
+          <div className="rounded-2xl border border-[#17446D]/65 bg-[#020D21]/70 p-4">
+            <p className="text-xs font-bold text-[#6F879F]">
               Agreement
             </p>
 
@@ -165,8 +173,8 @@ export default function TrustScore({
             </p>
           </div>
 
-          <div className="col-span-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <p className="text-xs font-bold text-slate-500">
+          <div className="col-span-2 rounded-2xl border border-[#17446D]/65 bg-[#020D21]/70 p-4">
+            <p className="text-xs font-bold text-[#6F879F]">
               Political diversity
             </p>
 
@@ -184,97 +192,97 @@ export default function TrustScore({
           </div>
         ) : null}
 
-        <details className="group mt-5 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-bold text-slate-200 transition hover:bg-slate-900/80">
+        <details className="group mt-5 overflow-hidden rounded-2xl border border-[#17446D]/65 bg-[#020D21]/60">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-bold text-[#D7E2EC] transition hover:bg-[#08203A]">
             <span>
               How is this score calculated?
             </span>
 
             <span
               aria-hidden="true"
-              className="text-lg text-red-400 transition-transform group-open:rotate-45"
+              className="text-lg text-[#FF5161] transition-transform group-open:rotate-45"
             >
               +
             </span>
           </summary>
 
-          <div className="border-t border-slate-800 px-4 py-5">
-            <p className="text-sm leading-6 text-slate-300">
-              PoliticalPulse combines several confidence signals to estimate the strength of the available reporting.
+          <div className="border-t border-[#17446D]/60 px-4 py-5">
+            <p className="text-sm leading-6 text-[#B5C3D2]">
+              The Angle Report combines several confidence signals to estimate the strength of the available reporting.
             </p>
 
             <div className="mt-4 space-y-3">
-              <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-[#17446D]/60 bg-[#061A31]/80 p-3">
                 <div>
                   <p className="text-sm font-bold text-white">
                     Analysis confidence
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-400">
-                    Confidence derived from PoliticalPulse analysis of the available story information.
+                  <p className="mt-1 text-xs leading-5 text-[#8EA3B7]">
+                    Confidence derived from The Angle Report analysis of the available story information.
                   </p>
                 </div>
 
-                <span className="shrink-0 text-sm font-extrabold text-red-300">
+                <span className="shrink-0 text-sm font-extrabold text-[#55C8FF]">
                   35%
                 </span>
               </div>
 
-              <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-[#17446D]/60 bg-[#061A31]/80 p-3">
                 <div>
                   <p className="text-sm font-bold text-white">
                     Independent corroboration
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                  <p className="mt-1 text-xs leading-5 text-[#8EA3B7]">
                     Measures how many independent sources are available to support or compare the reporting.
                   </p>
                 </div>
 
-                <span className="shrink-0 text-sm font-extrabold text-red-300">
+                <span className="shrink-0 text-sm font-extrabold text-[#55C8FF]">
                   35%
                 </span>
               </div>
 
-              <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-[#17446D]/60 bg-[#061A31]/80 p-3">
                 <div>
                   <p className="text-sm font-bold text-white">
                     Source quality
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                  <p className="mt-1 text-xs leading-5 text-[#8EA3B7]">
                     Uses available source reliability and factual-reporting ratings. Unknown ratings receive a neutral value rather than a penalty.
                   </p>
                 </div>
 
-                <span className="shrink-0 text-sm font-extrabold text-red-300">
+                <span className="shrink-0 text-sm font-extrabold text-[#55C8FF]">
                   20%
                 </span>
               </div>
 
-              <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-[#17446D]/60 bg-[#061A31]/80 p-3">
                 <div>
                   <p className="text-sm font-bold text-white">
                     Reporting agreement
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                  <p className="mt-1 text-xs leading-5 text-[#8EA3B7]">
                     Measures how closely available sources agree on the core facts. Unavailable agreement data receives a neutral value.
                   </p>
                 </div>
 
-                <span className="shrink-0 text-sm font-extrabold text-red-300">
+                <span className="shrink-0 text-sm font-extrabold text-[#55C8FF]">
                   10%
                 </span>
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-red-300">
+            <div className="mt-5 rounded-xl border border-[#38BDF8]/20 bg-[#38BDF8]/5 p-4">
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#55C8FF]">
                 This report
               </p>
 
-              <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+              <div className="mt-3 space-y-2 text-sm leading-6 text-[#B5C3D2]">
                 <p>
                   {getCorroborationExplanation(
                     trustScore.sourceCount
@@ -303,20 +311,20 @@ export default function TrustScore({
               </div>
             </div>
 
-            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-slate-400">
+            <div className="mt-4 rounded-xl border border-[#17446D]/60 bg-[#061A31]/80 p-4">
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#8FB4D3]">
                 Confidence safeguards
               </p>
 
-              <p className="mt-2 text-xs leading-5 text-slate-400">
+              <p className="mt-2 text-xs leading-5 text-[#8EA3B7]">
                 Reports supported by only one source are capped at 60/100. Reports supported by two sources are capped at 75/100. These limits prevent strong analysis confidence from outweighing limited corroboration.
               </p>
             </div>
           </div>
         </details>
 
-        <p className="mt-4 text-xs leading-5 text-slate-500">
-          Trust Score summarizes the strength of the available reporting. It is not a guarantee that every claim is correct.
+        <p className="mt-4 text-xs leading-5 text-[#647B92]">
+          Trust Score™ summarizes the strength of the available reporting. It is not a guarantee that every claim is correct.
         </p>
       </div>
     </section>

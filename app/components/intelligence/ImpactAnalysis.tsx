@@ -11,16 +11,16 @@ function BulletList({
 }: {
   items: string[];
   emptyMessage: string;
-  tone: "blue" | "amber";
+  tone: "cyan" | "amber";
 }) {
   const dotClass =
-    tone === "blue"
-      ? "bg-blue-400"
+    tone === "cyan"
+      ? "bg-[#38BDF8]"
       : "bg-amber-400";
 
   if (items.length === 0) {
     return (
-      <p className="text-sm leading-6 text-slate-500">
+      <p className="text-sm leading-6 text-[#6F879F]">
         {emptyMessage}
       </p>
     );
@@ -38,7 +38,7 @@ function BulletList({
             className={`mt-2 h-2 w-2 shrink-0 rounded-full ${dotClass}`}
           />
 
-          <span className="text-sm leading-6 text-slate-300">
+          <span className="text-sm leading-6 text-[#B5C3D2]">
             {item}
           </span>
         </li>
@@ -53,39 +53,40 @@ export default function ImpactAnalysis({
   return (
     <section
       aria-label="Impact analysis"
-      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-sm"
+      className="overflow-hidden rounded-3xl border border-[#17446D]/70 bg-[#04162C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
     >
-      <div className="border-b border-slate-800 px-5 py-4 sm:px-6">
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-400">
-          Impact Analysis
-        </p>
+      <div className="border-b border-[#17446D]/60 px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#55C8FF]">
+              Impact Analysis
+            </p>
 
-        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
-          <h2 className="text-2xl font-extrabold tracking-tight text-white">
-            What this story means
-          </h2>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+              What this story means
+            </h2>
+          </div>
 
-          <p className="max-w-xl text-sm leading-6 text-slate-400">
-            Why the story matters, who may be affected,
-            and what could happen next.
+          <p className="max-w-xl text-sm leading-6 text-[#8EA3B7]">
+            Why the story matters, who may be affected, and what could happen next.
           </p>
         </div>
       </div>
 
       <div className="p-5 sm:p-6">
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-red-300">
+        <div className="rounded-2xl border border-[#FF2638]/20 bg-[#FF2638]/[0.05] p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#FF7A86]">
             Why this matters
           </p>
 
-          <p className="mt-3 text-base leading-7 text-slate-100">
+          <p className="mt-3 text-base leading-7 text-[#E6EDF4]">
             {report.whyThisMatters}
           </p>
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-blue-300">
+          <div className="rounded-2xl border border-[#38BDF8]/20 bg-[#38BDF8]/[0.05] p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#7DD3FC]">
               Who is most affected
             </p>
 
@@ -93,13 +94,13 @@ export default function ImpactAnalysis({
               <BulletList
                 items={report.whoIsAffected}
                 emptyMessage="The affected groups could not be determined from the available information."
-                tone="blue"
+                tone="cyan"
               />
             </div>
           </div>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">
               Questions still unanswered
             </p>
 
@@ -114,22 +115,22 @@ export default function ImpactAnalysis({
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300">
+          <div className="rounded-2xl border border-[#17446D]/60 bg-[#020D21]/70 p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">
               Short-term impact
             </p>
 
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="mt-3 text-sm leading-6 text-[#B5C3D2]">
               {report.shortTermImpact}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-300">
+          <div className="rounded-2xl border border-[#17446D]/60 bg-[#020D21]/70 p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">
               Long-term impact
             </p>
 
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="mt-3 text-sm leading-6 text-[#B5C3D2]">
               {report.longTermImpact}
             </p>
           </div>

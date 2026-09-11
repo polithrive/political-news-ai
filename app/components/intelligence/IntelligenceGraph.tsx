@@ -4,24 +4,23 @@ import type {
   IntelligenceGraph as IntelligenceGraphData,
 } from "@/app/types/intelligenceGraph";
 
-import AnalysisCard from "@/app/components/ui/AnalysisCard";
-import SectionHeader from "@/app/components/ui/SectionHeader";
-
-import { colors } from "@/lib/design/theme";
-
 type IntelligenceGraphProps = {
   graph: IntelligenceGraphData;
 };
 
 type NodeTone =
-  | "primary"
-  | "info"
-  | "success"
-  | "warning";
+  | "cyan"
+  | "blue"
+  | "green"
+  | "amber"
+  | "red";
 
 type NodePresentation = {
-  accent: NodeTone;
-  color: string;
+  label: string;
+  border: string;
+  background: string;
+  text: string;
+  dot: string;
 };
 
 const nodePresentations: Record<
@@ -29,40 +28,75 @@ const nodePresentations: Record<
   NodePresentation
 > = {
   Story: {
-    accent: "primary",
-    color: colors.brand.primary,
+    label: "Story",
+    border: "border-[#38BDF8]/25",
+    background: "bg-[#38BDF8]/[0.06]",
+    text: "text-[#7DD3FC]",
+    dot: "bg-[#38BDF8]",
   },
+
   Person: {
-    accent: "info",
-    color: colors.status.info,
+    label: "Person",
+    border: "border-blue-400/20",
+    background: "bg-blue-500/[0.05]",
+    text: "text-blue-300",
+    dot: "bg-blue-400",
   },
+
   Organization: {
-    accent: "info",
-    color: colors.status.info,
+    label: "Organization",
+    border: "border-blue-400/20",
+    background: "bg-blue-500/[0.05]",
+    text: "text-blue-300",
+    dot: "bg-blue-400",
   },
+
   Legislation: {
-    accent: "success",
-    color: colors.status.success,
+    label: "Legislation",
+    border: "border-emerald-500/20",
+    background: "bg-emerald-500/[0.05]",
+    text: "text-emerald-300",
+    dot: "bg-emerald-400",
   },
+
   "Court Case": {
-    accent: "warning",
-    color: colors.status.warning,
+    label: "Court Case",
+    border: "border-amber-500/20",
+    background: "bg-amber-500/[0.05]",
+    text: "text-amber-300",
+    dot: "bg-amber-400",
   },
+
   "Government Agency": {
-    accent: "info",
-    color: colors.status.info,
+    label: "Government Agency",
+    border: "border-blue-400/20",
+    background: "bg-blue-500/[0.05]",
+    text: "text-blue-300",
+    dot: "bg-blue-400",
   },
+
   Location: {
-    accent: "success",
-    color: colors.status.success,
+    label: "Location",
+    border: "border-emerald-500/20",
+    background: "bg-emerald-500/[0.05]",
+    text: "text-emerald-300",
+    dot: "bg-emerald-400",
   },
+
   Topic: {
-    accent: "primary",
-    color: colors.brand.primary,
+    label: "Topic",
+    border: "border-[#FF2638]/20",
+    background: "bg-[#FF2638]/[0.05]",
+    text: "text-[#FF8B95]",
+    dot: "bg-[#FF5161]",
   },
+
   "Historical Event": {
-    accent: "warning",
-    color: colors.status.warning,
+    label: "Historical Event",
+    border: "border-amber-500/20",
+    background: "bg-amber-500/[0.05]",
+    text: "text-amber-300",
+    dot: "bg-amber-400",
   },
 };
 
@@ -71,8 +105,9 @@ function getNodeTitle(
   nodes: GraphNode[]
 ): string {
   return (
-    nodes.find((node) => node.id === nodeId)?.title ??
-    nodeId
+    nodes.find(
+      (node) => node.id === nodeId
+    )?.title ?? nodeId
   );
 }
 
@@ -107,9 +142,11 @@ export default function IntelligenceGraph({
       (node) => node.type === "Story"
     );
 
-  const relatedNodes = graph.nodes.filter(
-    (node) => node.id !== centralNode?.id
-  );
+  const relatedNodes =
+    graph.nodes.filter(
+      (node) =>
+        node.id !== centralNode?.id
+    );
 
   const totalConnections =
     graph.connections.length;
@@ -117,145 +154,84 @@ export default function IntelligenceGraph({
   return (
     <section
       aria-labelledby="intelligence-graph-title"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-2xl shadow-black/20 sm:p-8 lg:p-10"
-      style={{
-        backgroundColor: colors.background.surface,
-        borderColor: colors.border.default,
-      }}
+      className="relative overflow-hidden rounded-3xl border border-[#17446D]/70 bg-[#04162C]/95 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.18)] sm:p-8"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
-        style={{
-          backgroundColor: `${colors.status.info}12`,
-        }}
+        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-[#38BDF8]/5 blur-3xl"
       />
 
       <div className="relative">
-        <SectionHeader
-          eyebrow="Intelligence Graph"
-          title="Connected Context"
-          subtitle="Explore the people, organizations, legislation, topics, and events connected to this story."
-        />
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#55C8FF]">
+            Intelligence Graph
+          </p>
+
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+            Connected context
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8EA3B7]">
+            Explore the people,
+            organizations, legislation,
+            topics, places, and events
+            connected to this story.
+          </p>
+        </div>
 
         {centralNode ? (
           <div className="mt-8">
-            <article
-              className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border p-6 text-center sm:p-8"
-              style={{
-                backgroundColor:
-                  colors.background.elevated,
-                borderColor: `${colors.brand.primary}55`,
-              }}
-            >
+            <article className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-[#38BDF8]/30 bg-[#020D21]/70 p-6 text-center sm:p-8">
               <div
                 aria-hidden="true"
-                className="absolute inset-x-0 top-0 h-1"
-                style={{
-                  backgroundColor:
-                    colors.brand.primary,
-                }}
+                className="absolute inset-x-0 top-0 h-1 bg-[#38BDF8]"
               />
 
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full blur-3xl"
-                style={{
-                  backgroundColor: `${colors.brand.primary}16`,
-                }}
+                className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-[#38BDF8]/10 blur-3xl"
               />
 
               <div className="relative">
-                <div
-                  className="mx-auto inline-flex items-center gap-2 rounded-full border px-4 py-2"
-                  style={{
-                    backgroundColor: `${colors.brand.primary}12`,
-                    borderColor: `${colors.brand.primary}35`,
-                    color: colors.brand.primary,
-                  }}
-                >
+                <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#38BDF8]/25 bg-[#38BDF8]/10 px-4 py-2 text-[#7DD3FC]">
                   <span
                     aria-hidden="true"
-                    className="h-2 w-2 rounded-full bg-current"
+                    className="h-2 w-2 rounded-full bg-[#38BDF8]"
                   />
 
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em]">
                     Central Story
                   </span>
                 </div>
 
                 <h3
                   id="intelligence-graph-title"
-                  className="mx-auto mt-5 max-w-3xl text-2xl font-bold tracking-tight sm:text-3xl"
-                  style={{
-                    color: colors.text.primary,
-                  }}
+                  className="mx-auto mt-5 max-w-3xl text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
                 >
                   {centralNode.title}
                 </h3>
 
-                <p
-                  className="mx-auto mt-4 max-w-3xl text-sm leading-7 sm:text-base sm:leading-8"
-                  style={{
-                    color: colors.text.secondary,
-                  }}
-                >
+                <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-[#B5C3D2] sm:text-base sm:leading-8">
                   {centralNode.description}
                 </p>
 
                 <div className="mt-7 flex flex-wrap justify-center gap-3">
-                  <div
-                    className="rounded-xl border px-4 py-3"
-                    style={{
-                      backgroundColor:
-                        colors.background.surface,
-                      borderColor:
-                        colors.border.default,
-                    }}
-                  >
-                    <p
-                      className="text-xs font-semibold uppercase tracking-[0.16em]"
-                      style={{
-                        color: colors.text.muted,
-                      }}
-                    >
+                  <div className="min-w-[130px] rounded-xl border border-[#17446D]/60 bg-[#061A31] px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#6F879F]">
                       Related Entities
                     </p>
 
-                    <p
-                      className="mt-1 text-xl font-bold"
-                      style={{
-                        color: colors.text.primary,
-                      }}
-                    >
+                    <p className="mt-1 text-xl font-black text-white">
                       {relatedNodes.length}
                     </p>
                   </div>
 
-                  <div
-                    className="rounded-xl border px-4 py-3"
-                    style={{
-                      backgroundColor:
-                        colors.background.surface,
-                      borderColor:
-                        colors.border.default,
-                    }}
-                  >
-                    <p
-                      className="text-xs font-semibold uppercase tracking-[0.16em]"
-                      style={{
-                        color: colors.text.muted,
-                      }}
-                    >
+                  <div className="min-w-[130px] rounded-xl border border-[#17446D]/60 bg-[#061A31] px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#6F879F]">
                       Connections
                     </p>
 
-                    <p
-                      className="mt-1 text-xl font-bold"
-                      style={{
-                        color: colors.text.primary,
-                      }}
-                    >
+                    <p className="mt-1 text-xl font-black text-white">
                       {totalConnections}
                     </p>
                   </div>
@@ -267,186 +243,151 @@ export default function IntelligenceGraph({
               <>
                 <div
                   aria-hidden="true"
-                  className="mx-auto h-12 w-px"
-                  style={{
-                    backgroundColor:
-                      colors.border.strong ??
-                      colors.border.default,
-                  }}
+                  className="mx-auto h-12 w-px bg-[#17446D]"
                 />
 
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {relatedNodes.map((node) => {
-                    const connections =
-                      getConnectionsForNode(
-                        node.id,
-                        graph.connections
-                      );
+                  {relatedNodes.map(
+                    (node) => {
+                      const connections =
+                        getConnectionsForNode(
+                          node.id,
+                          graph.connections
+                        );
 
-                    const presentation =
-                      nodePresentations[node.type];
+                      const presentation =
+                        nodePresentations[
+                          node.type
+                        ];
 
-                    return (
-                      <AnalysisCard
-                        key={node.id}
-                        eyebrow={node.type}
-                        title={node.title}
-                        accent={presentation.accent}
-                        className="h-full"
-                      >
-                        <p
-                          className="text-sm leading-7 sm:text-base"
-                          style={{
-                            color:
-                              colors.text.secondary,
-                          }}
+                      return (
+                        <article
+                          key={node.id}
+                          className={`h-full overflow-hidden rounded-2xl border ${presentation.border} ${presentation.background} p-5 transition-all duration-200 hover:-translate-y-0.5 sm:p-6`}
                         >
-                          {node.description}
-                        </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  aria-hidden="true"
+                                  className={`h-2 w-2 rounded-full ${presentation.dot}`}
+                                />
 
-                        {connections.length > 0 ? (
-                          <div
-                            className="mt-6 border-t pt-5"
-                            style={{
-                              borderColor:
-                                colors.border.default,
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <p
-                                className="text-xs font-semibold uppercase tracking-[0.18em]"
-                                style={{
-                                  color:
-                                    colors.text.muted,
-                                }}
-                              >
-                                Connections
-                              </p>
+                                <p
+                                  className={`text-[9px] font-black uppercase tracking-[0.18em] ${presentation.text}`}
+                                >
+                                  {
+                                    presentation.label
+                                  }
+                                </p>
+                              </div>
 
-                              <span
-                                className="rounded-full border px-2.5 py-1 text-xs font-semibold"
-                                style={{
-                                  backgroundColor: `${presentation.color}10`,
-                                  borderColor: `${presentation.color}30`,
-                                  color:
-                                    presentation.color,
-                                }}
-                              >
-                                {connections.length}
-                              </span>
+                              <h3 className="mt-3 text-lg font-extrabold tracking-tight text-white">
+                                {node.title}
+                              </h3>
                             </div>
 
-                            <ul
-                              aria-label={`Connections for ${node.title}`}
-                              className="mt-4 space-y-4"
+                            <span
+                              className={`rounded-full border ${presentation.border} px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${presentation.text}`}
                             >
-                              {connections.map(
-                                (
-                                  connection,
-                                  index
-                                ) => {
-                                  const connectedNodeId =
-                                    getConnectedNodeId(
-                                      node.id,
-                                      connection
-                                    );
+                              {
+                                connections.length
+                              }{" "}
+                              links
+                            </span>
+                          </div>
 
-                                  return (
-                                    <li
-                                      key={`${connection.from}-${connection.to}-${index}`}
-                                      className="relative pl-4"
-                                    >
-                                      <span
-                                        aria-hidden="true"
-                                        className="absolute left-0 top-2.5 h-1.5 w-1.5 rounded-full"
-                                        style={{
-                                          backgroundColor:
-                                            presentation.color,
-                                        }}
-                                      />
+                          <p className="mt-4 text-sm leading-7 text-[#B5C3D2] sm:text-base">
+                            {node.description}
+                          </p>
 
-                                      <p
-                                        className="text-sm leading-6"
-                                        style={{
-                                          color:
-                                            colors.text
-                                              .secondary,
-                                        }}
+                          {connections.length >
+                          0 ? (
+                            <div className="mt-6 border-t border-[#17446D]/50 pt-5">
+                              <div className="flex items-center justify-between gap-4">
+                                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6F879F]">
+                                  Connections
+                                </p>
+
+                                <span
+                                  className={`text-xs font-bold ${presentation.text}`}
+                                >
+                                  {
+                                    connections.length
+                                  }
+                                </span>
+                              </div>
+
+                              <ul
+                                aria-label={`Connections for ${node.title}`}
+                                className="mt-4 space-y-4"
+                              >
+                                {connections.map(
+                                  (
+                                    connection,
+                                    index
+                                  ) => {
+                                    const connectedNodeId =
+                                      getConnectedNodeId(
+                                        node.id,
+                                        connection
+                                      );
+
+                                    return (
+                                      <li
+                                        key={`${connection.from}-${connection.to}-${index}`}
+                                        className="relative pl-4"
                                       >
                                         <span
-                                          className="font-semibold"
-                                          style={{
-                                            color:
-                                              colors.text
-                                                .primary,
-                                          }}
-                                        >
-                                          {getNodeTitle(
-                                            connectedNodeId,
-                                            graph.nodes
-                                          )}
-                                        </span>
-
-                                        <span
                                           aria-hidden="true"
-                                          style={{
-                                            color:
-                                              colors.text
-                                                .muted,
-                                          }}
-                                        >
-                                          {" "}
-                                          —{" "}
-                                        </span>
+                                          className={`absolute left-0 top-2.5 h-1.5 w-1.5 rounded-full ${presentation.dot}`}
+                                        />
 
-                                        {
-                                          connection.relationship
-                                        }
-                                      </p>
-                                    </li>
-                                  );
-                                }
-                              )}
-                            </ul>
-                          </div>
-                        ) : (
-                          <p
-                            className="mt-6 border-t pt-5 text-sm leading-6"
-                            style={{
-                              borderColor:
-                                colors.border.default,
-                              color: colors.text.muted,
-                            }}
-                          >
-                            No additional relationships
-                            were identified for this
-                            entity.
-                          </p>
-                        )}
-                      </AnalysisCard>
-                    );
-                  })}
+                                        <p className="text-sm leading-6 text-[#8EA3B7]">
+                                          <span className="font-bold text-[#D7E1EA]">
+                                            {getNodeTitle(
+                                              connectedNodeId,
+                                              graph.nodes
+                                            )}
+                                          </span>
+
+                                          <span className="text-[#58748E]">
+                                            {" "}
+                                            —{" "}
+                                          </span>
+
+                                          {
+                                            connection.relationship
+                                          }
+                                        </p>
+                                      </li>
+                                    );
+                                  }
+                                )}
+                              </ul>
+                            </div>
+                          ) : (
+                            <p className="mt-6 border-t border-[#17446D]/50 pt-5 text-sm leading-6 text-[#6F879F]">
+                              No additional
+                              relationships were
+                              identified for this
+                              entity.
+                            </p>
+                          )}
+                        </article>
+                      );
+                    }
+                  )}
                 </div>
               </>
             ) : (
               <div
                 role="status"
-                className="mt-6 rounded-2xl border border-dashed p-6"
-                style={{
-                  backgroundColor:
-                    colors.background.elevated,
-                  borderColor:
-                    colors.border.default,
-                }}
+                className="mt-6 rounded-2xl border border-dashed border-[#214B70] bg-[#020D21]/55 p-6"
               >
-                <p
-                  className="text-sm leading-6"
-                  style={{
-                    color: colors.text.muted,
-                  }}
-                >
-                  No related entities were identified
-                  for this story.
+                <p className="text-sm leading-6 text-[#8EA3B7]">
+                  No related entities were
+                  identified for this story.
                 </p>
               </div>
             )}
@@ -454,21 +395,12 @@ export default function IntelligenceGraph({
         ) : (
           <div
             role="status"
-            className="mt-8 rounded-2xl border border-dashed p-6 sm:p-8"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor: colors.border.default,
-            }}
+            className="mt-8 rounded-2xl border border-dashed border-[#214B70] bg-[#020D21]/55 p-6 sm:p-8"
           >
-            <p
-              className="text-sm leading-7 sm:text-base"
-              style={{
-                color: colors.text.muted,
-              }}
-            >
-              PoliticalPulse could not generate connected
-              story context from the available article
+            <p className="text-sm leading-7 text-[#8EA3B7] sm:text-base">
+              The Angle Report could not
+              generate connected story context
+              from the available article
               information.
             </p>
           </div>

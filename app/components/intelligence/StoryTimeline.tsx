@@ -6,15 +6,12 @@ import type { Article } from "@/app/types/article";
 
 import AnimatedCounter from "@/app/components/ui/AnimatedCounter";
 import FadeIn from "@/app/components/ui/FadeIn";
-import SectionHeader from "@/app/components/ui/SectionHeader";
 
 import {
   generateTimeline,
   getMockTimeline,
   type TimelineEvent,
 } from "@/lib/ai/timeline";
-
-import { colors } from "@/lib/design/theme";
 
 type StoryTimelineProps = {
   article: Article;
@@ -39,21 +36,11 @@ function TimelineItem({
   return (
     <li className="relative grid gap-4 sm:grid-cols-[88px_32px_minmax(0,1fr)] sm:gap-5">
       <div className="hidden pt-1 text-right sm:block">
-        <p
-          className="text-xs font-semibold uppercase tracking-[0.14em]"
-          style={{
-            color: colors.text.muted,
-          }}
-        >
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6F879F]">
           Event
         </p>
 
-        <p
-          className="mt-1 text-lg font-bold"
-          style={{
-            color: colors.text.primary,
-          }}
-        >
+        <p className="mt-1 text-lg font-extrabold text-white">
           {factNumber}
         </p>
       </div>
@@ -62,81 +49,33 @@ function TimelineItem({
         aria-hidden="true"
         className="absolute left-[15px] top-0 h-full sm:relative sm:left-auto"
       >
-        <div
-          className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-4"
-          style={{
-            backgroundColor:
-              colors.brand.primary,
-            borderColor:
-              colors.background.surface,
-            boxShadow: `0 0 0 1px ${colors.border.brand}`,
-          }}
-        >
-          <span className="h-2 w-2 rounded-full bg-white" />
+        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-4 border-[#04162C] bg-[#38BDF8] shadow-[0_0_0_1px_rgba(56,189,248,0.25)]">
+          <span className="h-2 w-2 rounded-full bg-[#020D21]" />
         </div>
 
         {!isLast ? (
-          <div
-            className="absolute left-1/2 top-8 h-[calc(100%+1.5rem)] w-px -translate-x-1/2"
-            style={{
-              backgroundColor:
-                colors.border.default,
-            }}
-          />
+          <div className="absolute left-1/2 top-8 h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-[#17446D]" />
         ) : null}
       </div>
 
-      <article
-        className="ml-12 overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:ml-0 sm:p-6"
-        style={{
-          backgroundColor:
-            colors.background.elevated,
-          borderColor:
-            colors.border.default,
-        }}
-      >
+      <article className="ml-12 overflow-hidden rounded-2xl border border-[#17446D]/60 bg-[#020D21]/70 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#38BDF8]/35 hover:bg-[#061A31] sm:ml-0 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.18em]"
-              style={{
-                color: colors.brand.primary,
-              }}
-            >
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#55C8FF]">
               {event.date}
             </p>
 
-            <h3
-              className="mt-2 text-lg font-semibold tracking-tight sm:text-xl"
-              style={{
-                color: colors.text.primary,
-              }}
-            >
+            <h3 className="mt-2 text-lg font-extrabold tracking-tight text-white sm:text-xl">
               {event.title}
             </h3>
           </div>
 
-          <span
-            className="rounded-full border px-3 py-1 text-xs font-semibold sm:hidden"
-            style={{
-              backgroundColor:
-                colors.brand.primarySoft,
-              borderColor:
-                colors.border.brand,
-              color:
-                colors.brand.primaryHover,
-            }}
-          >
+          <span className="rounded-full border border-[#38BDF8]/25 bg-[#38BDF8]/10 px-3 py-1 text-xs font-bold text-[#7DD3FC] sm:hidden">
             {factNumber}
           </span>
         </div>
 
-        <p
-          className="mt-4 text-sm leading-7 sm:text-base sm:leading-8"
-          style={{
-            color: colors.text.secondary,
-          }}
-        >
+        <p className="mt-4 text-sm leading-7 text-[#B5C3D2] sm:text-base sm:leading-8">
           {event.description}
         </p>
       </article>
@@ -182,7 +121,7 @@ export default function StoryTimeline({
 
         if (!isCancelled) {
           setErrorMessage(
-            "PoliticalPulse could not refresh the timeline. Showing available context instead."
+            "The Angle Report could not refresh the timeline. Showing available context instead."
           );
         }
       } finally {
@@ -203,55 +142,35 @@ export default function StoryTimeline({
     <section
       aria-label="Story timeline"
       aria-busy={isLoading}
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
-      style={{
-        backgroundColor:
-          colors.background.surface,
-        borderColor:
-          colors.border.default,
-      }}
+      className="relative overflow-hidden rounded-3xl border border-[#17446D]/70 bg-[#04162C]/95 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.18)] sm:p-8"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${colors.brand.primary}10`,
-        }}
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#38BDF8]/5 blur-3xl"
       />
 
       <div className="relative">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <SectionHeader
-            eyebrow="Story Timeline"
-            title="How This Story Developed"
-            subtitle="Follow the key events and decisions that shaped the current story."
-          />
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#55C8FF]">
+              Story Timeline
+            </p>
 
-          <div
-            className="shrink-0 rounded-2xl border px-5 py-4"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor:
-                colors.border.default,
-            }}
-          >
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.16em]"
-              style={{
-                color: colors.text.muted,
-              }}
-            >
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+              How this story developed
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8EA3B7]">
+              Follow the key events and decisions that shaped the current story.
+            </p>
+          </div>
+
+          <div className="shrink-0 rounded-2xl border border-[#17446D]/60 bg-[#020D21]/70 px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6F879F]">
               Timeline Events
             </p>
 
-            <p
-              className="mt-1 text-3xl font-bold tracking-tight"
-              style={{
-                color: colors.text.primary,
-              }}
-            >
+            <p className="mt-1 text-3xl font-black tracking-tight text-white">
               <AnimatedCounter
                 value={timelineEvents.length}
               />
@@ -262,31 +181,15 @@ export default function StoryTimeline({
         {isLoading ? (
           <div
             role="status"
-            className="mt-7 flex items-center gap-3 rounded-xl border px-4 py-3"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor:
-                colors.border.default,
-            }}
+            className="mt-7 flex items-center gap-3 rounded-xl border border-[#17446D]/60 bg-[#020D21]/60 px-4 py-3"
           >
             <span
               aria-hidden="true"
-              className="h-2.5 w-2.5 animate-pulse rounded-full"
-              style={{
-                backgroundColor:
-                  colors.brand.primary,
-              }}
+              className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#38BDF8]"
             />
 
-            <p
-              className="text-sm"
-              style={{
-                color: colors.text.secondary,
-              }}
-            >
-              Updating the timeline with the latest
-              available story context…
+            <p className="text-sm text-[#B5C3D2]">
+              Updating the timeline with the latest available story context…
             </p>
           </div>
         ) : null}
@@ -294,20 +197,9 @@ export default function StoryTimeline({
         {errorMessage ? (
           <div
             role="status"
-            className="mt-7 rounded-xl border px-4 py-3"
-            style={{
-              backgroundColor:
-                colors.status.warningSoft,
-              borderColor:
-                `${colors.status.warning}35`,
-            }}
+            className="mt-7 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3"
           >
-            <p
-              className="text-sm leading-6"
-              style={{
-                color: colors.text.secondary,
-              }}
-            >
+            <p className="text-sm leading-6 text-amber-100">
               {errorMessage}
             </p>
           </div>
@@ -339,23 +231,10 @@ export default function StoryTimeline({
         ) : (
           <div
             role="status"
-            className="mt-8 rounded-2xl border border-dashed p-6 sm:p-8"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor:
-                colors.border.default,
-            }}
+            className="mt-8 rounded-2xl border border-dashed border-[#214B70] bg-[#020D21]/55 p-6 sm:p-8"
           >
-            <p
-              className="text-sm leading-7 sm:text-base"
-              style={{
-                color: colors.text.muted,
-              }}
-            >
-              PoliticalPulse could not identify enough
-              dated events to build a reliable timeline
-              for this story.
+            <p className="text-sm leading-7 text-[#8EA3B7] sm:text-base">
+              The Angle Report could not identify enough dated events to build a reliable timeline for this story.
             </p>
           </div>
         )}

@@ -7,8 +7,6 @@ import {
   type MouseEvent,
 } from "react";
 
-import { colors } from "@/lib/design/theme";
-
 import ReportProgress from "./ReportProgress";
 
 type NavigationItem = {
@@ -111,7 +109,8 @@ export default function ReportNavigation() {
         .filter(
           (
             section
-          ): section is HTMLElement => section !== null
+          ): section is HTMLElement =>
+            section !== null
         );
 
       if (sections.length === 0) {
@@ -316,62 +315,32 @@ export default function ReportNavigation() {
   return (
     <nav
       aria-label="Intelligence report sections"
-      className="rounded-xl p-3"
-      style={{
-        backgroundColor:
-          colors.background.elevated,
-      }}
+      className="rounded-xl bg-[#061A31]/75 p-3"
     >
       <div className="px-2 pt-1">
-        <p
-          className="text-xs font-bold uppercase tracking-[0.16em]"
-          style={{
-            color:
-              colors.brand.primary,
-          }}
-        >
-          PoliticalPulse
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#55C8FF]">
+            Report progress
+          </p>
 
-        <h2
-          className="mt-2 text-lg font-semibold tracking-tight"
-          style={{
-            color:
-              colors.text.primary,
-          }}
-        >
-          Report sections
-        </h2>
+          <p className="text-[10px] font-bold text-[#6F879F]">
+            {completedSections}/{navigationItems.length}
+          </p>
+        </div>
 
-        <p
-          className="mt-1 text-sm leading-5"
-          style={{
-            color:
-              colors.text.muted,
-          }}
-        >
-          Follow the analysis from evidence to conclusions.
-        </p>
+        <div className="mt-3">
+          <ReportProgress
+            completedSections={
+              completedSections
+            }
+            totalSections={
+              navigationItems.length
+            }
+          />
+        </div>
       </div>
 
-      <div className="mt-5 px-2">
-        <ReportProgress
-          completedSections={
-            completedSections
-          }
-          totalSections={
-            navigationItems.length
-          }
-        />
-      </div>
-
-      <div
-        className="my-4 border-t"
-        style={{
-          borderColor:
-            colors.border.subtle,
-        }}
-      />
+      <div className="my-4 border-t border-[#17446D]/55" />
 
       <div className="flex flex-col gap-1">
         {navigationItems.map(
@@ -406,64 +375,32 @@ export default function ReportNavigation() {
                 }
                 className={[
                   "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm transition duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]/60",
+                  isActive
+                    ? "bg-[#0A2947] text-white"
+                    : "text-[#9CB0C5] hover:bg-[#08203A] hover:text-white",
                 ].join(" ")}
-                style={{
-                  backgroundColor:
-                    isActive
-                      ? colors.brand
-                          .primarySoft
-                      : "transparent",
-                  color:
-                    isActive
-                      ? colors.text
-                          .primary
-                      : colors.text
-                          .secondary,
-                  outlineColor:
-                    colors.brand
-                      .secondary,
-                }}
               >
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-2 left-0 w-0.5 rounded-full transition-opacity duration-200"
-                  style={{
-                    backgroundColor:
-                      colors.brand
-                        .primary,
-                    opacity: isActive
-                      ? 1
-                      : 0,
-                  }}
+                  className={[
+                    "absolute inset-y-2 left-0 w-0.5 rounded-full transition-opacity duration-200",
+                    isActive
+                      ? "bg-[#FF2638] opacity-100"
+                      : "opacity-0",
+                  ].join(" ")}
                 />
 
                 <span
                   aria-hidden="true"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition duration-200"
-                  style={{
-                    backgroundColor:
-                      isActive
-                        ? colors.brand
-                            .primary
-                        : isCompleted
-                          ? colors
-                              .status
-                              .successSoft
-                          : colors
-                              .background
-                              .muted,
-                    color:
-                      isActive
-                        ? colors.text
-                            .inverse
-                        : isCompleted
-                          ? colors
-                              .status
-                              .success
-                          : colors.text
-                              .subtle,
-                  }}
+                  className={[
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black transition duration-200",
+                    isActive
+                      ? "border-[#38BDF8]/40 bg-[#38BDF8] text-[#020D21]"
+                      : isCompleted
+                        ? "border-[#38BDF8]/25 bg-[#38BDF8]/10 text-[#55C8FF]"
+                        : "border-[#214B70] bg-[#04162C] text-[#58748E]",
+                  ].join(" ")}
                 >
                   {isCompleted
                     ? "✓"
@@ -476,8 +413,8 @@ export default function ReportNavigation() {
                   className={[
                     "transition-colors duration-200",
                     isActive
-                      ? "font-semibold"
-                      : "font-medium group-hover:underline",
+                      ? "font-bold"
+                      : "font-medium",
                   ].join(" ")}
                 >
                   {item.label}

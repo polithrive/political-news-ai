@@ -3,19 +3,14 @@ import type {
   IntelligenceReport,
 } from "@/app/types/report";
 
-import AnalysisCard from "@/app/components/ui/AnalysisCard";
-import SectionHeader from "@/app/components/ui/SectionHeader";
-
-import { colors } from "@/lib/design/theme";
-
 type DebatePanelProps = {
   report: IntelligenceReport;
 };
 
 type PerspectiveTone =
-  | "info"
-  | "primary"
-  | "warning";
+  | "progressive"
+  | "centrist"
+  | "conservative";
 
 type PerspectiveCardProps = {
   eyebrow: string;
@@ -27,28 +22,43 @@ type PerspectiveCardProps = {
 type InsightListProps = {
   items: string[];
   emptyMessage: string;
-  color: string;
+  dotClass: string;
 };
 
-const perspectiveColors = {
-  info: colors.status.info,
-  primary: colors.brand.primary,
-  warning: colors.status.warning,
+const perspectiveStyles = {
+  progressive: {
+    border: "border-[#38BDF8]/25",
+    background: "bg-[#38BDF8]/[0.055]",
+    accent: "bg-[#38BDF8]",
+    label: "text-[#7DD3FC]",
+    dot: "bg-[#55C8FF]",
+  },
+
+  centrist: {
+    border: "border-[#31506F]",
+    background: "bg-[#06172B]",
+    accent: "bg-[#8EA3B7]",
+    label: "text-[#B5C6D8]",
+    dot: "bg-[#9CB0C5]",
+  },
+
+  conservative: {
+    border: "border-[#FF2638]/25",
+    background: "bg-[#FF2638]/[0.055]",
+    accent: "bg-[#FF2638]",
+    label: "text-[#FF7B86]",
+    dot: "bg-[#FF5B69]",
+  },
 } as const;
 
 function InsightList({
   items,
   emptyMessage,
-  color,
+  dotClass,
 }: InsightListProps) {
   if (items.length === 0) {
     return (
-      <p
-        className="mt-3 text-sm leading-6"
-        style={{
-          color: colors.text.muted,
-        }}
-      >
+      <p className="mt-3 text-sm leading-6 text-[#6F879F]">
         {emptyMessage}
       </p>
     );
@@ -59,20 +69,16 @@ function InsightList({
       {items.map((item, index) => (
         <li
           key={`${item}-${index}`}
-          className="flex gap-3 text-sm leading-6"
-          style={{
-            color: colors.text.secondary,
-          }}
+          className="flex gap-3"
         >
           <span
             aria-hidden="true"
-            className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{
-              backgroundColor: color,
-            }}
+            className={`mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
           />
 
-          <span>{item}</span>
+          <span className="text-sm leading-6 text-[#B8C8D8]">
+            {item}
+          </span>
         </li>
       ))}
     </ul>
@@ -85,98 +91,58 @@ function PerspectiveCard({
   perspective,
   tone,
 }: PerspectiveCardProps) {
-  const accentColor =
-    perspectiveColors[tone];
+  const styles =
+    perspectiveStyles[tone];
 
   return (
     <article
-      className="relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-6"
-      style={{
-        backgroundColor:
-          colors.background.elevated,
-        borderColor:
-          colors.border.default,
-      }}
+      className={`relative overflow-hidden rounded-2xl border ${styles.border} ${styles.background} p-5 sm:p-6`}
     >
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-1"
-        style={{
-          backgroundColor: accentColor,
-        }}
+        className={`absolute inset-y-0 left-0 w-1 ${styles.accent}`}
       />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${accentColor}10`,
-        }}
-      />
+      <p
+        className={`text-[10px] font-black uppercase tracking-[0.18em] ${styles.label}`}
+      >
+        {eyebrow}
+      </p>
 
-      <div className="relative">
-        <p
-          className="text-xs font-semibold uppercase tracking-[0.18em]"
-          style={{
-            color: accentColor,
-          }}
-        >
-          {eyebrow}
+      <h3 className="mt-2 text-xl font-extrabold tracking-tight text-white">
+        {title}
+      </h3>
+
+      <p className="mt-4 text-sm leading-6 text-[#A9BDD0]">
+        {perspective.position}
+      </p>
+
+      <div className="mt-6 border-t border-[#17446D]/65 pt-5">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7F9BB5]">
+          Strongest Arguments
         </p>
 
-        <h3
-          className="mt-2 text-xl font-semibold tracking-tight"
-          style={{
-            color: colors.text.primary,
-          }}
-        >
-          {title}
-        </h3>
+        <InsightList
+          items={
+            perspective.strongestArguments
+          }
+          emptyMessage="The current analysis did not identify distinct supporting arguments."
+          dotClass={styles.dot}
+        />
+      </div>
 
-        <div className="mt-6">
-          <h4
-            className="text-sm font-semibold"
-            style={{
-              color: colors.text.primary,
-            }}
-          >
-            Strongest arguments
-          </h4>
+      <div className="mt-5 border-t border-[#17446D]/65 pt-5">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7F9BB5]">
+          Primary Concerns
+        </p>
 
-          <InsightList
-            items={
-              perspective.strongestArguments
-            }
-            emptyMessage="The current analysis did not identify distinct supporting arguments."
-            color={accentColor}
-          />
-        </div>
-
-        <div
-          className="mt-6 border-t pt-5"
-          style={{
-            borderColor:
-              colors.border.default,
-          }}
-        >
-          <h4
-            className="text-sm font-semibold"
-            style={{
-              color: colors.text.primary,
-            }}
-          >
-            Primary concerns
-          </h4>
-
-          <InsightList
-            items={
-              perspective.primaryConcerns
-            }
-            emptyMessage="The current analysis did not identify distinct concerns."
-            color={accentColor}
-          />
-        </div>
+        <InsightList
+          items={
+            perspective.primaryConcerns
+          }
+          emptyMessage="The current analysis did not identify distinct concerns."
+          dotClass={styles.dot}
+        />
       </div>
     </article>
   );
@@ -186,22 +152,22 @@ function getDebateTemperatureLabel(
   temperature: number
 ): string {
   if (temperature >= 80) {
-    return "Highly polarized";
+    return "Highly Polarized";
   }
 
   if (temperature >= 60) {
-    return "Strong disagreement";
+    return "Strong Disagreement";
   }
 
   if (temperature >= 40) {
-    return "Meaningful disagreement";
+    return "Meaningful Disagreement";
   }
 
   if (temperature >= 20) {
-    return "Limited disagreement";
+    return "Limited Disagreement";
   }
 
-  return "Broad agreement";
+  return "Broad Agreement";
 }
 
 function clampTemperature(
@@ -209,7 +175,10 @@ function clampTemperature(
 ) {
   return Math.max(
     0,
-    Math.min(100, temperature)
+    Math.min(
+      100,
+      Math.round(temperature)
+    )
   );
 }
 
@@ -266,237 +235,181 @@ export default function DebatePanel({
     report.article.title ||
     "The central political debate";
 
-  const politicalPulseAnalysis =
+  const angleReportAnalysis =
     perspectiveAnalysis
       ?.politicalPulseAnalysis ||
-    "PoliticalPulse identified the primary arguments and areas of disagreement, but a dedicated neutral synthesis was not available.";
+    "The Angle Report identified the primary arguments and areas of disagreement, but a dedicated neutral synthesis was not available.";
 
   return (
     <section
       aria-label="Political debate analysis"
-      className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
-      style={{
-        backgroundColor:
-          colors.background.surface,
-        borderColor:
-          colors.border.default,
-      }}
+      className="overflow-hidden rounded-3xl border border-[#17446D] bg-[#04162C]"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full blur-3xl"
-        style={{
-          backgroundColor:
-            `${colors.brand.primary}10`,
-        }}
-      />
+      {/* Header */}
+      <div className="border-b border-[#17446D]/80 px-6 py-5 sm:px-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#55C8FF]">
+              Debate Intelligence
+            </p>
 
-      <div className="relative">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <SectionHeader
-            eyebrow="PoliticalPulse Debate™"
-            title="Where the Political Debate Really Stands"
-            subtitle="Compare the strongest arguments and concerns across progressive, centrist, and conservative viewpoints while identifying the central areas of disagreement."
-          />
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              Where the political debate
+              really stands
+            </h2>
 
-          <div
-            className="w-full shrink-0 rounded-2xl border p-5 lg:max-w-xs"
-            style={{
-              backgroundColor:
-                colors.background.elevated,
-              borderColor:
-                colors.border.default,
-            }}
-          >
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#8FA9C1]">
+              Compare the strongest arguments,
+              concerns, and points of
+              disagreement across the political
+              spectrum.
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full border border-[#1C567D] bg-[#06223D] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#55C8FF]">
+              Ideas From Every Side
+            </span>
+
+            <span className="rounded-full border border-[#17446D] bg-[#06172B] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#8FB4D3]">
+              Debate Analysis
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 sm:p-7">
+        {/* Debate signal */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="rounded-2xl border border-[#17446D] bg-[#031326] p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#55C8FF]">
+              Central Debate
+            </p>
+
+            <p className="mt-3 max-w-4xl text-lg font-bold leading-7 text-white sm:text-xl sm:leading-8">
+              {topic}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-[#17446D] bg-[#031326] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p
-                  className="text-xs font-semibold uppercase tracking-[0.16em]"
-                  style={{
-                    color:
-                      colors.text.muted,
-                  }}
-                >
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7F9BB5]">
                   Debate Temperature
                 </p>
 
-                <p
-                  className="mt-2 text-lg font-semibold"
-                  style={{
-                    color:
-                      colors.text.primary,
-                  }}
-                >
+                <p className="mt-2 text-sm font-bold text-white">
                   {debateTemperatureLabel}
                 </p>
               </div>
 
-              <div className="text-right">
-                <span
-                  className="text-3xl font-bold tracking-tight"
-                  style={{
-                    color:
-                      colors.text.primary,
-                  }}
-                >
+              <div className="flex items-end">
+                <span className="text-3xl font-black leading-none text-white">
                   {debateTemperature}
                 </span>
 
-                <span
-                  className="ml-1 text-sm font-semibold"
-                  style={{
-                    color:
-                      colors.text.muted,
-                  }}
-                >
+                <span className="ml-1 text-sm font-bold text-[#6382A0]">
                   /100
                 </span>
               </div>
             </div>
 
-            <div
-              className="mt-5 h-2.5 overflow-hidden rounded-full"
-              style={{
-                backgroundColor:
-                  colors.background.muted,
-              }}
-            >
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#102C47]">
               <div
-                className="h-full rounded-full transition-all duration-700"
+                className="h-full rounded-full bg-[#FF2638] transition-all duration-700"
                 style={{
-                  width:
-                    `${debateTemperature}%`,
-                  backgroundColor:
-                    colors.brand.primary,
+                  width: `${debateTemperature}%`,
                 }}
-                aria-hidden="true"
               />
             </div>
 
-            <div className="mt-2 flex justify-between">
-              <span
-                className="text-[11px] font-medium"
-                style={{
-                  color: colors.text.muted,
-                }}
-              >
-                Agreement
-              </span>
-
-              <span
-                className="text-[11px] font-medium"
-                style={{
-                  color: colors.text.muted,
-                }}
-              >
-                Polarized
-              </span>
+            <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-[0.12em] text-[#617C96]">
+              <span>Agreement</span>
+              <span>Polarized</span>
             </div>
           </div>
         </div>
 
-        <div
-          className="mt-8 rounded-2xl border p-5 sm:p-6"
-          style={{
-            backgroundColor:
-              colors.brand.primarySoft,
-            borderColor:
-              colors.border.brand,
-          }}
-        >
-          <p
-            className="text-xs font-bold uppercase tracking-[0.18em]"
-            style={{
-              color:
-                colors.brand.primaryHover,
-            }}
-          >
-            Central Debate
-          </p>
-
-          <p
-            className="mt-3 text-lg font-semibold leading-8 sm:text-xl"
-            style={{
-              color: colors.text.primary,
-            }}
-          >
-            {topic}
-          </p>
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+        {/* Perspectives */}
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
           <PerspectiveCard
-            eyebrow="Progressive Analysis"
+            eyebrow="Progressive View"
             title="Progressive Arguments"
             perspective={progressive}
-            tone="info"
+            tone="progressive"
           />
 
           <PerspectiveCard
-            eyebrow="Centrist Analysis"
+            eyebrow="Centrist View"
             title="Centrist Arguments"
             perspective={centrist}
-            tone="primary"
+            tone="centrist"
           />
 
           <PerspectiveCard
-            eyebrow="Conservative Analysis"
+            eyebrow="Conservative View"
             title="Conservative Arguments"
             perspective={conservative}
-            tone="warning"
+            tone="conservative"
           />
         </div>
 
-        <div className="mt-8">
-          <AnalysisCard
-            eyebrow="Areas of Disagreement"
-            title="Where the Sides Diverge"
-            accent="warning"
-          >
-            <InsightList
-              items={mainDisagreements}
-              emptyMessage="The current analysis did not identify specific disagreements beyond the arguments described above."
-              color={
-                colors.status.warning
-              }
-            />
-          </AnalysisCard>
-        </div>
+        {/* Disagreement */}
+        <div className="mt-5 rounded-2xl border border-[#F59E0B]/20 bg-[#F59E0B]/[0.045] p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#FBBF24]" />
 
-        <div className="mt-8">
-          <AnalysisCard
-            eyebrow="PoliticalPulse Synthesis"
-            title="What the Debate Is Really About"
-            accent="info"
-          >
-            <p
-              className="text-base leading-8 sm:text-lg"
-              style={{
-                color:
-                  colors.text.primary,
-              }}
-            >
-              {politicalPulseAnalysis}
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#FBBF24]">
+              Areas of Disagreement
             </p>
-          </AnalysisCard>
+          </div>
+
+          <h3 className="mt-2 text-xl font-extrabold tracking-tight text-white">
+            Where the sides diverge
+          </h3>
+
+          <InsightList
+            items={mainDisagreements}
+            emptyMessage="The current analysis did not identify specific disagreements beyond the arguments described above."
+            dotClass="bg-[#FBBF24]"
+          />
         </div>
 
-        <div
-          className="mt-6 rounded-xl border px-5 py-4"
-          style={{
-            backgroundColor:
-              colors.background.elevated,
-            borderColor:
-              colors.border.default,
-          }}
-        >
-          <p
-            className="text-sm leading-6"
-            style={{
-              color: colors.text.muted,
-            }}
-          >
-            These arguments summarize how different political viewpoints may interpret and debate the available information. They do not represent endorsements by PoliticalPulse.
+        {/* Angle Report synthesis */}
+        <div className="mt-5 rounded-2xl border border-[#38BDF8]/20 bg-[#38BDF8]/[0.045] p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#55C8FF]">
+                The Angle Report
+              </p>
+
+              <h3 className="mt-2 text-xl font-extrabold tracking-tight text-white">
+                What the debate is really about
+              </h3>
+            </div>
+
+            <span className="rounded-full border border-[#1C567D] bg-[#06223D] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-[#55C8FF]">
+              Neutral Synthesis
+            </span>
+          </div>
+
+          <p className="mt-4 text-base leading-7 text-[#C2D1DF] sm:text-lg sm:leading-8">
+            {angleReportAnalysis}
+          </p>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#17446D]/80 bg-[#031326] px-4 py-3">
+          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#285172] text-[10px] font-bold text-[#6E91AF]">
+            i
+          </div>
+
+          <p className="text-xs leading-5 text-[#6F879F] sm:text-sm sm:leading-6">
+            These arguments summarize how
+            different political viewpoints may
+            interpret and debate the available
+            information. They do not represent
+            endorsements by The Angle Report.
           </p>
         </div>
       </div>

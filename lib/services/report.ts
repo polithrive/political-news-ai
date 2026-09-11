@@ -232,7 +232,7 @@ function createPerspectiveAnalysis(
       toStringValue(
         dedicatedAnalysis
           ?.politicalPulseAnalysis,
-        "PoliticalPulse identified the major perspectives and areas of possible agreement, but a dedicated synthesis was not available."
+        "The Angle Report identified the major perspectives and areas of possible agreement, but a dedicated synthesis was not available."
       ),
 
     debateTemperature: toClampedScore(
@@ -315,7 +315,7 @@ export function getMockIntelligenceReport(): IntelligenceReport {
         new Date().toISOString(),
 
       source: {
-        name: "PoliticalPulse",
+        name: "The Angle Report",
       },
     },
 
@@ -339,15 +339,15 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       "Generating intelligence report...",
 
     whyThisMatters:
-      "PoliticalPulse is determining why this story matters.",
+      "The Angle Report is determining why this story matters.",
 
     whoIsAffected: [],
 
     shortTermImpact:
-      "PoliticalPulse is analyzing the likely short-term effects.",
+      "The Angle Report is analyzing the likely short-term effects.",
 
     longTermImpact:
-      "PoliticalPulse is analyzing the possible long-term effects.",
+      "The Angle Report is analyzing the possible long-term effects.",
 
     unansweredQuestions: [],
 
@@ -401,26 +401,26 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       },
 
       areasOfAgreement: [
-        "PoliticalPulse is analyzing potential areas of agreement.",
+        "The Angle Report is analyzing potential areas of agreement.",
       ],
 
       mainDisagreements: [],
 
       politicalPulseAnalysis:
-        "PoliticalPulse is generating a neutral synthesis of the debate.",
+        "The Angle Report is generating a neutral synthesis of the debate.",
 
       debateTemperature: 0,
     },
 
     evidence: {
       primarySources: [
-        "PoliticalPulse AI",
+        "The Angle Report AI",
       ],
 
       conflictingReporting: [],
 
       methodology:
-        "PoliticalPulse AI is gathering and evaluating available reporting.",
+        "The Angle Report AI is gathering and evaluating available reporting.",
 
       lastAnalyzedAt:
         new Date().toISOString(),
@@ -498,7 +498,7 @@ export async function generateIntelligenceReport(
 
   /*
    * Source names are derived from the sources
-   * PoliticalPulse actually gathered rather
+   * The Angle Report actually gathered rather
    * than from an AI-estimated source count.
    */
   const sourceNames = Array.from(
@@ -544,7 +544,7 @@ export async function generateIntelligenceReport(
    *
    * This is separate from Trust Score. The AI
    * may be confident in its interpretation, but
-   * PoliticalPulse should communicate evidence
+   * The Angle Report should communicate evidence
    * limitations consistently throughout the UI.
    */
   const confidence =
@@ -589,7 +589,7 @@ export async function generateIntelligenceReport(
     returnedCommonGround.length > 0
       ? returnedCommonGround
       : [
-          "PoliticalPulse identified potential areas of agreement in the available analysis.",
+          "The Angle Report identified potential areas of agreement in the available analysis.",
           "Additional reporting may change how the issue is understood.",
         ];
 
@@ -659,8 +659,8 @@ export async function generateIntelligenceReport(
    */
   const evidenceMethodology =
     analyzedSourceCount <= 1
-      ? "PoliticalPulse analyzed the available source, evaluated available source metadata, generated parallel AI assessments, and limited report-level trust because independent corroboration was not available."
-      : `PoliticalPulse gathered ${analyzedSourceCount} independent sources, removed duplicate coverage, evaluated available source metadata, compared the reporting set, and generated a neutral intelligence assessment.`;
+      ? "The Angle Report analyzed the available source, evaluated available source metadata, generated parallel AI assessments, and limited report-level trust because independent corroboration was not available."
+      : `The Angle Report gathered ${analyzedSourceCount} independent sources, removed duplicate coverage, evaluated available source metadata, compared the reporting set, and generated a neutral intelligence assessment.`;
 
   const report: IntelligenceReport = {
     article,
@@ -693,7 +693,7 @@ export async function generateIntelligenceReport(
     whyThisMatters:
       toStringValue(
         analysis.whyThisMatters,
-        "PoliticalPulse could not determine why this story matters from the available reporting."
+        "The Angle Report could not determine why this story matters from the available reporting."
       ),
 
     whoIsAffected: toStringArray(
@@ -761,7 +761,7 @@ export async function generateIntelligenceReport(
 
     evidence: {
       /*
-       * Prefer the sources PoliticalPulse actually
+       * Prefer the sources The Angle Report actually
        * gathered. AI-provided source names are used
        * only when the gathered list is unavailable.
        */
@@ -795,7 +795,7 @@ export async function generateIntelligenceReport(
     );
 
   console.info(
-    "PoliticalPulse report performance:",
+    "The Angle Report performance:",
     {
       article:
         article.title.slice(0, 100),
