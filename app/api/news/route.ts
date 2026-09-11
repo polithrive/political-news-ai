@@ -1,8 +1,8 @@
 const NEWS_API_BASE_URL =
   "https://newsapi.org/v2";
 
-const DEFAULT_PAGE_SIZE = 40;
-const MAX_HOMEPAGE_ARTICLES = 10;
+const DEFAULT_PAGE_SIZE = 100;
+const MAX_HOMEPAGE_ARTICLES = 30;
 
 const RELATED_FETCH_SIZE = 30;
 const RELATED_RETURN_SIZE = 12;
@@ -324,6 +324,106 @@ function isPoliticalArticle(
   );
 }
 
+const NEAR_DUPLICATE_STOP_WORDS = new Set([
+  ...RELATED_STOP_WORDS,
+  "after",
+  "amid",
+  "over",
+  "new",
+  "latest",
+  "just",
+  "could",
+  "would",
+  "may",
+  "says",
+  "say",
+]);
+
+function getTitleTokens(
+  title: string
+): string[] {
+  return Array.from(
+    new Set(
+      title
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .split(/\s+/)
+        .map((word) => word.trim())
+        .filter(
+          (word) =>
+            word.length >= 3 &&
+            !NEAR_DUPLICATE_STOP_WORDS.has(word)
+        )
+    )
+  );
+}
+
+function isNearDuplicateTitle(
+  leftTitle: string,
+  rightTitle: string
+): boolean {
+  const leftTokens = getTitleTokens(leftTitle);
+  const rightTokens = getTitleTokens(rightTitle);
+
+  if (
+    leftTokens.length < 4 ||
+    rightTokens.length < 4
+  ) {
+    return false;
+  }
+
+  const rightTokenSet = new Set(rightTokens);
+
+  const overlapCount = leftTokens.filter(
+    (token) => rightTokenSet.has(token)
+  ).length;
+
+  const smallerSetSize = Math.min(
+    leftTokens.length,
+    rightTokens.length
+  );
+
+  return (
+    overlapCount >= 4 &&
+    overlapCount / smallerSetSize >= 0.72
+  );
+}
+
+/*
+ * Keeps the first article in a near-duplicate
+ * cluster. Homepage articles are already
+ * newest-first from NewsAPI, so later wire
+ * copies of the same event are dropped from
+ * the homepage feed only.
+ */
+function filterNearDuplicateStories(
+  articles: NewsApiArticle[]
+): NewsApiArticle[] {
+  const keptArticles: NewsApiArticle[] = [];
+
+  for (const article of articles) {
+    const title = article.title?.trim();
+
+    if (!title) {
+      continue;
+    }
+
+    const isNearDuplicate = keptArticles.some(
+      (existingArticle) =>
+        isNearDuplicateTitle(
+          existingArticle.title ?? "",
+          title
+        )
+    );
+
+    if (!isNearDuplicate) {
+      keptArticles.push(article);
+    }
+  }
+
+  return keptArticles;
+}
+
 function deduplicateArticles(
   articles: NewsApiArticle[]
 ): NewsApiArticle[] {
@@ -371,11 +471,13 @@ function deduplicateArticles(
 function prepareHomepageArticles(
   articles: unknown[]
 ): NewsApiArticle[] {
-  return deduplicateArticles(
-    articles
-      .filter(isNewsApiArticle)
-      .filter(isUsableArticle)
-      .filter(isPoliticalArticle)
+  return filterNearDuplicateStories(
+    deduplicateArticles(
+      articles
+        .filter(isNewsApiArticle)
+        .filter(isUsableArticle)
+        .filter(isPoliticalArticle)
+    )
   ).slice(
     0,
     MAX_HOMEPAGE_ARTICLES

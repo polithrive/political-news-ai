@@ -9,8 +9,9 @@ import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 import { analyzeArticle } from "@/app/lib/analysis";
 import { getLatestNews } from "@/lib/news";
 
-const MAX_HOMEPAGE_ARTICLES = 6;
-const ANALYSIS_CONCURRENCY = 2;
+const PREVIEW_ARTICLE_COUNT = 3;
+const DIVERSITY_WINDOW = 12;
+const MAX_PER_PUBLISHER_IN_WINDOW = 2;
 
 type HomepageIntelligenceState = {
   articles: Article[];
@@ -21,6 +22,62 @@ type HomepageIntelligenceState = {
   isFeaturedAnalysisLoading: boolean;
   errorMessage: string | null;
 };
+
+function normalizePublisherName(
+  value: string | undefined
+): string {
+  return (value ?? "unknown")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+/*
+ * Reorders the fetched homepage pool so a single
+ * publisher does not dominate the first visible
+ * stories. Deferred articles remain in the array
+ * for Load More, search, and Intelligence Report
+ * selection.
+ */
+function applyPublisherDiversity(
+  articles: Article[]
+): Article[] {
+  const windowArticles: Article[] = [];
+  const deferredArticles: Article[] = [];
+  const remainingArticles: Article[] = [];
+  const publisherCounts = new Map<string, number>();
+
+  for (const article of articles) {
+    const publisherKey = normalizePublisherName(
+      article.source?.name
+    );
+
+    if (windowArticles.length < DIVERSITY_WINDOW) {
+      const currentCount =
+        publisherCounts.get(publisherKey) ?? 0;
+
+      if (currentCount >= MAX_PER_PUBLISHER_IN_WINDOW) {
+        deferredArticles.push(article);
+        continue;
+      }
+
+      windowArticles.push(article);
+      publisherCounts.set(
+        publisherKey,
+        currentCount + 1
+      );
+      continue;
+    }
+
+    remainingArticles.push(article);
+  }
+
+  return [
+    ...windowArticles,
+    ...deferredArticles,
+    ...remainingArticles,
+  ];
+}
 
 export function useHomepageIntelligence(): HomepageIntelligenceState {
   const [articles, setArticles] =
@@ -46,71 +103,41 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
   useEffect(() => {
     let isCancelled = false;
 
-    async function analyzeRemainingArticles(
-      articlesToAnalyze: Article[]
+    async function analyzeSideStories(
+      homepageArticles: Article[]
     ) {
-      let nextIndex = 1;
+      const sideStories = homepageArticles.slice(
+        1,
+        PREVIEW_ARTICLE_COUNT
+      );
 
-      async function worker() {
-        while (
-          nextIndex < articlesToAnalyze.length &&
-          !isCancelled
-        ) {
-          const currentIndex = nextIndex;
-          nextIndex += 1;
-
-          const article =
-            articlesToAnalyze[currentIndex];
-
-          if (!article) {
-            continue;
-          }
+      await Promise.all(
+        sideStories.map(async (article, offset) => {
+          const articleIndex = offset + 1;
 
           try {
-            const analysis =
-              await analyzeArticle(article);
+            const analysis = await analyzeArticle(
+              article
+            );
 
             if (isCancelled) {
               return;
             }
 
-            setAnalysisResults(
-              (previousResults) => ({
-                ...previousResults,
-                [currentIndex]: analysis,
-              })
-            );
+            setAnalysisResults((previousResults) => ({
+              ...previousResults,
+              [articleIndex]: analysis,
+            }));
           } catch (error) {
             console.error(
               `Failed to analyze homepage article ${
-                currentIndex + 1
+                articleIndex + 1
               }:`,
               error
             );
           }
-        }
-      }
-
-      const remainingArticleCount =
-        Math.max(
-          0,
-          articlesToAnalyze.length - 1
-        );
-
-      const workerCount = Math.min(
-        ANALYSIS_CONCURRENCY,
-        remainingArticleCount
+        })
       );
-
-      if (workerCount === 0) {
-        return;
-      }
-
-      const workers = Array.from({
-        length: workerCount,
-      }).map(() => worker());
-
-      await Promise.all(workers);
     }
 
     async function loadHomepageIntelligence() {
@@ -122,22 +149,18 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
         setAnalysisResults({});
         setFeaturedAnalysis(null);
 
-        const latestArticles =
-          await getLatestNews();
+        const latestArticles = await getLatestNews();
 
         if (isCancelled) {
           return;
         }
 
         const homepageArticles =
-          latestArticles.slice(
-            0,
-            MAX_HOMEPAGE_ARTICLES
-          );
+          applyPublisherDiversity(latestArticles);
 
         if (homepageArticles.length === 0) {
           setErrorMessage(
-            "PoliticalPulse did not receive any live articles."
+            "The Angle Report did not receive any live articles."
           );
 
           return;
@@ -146,8 +169,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
         setArticles(homepageArticles);
         setIsNewsLoading(false);
 
-        const featuredArticle =
-          homepageArticles[0];
+        const featuredArticle = homepageArticles[0];
 
         if (!featuredArticle) {
           return;
@@ -155,18 +177,15 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
 
         setIsFeaturedAnalysisLoading(true);
 
-        const featuredPreview =
-          await analyzeArticle(
-            featuredArticle
-          );
+        const featuredPreview = await analyzeArticle(
+          featuredArticle
+        );
 
         if (isCancelled) {
           return;
         }
 
-        setFeaturedAnalysis(
-          featuredPreview
-        );
+        setFeaturedAnalysis(featuredPreview);
 
         setAnalysisResults({
           0: featuredPreview,
@@ -174,9 +193,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
 
         setIsFeaturedAnalysisLoading(false);
 
-        await analyzeRemainingArticles(
-          homepageArticles
-        );
+        await analyzeSideStories(homepageArticles);
       } catch (error) {
         console.error(
           "Failed to load homepage intelligence:",
@@ -187,7 +204,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : "PoliticalPulse could not load homepage intelligence."
+              : "The Angle Report could not load homepage intelligence."
           );
         }
       } finally {
@@ -208,8 +225,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
   return {
     articles,
     analysisResults,
-    featuredArticle:
-      articles[0] ?? null,
+    featuredArticle: articles[0] ?? null,
     featuredAnalysis,
     isNewsLoading,
     isFeaturedAnalysisLoading,

@@ -482,6 +482,8 @@ function RightRail({
   );
 }
 
+const TOP_STORIES_PAGE_SIZE = 6;
+
 export default function HomeDashboard({
   articles,
   analysisResults,
@@ -491,6 +493,9 @@ export default function HomeDashboard({
   errorMessage,
   onTopicSelect,
 }: HomeDashboardProps) {
+  const [visibleTopStoryCount, setVisibleTopStoryCount] =
+    useState(TOP_STORIES_PAGE_SIZE);
+
   const storyPool =
     articles.filter(
       (article) =>
@@ -501,8 +506,18 @@ export default function HomeDashboard({
   const sideStories =
     storyPool.slice(0, 2);
 
+  const latestStoriesPool =
+    storyPool.slice(2);
+
   const latestStories =
-    storyPool.slice(2, 8);
+    latestStoriesPool.slice(
+      0,
+      visibleTopStoryCount
+    );
+
+  const hasMoreTopStories =
+    visibleTopStoryCount <
+    latestStoriesPool.length;
 
   return (
     <div className="relative overflow-hidden bg-[#020D21]">
@@ -778,17 +793,26 @@ export default function HomeDashboard({
               </div>
 
               <span className="hidden rounded-lg border border-[#17446D] bg-[#04162C] px-3 py-1.5 text-xs font-semibold text-[#8197AD] sm:inline">
-                {latestStories.length} stories
+                {latestStoriesPool.length} stories
               </span>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
               {latestStories.map(
                 (article, index) => {
+                  const articleIndex =
+                    articles.findIndex(
+                      (candidate) =>
+                        candidate.url ===
+                        article.url
+                    );
+
                   const analysis =
-                    analysisResults[
-                      index + 2
-                    ];
+                    articleIndex >= 0
+                      ? analysisResults[
+                          articleIndex
+                        ]
+                      : undefined;
 
                   return (
                     <article
@@ -860,6 +884,24 @@ export default function HomeDashboard({
                 }
               )}
             </div>
+
+            {hasMoreTopStories ? (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVisibleTopStoryCount(
+                      (currentCount) =>
+                        currentCount +
+                        TOP_STORIES_PAGE_SIZE
+                    )
+                  }
+                  className="rounded-xl border border-[#1769A4]/70 bg-[#082447]/80 px-6 py-3 text-sm font-bold text-[#E2F3FF] transition hover:border-[#38BDF8] hover:bg-[#0A315B]"
+                >
+                  Load More
+                </button>
+              </div>
+            ) : null}
           </section>
 
           {/* Topics */}
