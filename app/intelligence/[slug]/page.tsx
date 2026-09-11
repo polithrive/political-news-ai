@@ -26,7 +26,7 @@ import StickyReportNavigation from "@/app/components/intelligence/StickyReportNa
 import StoryTimeline from "@/app/components/intelligence/StoryTimeline";
 import TrustScore from "@/app/components/intelligence/TrustScore";
 
-import { getSelectedArticle } from "@/lib/selectedArticle";
+import { getSelectedArticle, saveSelectedArticle } from "@/lib/selectedArticle";
 import { buildIntelligenceContext } from "@/lib/services/contextBuilder";
 import { generateIntelligenceGraph } from "@/lib/services/intelligenceGraph";
 import {
@@ -38,6 +38,10 @@ import {
   getCachedReport,
 } from "@/lib/services/reportCache";
 import { generateIntelligenceReport } from "@/lib/services/report";
+import {
+  generateIntelligenceReportFromUrl,
+  isUrlSubmittedArticle,
+} from "@/lib/services/urlAnalysisReport";
 
 import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
@@ -141,7 +145,7 @@ export default function IntelligenceReportPage() {
 
         if (!isCancelled) {
           setErrorMessage(
-            "PoliticalPulse could not generate this intelligence report. Please return to the homepage and try opening the story again."
+            "The Angle Report could not generate this intelligence report. Please return to the homepage and try opening the story again."
           );
         }
       } finally {
@@ -181,12 +185,74 @@ export default function IntelligenceReportPage() {
 
         if (!isCancelled) {
           setGraphErrorMessage(
-            "PoliticalPulse could not generate connected context for this story."
+            "The Angle Report could not generate connected context for this story."
           );
         }
       } finally {
         if (!isCancelled) {
           setIsGraphLoading(false);
+        }
+      }
+    }
+
+    async function generateUrlReport(
+      selectedArticle: Article
+    ) {
+      try {
+        setIsReportLoading(true);
+        setErrorMessage(null);
+
+        const {
+          article: analyzedArticle,
+          report: generatedReport,
+        } =
+          await generateIntelligenceReportFromUrl(
+            selectedArticle.url
+          );
+
+        if (isCancelled) {
+          return;
+        }
+
+        saveSelectedArticle(analyzedArticle);
+        cacheReport(
+          analyzedArticle,
+          generatedReport
+        );
+
+        setArticle(analyzedArticle);
+        setReport(generatedReport);
+
+        const cachedGraph =
+          getCachedIntelligenceGraph(
+            analyzedArticle
+          );
+
+        if (cachedGraph) {
+          setGraph(cachedGraph);
+          setIsGraphLoading(false);
+        } else {
+          void generateGraph(
+            analyzedArticle
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to generate URL intelligence report:",
+          error
+        );
+
+        if (!isCancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "The Angle Report could not generate this intelligence report from the submitted URL. Please return to the homepage and try again."
+          );
+          setIsGraphLoading(false);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsReportLoading(false);
         }
       }
     }
@@ -216,6 +282,18 @@ export default function IntelligenceReportPage() {
       if (cachedReport) {
         setReport(cachedReport);
         setIsReportLoading(false);
+      } else if (
+        isUrlSubmittedArticle(
+          selectedArticle
+        )
+      ) {
+        setIsReportLoading(true);
+        setIsGraphLoading(true);
+        void generateUrlReport(
+          selectedArticle
+        );
+        setIsInitializingArticle(false);
+        return;
       } else {
         setIsReportLoading(true);
         void generateReport(
@@ -319,11 +397,11 @@ export default function IntelligenceReportPage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-extrabold">
-              Open an Intelligence Report from the PoliticalPulse homepage.
+              Open an Intelligence Report from The Angle Report homepage.
             </h1>
 
             <p className="mt-4 max-w-2xl text-slate-400">
-              PoliticalPulse needs a selected news story before it can generate a complete intelligence report.
+              The Angle Report needs a selected news story before it can generate a complete intelligence report.
             </p>
 
             <Link
@@ -463,14 +541,14 @@ export default function IntelligenceReportPage() {
                   <IntelligenceSectionSkeleton
                     label="Executive Brief"
                     title="Building the executive summary"
-                    description="PoliticalPulse is identifying the central facts, context, and significance of this story."
+                    description="The Angle Report is identifying the central facts, context, and significance of this story."
                     blocks={3}
                   />
 
                   <IntelligenceSectionSkeleton
                     label="Trust Score"
                     title="Evaluating source confidence"
-                    description="PoliticalPulse is reviewing source quality, reporting agreement, and evidence strength."
+                    description="The Angle Report is reviewing source quality, reporting agreement, and evidence strength."
                     blocks={2}
                   />
                 </div>
@@ -529,14 +607,14 @@ export default function IntelligenceReportPage() {
                   <IntelligenceSectionSkeleton
                     label="Perspective Analysis"
                     title="Comparing political viewpoints"
-                    description="PoliticalPulse is evaluating progressive, centrist, and conservative interpretations."
+                    description="The Angle Report is evaluating progressive, centrist, and conservative interpretations."
                     blocks={3}
                   />
 
                   <IntelligenceSectionSkeleton
                     label="Impact Analysis"
                     title="Evaluating potential impact"
-                    description="PoliticalPulse is identifying who may be affected and the likely short- and long-term consequences."
+                    description="The Angle Report is identifying who may be affected and the likely short- and long-term consequences."
                     blocks={3}
                   />
                 </div>
@@ -572,7 +650,7 @@ export default function IntelligenceReportPage() {
                     <IntelligenceSectionSkeleton
                       label="Intelligence Graph"
                       title="Building connected context"
-                      description="PoliticalPulse is identifying the people, organizations, events, and issues connected to this story."
+                      description="The Angle Report is identifying the people, organizations, events, and issues connected to this story."
                       blocks={3}
                     />
                   ) : (
@@ -587,7 +665,7 @@ export default function IntelligenceReportPage() {
 
                       <p className="mt-3 max-w-3xl text-slate-400">
                         {graphErrorMessage ??
-                          "PoliticalPulse could not identify reliable story connections from the available article information."}
+                          "The Angle Report could not identify reliable story connections from the available article information."}
                       </p>
                     </section>
                   )}
@@ -628,7 +706,7 @@ export default function IntelligenceReportPage() {
                   <IntelligenceSectionSkeleton
                     label="Evidence"
                     title="Reviewing supporting information"
-                    description="PoliticalPulse is assembling source evidence, methodology, and conflicting reporting."
+                    description="The Angle Report is assembling source evidence, methodology, and conflicting reporting."
                     blocks={3}
                   />
                 )}
@@ -638,7 +716,7 @@ export default function IntelligenceReportPage() {
             {report && reportContext ? (
               <section className="mt-12">
                 <SectionIntro
-                  eyebrow="Ask PoliticalPulse"
+                  eyebrow="Ask The Angle Report"
                   title="Continue the analysis"
                   description="Ask follow-up questions about this report using the same intelligence context shown above."
                 />

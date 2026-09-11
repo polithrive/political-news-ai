@@ -376,10 +376,13 @@ export default function SourceComparison({
                   {sourcesReviewed === 1
                     ? ""
                     : "s"}{" "}
-                  for this report. The current
+                  for this report.                   The current
                   source set produced a reporting
                   agreement score of{" "}
-                  {reportingAgreement}/100 and a
+                  {reportingAgreement === null
+                    ? "N/A"
+                    : `${reportingAgreement}/100`}{" "}
+                  and a
                   political diversity rating of{" "}
                   {politicalDiversity.toLowerCase()}.
                   Source ratings provide context
@@ -408,10 +411,14 @@ export default function SourceComparison({
                   </p>
 
                   <p className="mt-2 text-xl font-black text-white">
-                    {reportingAgreement}
-                    <span className="text-xs text-[#7890A7]">
-                      /100
-                    </span>
+                    {reportingAgreement === null
+                      ? "N/A"
+                      : reportingAgreement}
+                    {reportingAgreement === null ? null : (
+                      <span className="text-xs text-[#7890A7]">
+                        /100
+                      </span>
+                    )}
                   </p>
                 </div>
 

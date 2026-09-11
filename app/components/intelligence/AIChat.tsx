@@ -206,7 +206,7 @@ export default function AIChat({
 
       if (!response.ok) {
         let apiError =
-          "PoliticalPulse could not answer this question.";
+          "The Angle Report could not answer this question.";
 
         try {
           const data =
@@ -225,7 +225,7 @@ export default function AIChat({
 
       if (!response.body) {
         throw new Error(
-          "PoliticalPulse could not start the response stream."
+          "The Angle Report could not start the response stream."
         );
       }
 
@@ -325,7 +325,7 @@ export default function AIChat({
 
       if (!finalVisibleAnswer.trim()) {
         throw new Error(
-          "PoliticalPulse returned an empty response."
+          "The Angle Report returned an empty response."
         );
       }
     } catch (error) {
@@ -334,7 +334,7 @@ export default function AIChat({
         error.name === "AbortError"
       ) {
         setErrorMessage(
-          "The PoliticalPulse response was stopped."
+          "The Angle Report response was stopped."
         );
       } else {
         const message =
@@ -382,7 +382,7 @@ export default function AIChat({
 
   return (
     <section
-      aria-label="Ask PoliticalPulse"
+      aria-label="Ask The Angle Report"
       className="relative overflow-hidden rounded-3xl border p-6 shadow-[0_20px_55px_rgba(37,54,74,0.08)] sm:p-8 lg:p-10"
       style={{
         backgroundColor:
@@ -403,7 +403,7 @@ export default function AIChat({
       <div className="relative">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeader
-            eyebrow="Ask PoliticalPulse"
+            eyebrow="Ask The Angle Report"
             title="Go Deeper Into This Story"
             subtitle="Ask follow-up questions about the evidence, political perspectives, implications, or anything else contained in this intelligence report."
           />
@@ -514,7 +514,7 @@ export default function AIChat({
                 >
                   Ask a question about this
                   intelligence report.
-                  PoliticalPulse will use the
+                  The Angle Report will use the
                   report as its primary source
                   of context.
                 </p>
@@ -584,7 +584,7 @@ export default function AIChat({
                           }}
                         >
                           {isAssistant
-                            ? "PoliticalPulse AI"
+                            ? "The Angle Report AI"
                             : "You"}
                         </span>
                       </div>
@@ -610,7 +610,7 @@ export default function AIChat({
                                   .muted,
                             }}
                           >
-                            PoliticalPulse is
+                            The Angle Report is
                             analyzing the
                             report...
                           </p>
@@ -1069,7 +1069,7 @@ export default function AIChat({
                 )
               }
               onKeyDown={handleKeyDown}
-              placeholder="Ask PoliticalPulse about this report..."
+              placeholder="Ask The Angle Report about this report..."
               disabled={isLoading}
               aria-label="Ask a question about this report"
               className="min-w-0 flex-1 bg-transparent px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-60"
@@ -1108,7 +1108,7 @@ export default function AIChat({
                     colors.brand.primary,
                 }}
               >
-                Ask PoliticalPulse
+                Ask The Angle Report
               </button>
             )}
           </div>

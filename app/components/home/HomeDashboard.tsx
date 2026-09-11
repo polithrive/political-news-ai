@@ -12,6 +12,8 @@ import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 import { createSlug } from "@/lib/createSlug";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
+import AnalyzeUrlForm from "./AnalyzeUrlForm";
+
 type HomeDashboardProps = {
   articles: Article[];
   analysisResults: Record<number, AnalysisResult>;
@@ -608,6 +610,8 @@ export default function HomeDashboard({
                 ))}
               </div>
             </div>
+
+            <AnalyzeUrlForm />
 
             {errorMessage ? (
               <div className="rounded-2xl border border-[#FF2638]/30 bg-[#FF2638]/10 p-6 text-red-200">

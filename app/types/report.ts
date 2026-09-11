@@ -8,11 +8,25 @@ export type IntelligenceOverview = {
   sourcesReviewed: number;
 };
 
+export type ReportRelatedSource = {
+  title: string;
+  url: string;
+  sourceName: string;
+  isPrimary: boolean;
+};
+
 export type ReportEvidence = {
   primarySources: string[];
   conflictingReporting: string[];
   methodology: string;
   lastAnalyzedAt: string;
+
+  /*
+   * Optional richer source records from the
+   * URL-analysis evidence set. Homepage reports
+   * may omit this field.
+   */
+  relatedSources?: ReportRelatedSource[];
 };
 
 export type DebatePerspective = {

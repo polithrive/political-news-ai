@@ -223,6 +223,36 @@ export function buildIntelligenceContext({
       title: "Primary Sources",
       content: report.evidence.primarySources,
     },
+    ...(report.evidence.relatedSources &&
+    report.evidence.relatedSources.length > 0
+      ? [
+          {
+            title: "Related Evidence Sources",
+            content: report.evidence.relatedSources.map(
+              (source) => {
+                const sourceLabel =
+                  source.sourceName ||
+                  source.title ||
+                  "Unknown source";
+
+                const titleLabel = source.title
+                  ? ` — ${source.title}`
+                  : "";
+
+                const urlLabel = source.url
+                  ? ` (${source.url})`
+                  : "";
+
+                const primaryLabel = source.isPrimary
+                  ? " [primary]"
+                  : "";
+
+                return `${sourceLabel}${titleLabel}${urlLabel}${primaryLabel}`;
+              }
+            ),
+          },
+        ]
+      : []),
     {
       title: "Conflicting Reporting",
       content: report.evidence.conflictingReporting,
