@@ -19,6 +19,8 @@ import {
 
 import { buildEvidenceContext } from "@/lib/services/evidenceContext";
 
+import { calculateTrustScore } from "@/lib/services/trustScore";
+
 type AnalyzeUrlRequest = {
   url?: unknown;
 };
@@ -114,6 +116,10 @@ function createPoliticalFallback(): PoliticalAnalysis {
 
       mainDisagreements: [],
 
+      /*
+       * Keep this property name for compatibility
+       * with the existing intelligence data model.
+       */
       politicalPulseAnalysis:
         "The Angle Report could not complete the political perspective analysis.",
 
@@ -146,13 +152,18 @@ function createArticleFromExtraction(
   }
 
   return {
-    title: extracted.title,
+    title:
+      extracted.title,
 
     description:
       extracted.description ||
-      extracted.content.slice(0, 500),
+      extracted.content.slice(
+        0,
+        500
+      ),
 
-    url: extracted.url,
+    url:
+      extracted.url,
 
     urlToImage:
       extracted.image || null,
@@ -168,6 +179,7 @@ function createArticleFromExtraction(
 
     source: {
       id: null,
+
       name:
         extracted.source ||
         "Unknown source",
@@ -201,7 +213,9 @@ export async function POST(
 
     try {
       normalizedUrl =
-        normalizeArticleUrl(body.url);
+        normalizeArticleUrl(
+          body.url
+        );
     } catch (error) {
       return Response.json(
         {
@@ -217,7 +231,9 @@ export async function POST(
     }
 
     const extracted =
-      await extractArticle(normalizedUrl);
+      await extractArticle(
+        normalizedUrl
+      );
 
     if (!extracted) {
       return Response.json(
@@ -232,7 +248,9 @@ export async function POST(
     }
 
     const article =
-      createArticleFromExtraction(extracted);
+      createArticleFromExtraction(
+        extracted
+      );
 
     if (!article) {
       return Response.json(
@@ -246,14 +264,6 @@ export async function POST(
       );
     }
 
-    /*
-     * Build the evidence package now so this
-     * endpoint is ready for the multi-source
-     * intelligence pipeline.
-     *
-     * The next step will pass this context into
-     * the AI analysis modules directly.
-     */
     const evidenceContext =
       await buildEvidenceContext(
         article,
@@ -278,19 +288,34 @@ export async function POST(
     const [
       summaryResult,
       politicalResult,
-    ] = await Promise.allSettled([
-      generateSummaryAnalysis({
-        title: article.title,
-        description,
-        sourceName,
-      }),
+    ] =
+      await Promise.allSettled([
+        generateSummaryAnalysis({
+          title:
+            article.title,
 
-      generatePoliticalAnalysis({
-        title: article.title,
-        description,
-        sourceName,
-      }),
-    ]);
+          description,
+
+          sourceName,
+
+          evidenceContext:
+            evidenceContext
+              .promptContext,
+        }),
+
+        generatePoliticalAnalysis({
+          title:
+            article.title,
+
+          description,
+
+          sourceName,
+
+          evidenceContext:
+            evidenceContext
+              .promptContext,
+        }),
+      ]);
 
     const summaryAnalysis =
       summaryResult.status ===
@@ -324,11 +349,76 @@ export async function POST(
       );
     }
 
+    const sourceNames =
+      evidenceContext.sources
+        .map(
+          (source) =>
+            source.sourceName
+        )
+        .filter(Boolean);
+
+    const sourceConsensus =
+      evidenceContext
+        .sourceConsensus;
+
+    /*
+     * Calculate the Trust Score from the
+     * actual evidence set.
+     *
+     * AI confidence is only one component.
+     * Source corroboration, publisher quality,
+     * reporting alignment, and political
+     * diversity also contribute.
+     */
+    const trustScore =
+      calculateTrustScore({
+        confidence:
+          summaryAnalysis.confidence,
+
+        sourceCount:
+          sourceConsensus.sourceCount,
+
+        ratedSourceCount:
+          sourceConsensus
+            .ratedSourceCount,
+
+        averageReliability:
+          sourceConsensus
+            .averageReliability,
+
+        averageFactualReporting:
+          sourceConsensus
+            .averageFactualReporting,
+
+        reportingAgreement:
+          sourceConsensus
+            .reportingAgreement,
+
+        politicalDistribution:
+          sourceConsensus
+            .politicalDistribution,
+      });
+
     const analysis =
       mergeAnalysis({
         summaryAnalysis,
+
         politicalAnalysis,
+
         sourceName,
+
+        sourcesReviewed:
+          evidenceContext
+            .sourceCount,
+
+        primarySources:
+          sourceNames,
+
+        methodology:
+          evidenceContext
+            .sourceCount > 1
+            ? `The Angle Report analyzed the submitted article alongside ${evidenceContext.sourceCount - 1} related source${evidenceContext.sourceCount - 1 === 1 ? "" : "s"}. The evidence set included ${evidenceContext.independentSourceCount} independent publisher${evidenceContext.independentSourceCount === 1 ? "" : "s"}. Summary and political-intelligence modules analyzed the same evidence context to identify supported facts, uncertainty, framing, perspectives, and areas of agreement or disagreement.`
+            : "The Angle Report analyzed the submitted article as the only available source. No additional sufficiently relevant reporting was available in the evidence set, so the analysis should not be interpreted as independently corroborated.",
       });
 
     return Response.json({
@@ -357,7 +447,8 @@ export async function POST(
 
       evidence: {
         sourceCount:
-          evidenceContext.sourceCount,
+          evidenceContext
+            .sourceCount,
 
         independentSourceCount:
           evidenceContext
@@ -367,9 +458,45 @@ export async function POST(
           evidenceContext
             .ratedSourceCount,
 
+        sourceConsensus: {
+          sourceCount:
+            sourceConsensus
+              .sourceCount,
+
+          ratedSourceCount:
+            sourceConsensus
+              .ratedSourceCount,
+
+          averageReliability:
+            sourceConsensus
+              .averageReliability,
+
+          averageFactualReporting:
+            sourceConsensus
+              .averageFactualReporting,
+
+          reportingAgreement:
+            sourceConsensus
+              .reportingAgreement,
+
+          sourceQualityScore:
+            sourceConsensus
+              .sourceQualityScore,
+
+          sourceNames:
+            sourceConsensus
+              .sourceNames,
+
+          politicalDistribution:
+            sourceConsensus
+              .politicalDistribution,
+        },
+
         sources:
           evidenceContext.sources,
       },
+
+      trustScore,
 
       analysis,
     });

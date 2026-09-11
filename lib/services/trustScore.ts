@@ -104,8 +104,10 @@ function calculateSourceQualityScore(
   }
 
   return clamp(
-    (averageReliability +
-      averageFactualReporting) /
+    (
+      averageReliability +
+      averageFactualReporting
+    ) /
       2
   );
 }
@@ -130,6 +132,22 @@ function calculateCorroborationScore(
   }
 
   return 100;
+}
+
+function calculatePoliticalDiversityScore(
+  politicalDiversity: PoliticalDiversity
+): number {
+  switch (politicalDiversity) {
+    case "High":
+      return 100;
+
+    case "Medium":
+      return 70;
+
+    case "Low":
+    default:
+      return 40;
+  }
 }
 
 function applySourceCountCap(
@@ -167,20 +185,40 @@ export function calculateTrustScore(
       input.sourceCount
     );
 
-  const reportingAgreementScore =
-    input.reportingAgreement;
+  const politicalDiversity =
+    calculatePoliticalDiversity(
+      input.politicalDistribution,
+      input.sourceCount
+    );
+
+  const politicalDiversityScore =
+    calculatePoliticalDiversityScore(
+      politicalDiversity
+    );
+
+  const confidenceScore =
+    clamp(
+      input.confidence
+    );
 
   /*
-   * Start with AI confidence, but never allow
-   * AI confidence alone to dominate the score.
+   * The Angle Report Trust Score is evidence-led.
+   *
+   * AI confidence remains one signal, but the
+   * score now gives more weight to actual source
+   * corroboration, reporting alignment, source
+   * quality, and source diversity.
    */
   let weightedScore =
-    clamp(input.confidence) * 0.35 +
-    corroborationScore * 0.35;
+    confidenceScore * 0.20 +
+    corroborationScore * 0.30;
 
   /*
-   * Only use source-quality ratings when
-   * PoliticalPulse actually has rated sources.
+   * Source quality contributes only when
+   * independently rated publisher information
+   * is actually available.
+   *
+   * Missing ratings remain neutral.
    */
   if (
     sourceQualityScore !== null &&
@@ -189,25 +227,40 @@ export function calculateTrustScore(
     weightedScore +=
       sourceQualityScore * 0.20;
   } else {
-    /*
-     * Unknown source quality should not be
-     * treated as either positive or negative.
-     */
-    weightedScore += 50 * 0.20;
+    weightedScore +=
+      50 * 0.20;
   }
 
   /*
-   * Reporting agreement contributes only when
-   * genuine cross-source agreement is available.
+   * Reporting agreement is based on the
+   * evidence set's cross-source reporting
+   * alignment.
+   *
+   * Missing agreement remains neutral rather
+   * than being treated as evidence for or
+   * against the story.
    */
   if (
-    reportingAgreementScore !== null
+    input.reportingAgreement !== null
   ) {
     weightedScore +=
-      reportingAgreementScore * 0.10;
+      clamp(
+        input.reportingAgreement
+      ) * 0.20;
   } else {
-    weightedScore += 50 * 0.10;
+    weightedScore +=
+      50 * 0.20;
   }
+
+  /*
+   * Political diversity is a smaller supporting
+   * signal. It rewards evidence sets that include
+   * reporting from more than one ideological
+   * classification without implying that balance
+   * itself proves factual accuracy.
+   */
+  weightedScore +=
+    politicalDiversityScore * 0.10;
 
   const cappedOverall =
     applySourceCountCap(
@@ -216,7 +269,9 @@ export function calculateTrustScore(
     );
 
   const overall =
-    clamp(cappedOverall);
+    clamp(
+      cappedOverall
+    );
 
   const evidenceStrength =
     calculateEvidenceStrength(
@@ -224,12 +279,6 @@ export function calculateTrustScore(
       input.ratedSourceCount,
       sourceQualityScore,
       input.reportingAgreement
-    );
-
-  const politicalDiversity =
-    calculatePoliticalDiversity(
-      input.politicalDistribution,
-      input.sourceCount
     );
 
   return {

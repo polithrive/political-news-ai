@@ -1,6 +1,7 @@
 import type {
   PoliticalAnalysis,
 } from "@/lib/ai/generatePoliticalAnalysis";
+
 import type {
   SummaryAnalysis,
 } from "@/lib/ai/generateSummary";
@@ -22,7 +23,8 @@ export type MergedAnalysis = {
   sourcesReviewed: number;
   keyFacts: string[];
 
-  perspectives: PoliticalAnalysis["perspectives"];
+  perspectives:
+    PoliticalAnalysis["perspectives"];
 
   perspectiveAnalysis:
     PoliticalAnalysis["perspectiveAnalysis"];
@@ -30,7 +32,8 @@ export type MergedAnalysis = {
   commonGround: string[];
   consensusScore: number;
 
-  factCheck: SummaryAnalysis["factCheck"];
+  factCheck:
+    SummaryAnalysis["factCheck"];
 
   evidence: {
     primarySources: string[];
@@ -44,16 +47,51 @@ type MergeAnalysisInput = {
   summaryAnalysis: SummaryAnalysis;
   politicalAnalysis: PoliticalAnalysis;
   sourceName: string;
+
+  sourcesReviewed?: number;
+  primarySources?: string[];
+  conflictingReporting?: string[];
+  methodology?: string;
 };
 
-function clampScore(value: number): number {
+function clampScore(
+  value: number
+): number {
   if (!Number.isFinite(value)) {
     return 0;
   }
 
   return Math.max(
     0,
-    Math.min(100, Math.round(value))
+    Math.min(
+      100,
+      Math.round(value)
+    )
+  );
+}
+
+function normalizeSources(
+  primarySources: string[] | undefined,
+  fallbackSourceName: string
+): string[] {
+  const cleanedSources =
+    (primarySources ?? [])
+      .map((source) =>
+        source.trim()
+      )
+      .filter(Boolean);
+
+  if (
+    cleanedSources.length === 0 &&
+    fallbackSourceName.trim()
+  ) {
+    return [
+      fallbackSourceName.trim(),
+    ];
+  }
+
+  return Array.from(
+    new Set(cleanedSources)
   );
 }
 
@@ -61,38 +99,73 @@ export function mergeAnalysis({
   summaryAnalysis,
   politicalAnalysis,
   sourceName,
+  sourcesReviewed,
+  primarySources,
+  conflictingReporting,
+  methodology,
 }: MergeAnalysisInput): MergedAnalysis {
+  const normalizedPrimarySources =
+    normalizeSources(
+      primarySources,
+      sourceName
+    );
+
+  const normalizedSourceCount =
+    Number.isFinite(sourcesReviewed)
+      ? Math.max(
+          1,
+          Math.round(
+            sourcesReviewed ?? 1
+          )
+        )
+      : Math.max(
+          1,
+          normalizedPrimarySources.length
+        );
+
   return {
-    summary: summaryAnalysis.summary,
+    summary:
+      summaryAnalysis.summary,
+
     whyThisMatters:
       summaryAnalysis.whyThisMatters,
+
     whoIsAffected:
       summaryAnalysis.whoIsAffected,
+
     shortTermImpact:
       summaryAnalysis.shortTermImpact,
+
     longTermImpact:
       summaryAnalysis.longTermImpact,
+
     unansweredQuestions:
       summaryAnalysis.unansweredQuestions,
 
-    biasScore: clampScore(
-      politicalAnalysis.biasScore
-    ),
+    biasScore:
+      clampScore(
+        politicalAnalysis.biasScore
+      ),
 
-    lean: politicalAnalysis.lean,
+    lean:
+      politicalAnalysis.lean,
 
     biasReasoning:
       politicalAnalysis.biasReasoning,
 
-    confidence: clampScore(
-      summaryAnalysis.confidence
-    ),
+    confidence:
+      clampScore(
+        summaryAnalysis.confidence
+      ),
 
-    category: summaryAnalysis.category,
+    category:
+      summaryAnalysis.category,
 
-    sourcesReviewed: 1,
+    sourcesReviewed:
+      normalizedSourceCount,
 
-    keyFacts: summaryAnalysis.keyFacts,
+    keyFacts:
+      summaryAnalysis.keyFacts,
 
     perspectives:
       politicalAnalysis.perspectives,
@@ -103,19 +176,24 @@ export function mergeAnalysis({
     commonGround:
       politicalAnalysis.commonGround,
 
-    consensusScore: clampScore(
-      politicalAnalysis.consensusScore
-    ),
+    consensusScore:
+      clampScore(
+        politicalAnalysis.consensusScore
+      ),
 
-    factCheck: summaryAnalysis.factCheck,
+    factCheck:
+      summaryAnalysis.factCheck,
 
     evidence: {
-      primarySources: [sourceName],
+      primarySources:
+        normalizedPrimarySources,
 
-      conflictingReporting: [],
+      conflictingReporting:
+        conflictingReporting ?? [],
 
       methodology:
-        "PoliticalPulse generated two parallel analyses from the supplied article title, description, and source: one focused on factual summary and impact, and one focused on political framing, viewpoints, agreement, and disagreement. Full article extraction was disabled for Alpha performance.",
+        methodology ??
+        "The Angle Report analyzed the supplied article using separate summary and political-intelligence modules. When additional evidence sources are provided, the analysis is grounded in that broader evidence set rather than the primary article alone.",
 
       lastAnalyzedAt:
         new Date().toISOString(),

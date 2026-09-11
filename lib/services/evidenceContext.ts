@@ -5,6 +5,11 @@ import {
   type RankedArticle,
 } from "./multiSource";
 
+import {
+  calculateSourceConsensus,
+  type SourceConsensus,
+} from "./sourceConsensus";
+
 const MAX_EVIDENCE_SOURCES = 6;
 const MAX_DESCRIPTION_LENGTH = 1_200;
 const MAX_PRIMARY_CONTENT_LENGTH = 8_000;
@@ -38,6 +43,8 @@ export type EvidenceContext = {
   independentSourceCount: number;
   ratedSourceCount: number;
 
+  sourceConsensus: SourceConsensus;
+
   promptContext: string;
 };
 
@@ -63,19 +70,26 @@ function truncateText(
     return cleaned;
   }
 
-  return `${cleaned.slice(0, maxLength).trim()}…`;
+  return `${cleaned
+    .slice(0, maxLength)
+    .trim()}…`;
 }
 
 function getSourceName(
   article: Article
 ): string {
-  return cleanText(article.source?.name) || "Unknown source";
+  return (
+    cleanText(article.source?.name) ||
+    "Unknown source"
+  );
 }
 
 function getPublishedAt(
   article: Article
 ): string {
-  return cleanText(article.publishedAt);
+  return cleanText(
+    article.publishedAt
+  );
 }
 
 function createEvidenceSource(
@@ -91,78 +105,106 @@ function createEvidenceSource(
   return {
     index: index + 1,
 
-    title: cleanText(article.title),
+    title:
+      cleanText(article.title),
 
-    description: truncateText(
-      article.description ?? "",
-      MAX_DESCRIPTION_LENGTH
-    ),
+    description:
+      truncateText(
+        article.description ?? "",
+        MAX_DESCRIPTION_LENGTH
+      ),
 
-    url: cleanText(article.url),
+    url:
+      cleanText(article.url),
 
-    sourceName: getSourceName(article),
+    sourceName:
+      getSourceName(article),
 
-    publishedAt: getPublishedAt(article),
+    publishedAt:
+      getPublishedAt(article),
 
     isPrimary,
 
-    isRated: sourceRating.isRated,
+    isRated:
+      sourceRating.isRated,
 
-    reliability: sourceRating.isRated
-      ? sourceRating.reliability
-      : null,
+    reliability:
+      sourceRating.isRated
+        ? sourceRating.reliability
+        : null,
 
-    factualReporting: sourceRating.isRated
-      ? sourceRating.factualReporting
-      : null,
+    factualReporting:
+      sourceRating.isRated
+        ? sourceRating.factualReporting
+        : null,
   };
 }
 
 function countIndependentSources(
   sources: EvidenceSource[]
 ): number {
-  const publishers = new Set(
-    sources
-      .map((source) =>
-        source.sourceName
-          .toLowerCase()
-          .trim()
-      )
-      .filter(Boolean)
-  );
+  const publishers =
+    new Set(
+      sources
+        .map((source) =>
+          source.sourceName
+            .toLowerCase()
+            .trim()
+        )
+        .filter(Boolean)
+    );
 
   return publishers.size;
+}
+
+function formatScore(
+  value: number | null
+): string {
+  return value === null
+    ? "Unavailable"
+    : `${value}/100`;
 }
 
 function buildPromptContext(
   primaryArticle: Article,
   sources: EvidenceSource[],
-  primaryContent: string
+  primaryContent: string,
+  sourceConsensus: SourceConsensus
 ): string {
   const sections: string[] = [];
 
   sections.push(
     [
       "PRIMARY ARTICLE",
-      `Title: ${cleanText(primaryArticle.title)}`,
-      `Publisher: ${getSourceName(primaryArticle)}`,
+      `Title: ${cleanText(
+        primaryArticle.title
+      )}`,
+      `Publisher: ${getSourceName(
+        primaryArticle
+      )}`,
       `Published: ${
-        getPublishedAt(primaryArticle) || "Unknown"
+        getPublishedAt(
+          primaryArticle
+        ) || "Unknown"
       }`,
-      `URL: ${cleanText(primaryArticle.url)}`,
+      `URL: ${cleanText(
+        primaryArticle.url
+      )}`,
       `Description: ${
         truncateText(
-          primaryArticle.description ?? "",
+          primaryArticle.description ??
+            "",
           MAX_DESCRIPTION_LENGTH
         ) || "Not available"
       }`,
     ].join("\n")
   );
 
-  const normalizedContent = truncateText(
-    primaryContent,
-    MAX_PRIMARY_CONTENT_LENGTH
-  );
+  const normalizedContent =
+    truncateText(
+      primaryContent,
+      MAX_PRIMARY_CONTENT_LENGTH
+    );
 
   if (normalizedContent) {
     sections.push(
@@ -174,36 +216,39 @@ function buildPromptContext(
   }
 
   if (sources.length > 0) {
-    const sourceSections = sources.map(
-      (source) => {
-        const rating =
-          source.isRated &&
-          source.reliability !== null &&
-          source.factualReporting !== null
-            ? `Reliability: ${source.reliability}/100 | Factual reporting: ${source.factualReporting}/100`
-            : "Reliability: Not independently rated";
+    const sourceSections =
+      sources.map(
+        (source) => {
+          const rating =
+            source.isRated &&
+            source.reliability !==
+              null &&
+            source.factualReporting !==
+              null
+              ? `Reliability: ${source.reliability}/100 | Factual reporting: ${source.factualReporting}/100`
+              : "Reliability: Not independently rated";
 
-        return [
-          `SOURCE ${source.index}${
-            source.isPrimary
-              ? " — PRIMARY"
-              : ""
-          }`,
-          `Publisher: ${source.sourceName}`,
-          `Title: ${source.title}`,
-          `Published: ${
-            source.publishedAt ||
-            "Unknown"
-          }`,
-          `Description: ${
-            source.description ||
-            "Not available"
-          }`,
-          rating,
-          `URL: ${source.url}`,
-        ].join("\n");
-      }
-    );
+          return [
+            `SOURCE ${source.index}${
+              source.isPrimary
+                ? " — PRIMARY"
+                : ""
+            }`,
+            `Publisher: ${source.sourceName}`,
+            `Title: ${source.title}`,
+            `Published: ${
+              source.publishedAt ||
+              "Unknown"
+            }`,
+            `Description: ${
+              source.description ||
+              "Not available"
+            }`,
+            rating,
+            `URL: ${source.url}`,
+          ].join("\n");
+        }
+      );
 
     sections.push(
       [
@@ -212,6 +257,38 @@ function buildPromptContext(
       ].join("\n\n")
     );
   }
+
+  sections.push(
+    [
+      "SOURCE CONSENSUS SIGNALS",
+      `Sources reviewed: ${sourceConsensus.sourceCount}`,
+      `Rated sources: ${sourceConsensus.ratedSourceCount}`,
+      `Average reliability: ${formatScore(
+        sourceConsensus.averageReliability
+      )}`,
+      `Average factual reporting: ${formatScore(
+        sourceConsensus.averageFactualReporting
+      )}`,
+      `Source quality: ${formatScore(
+        sourceConsensus.sourceQualityScore
+      )}`,
+      `Reporting alignment: ${formatScore(
+        sourceConsensus.reportingAgreement
+      )}`,
+      `Political source distribution: Left ${sourceConsensus.politicalDistribution.left}, Center ${sourceConsensus.politicalDistribution.center}, Right ${sourceConsensus.politicalDistribution.right}, Mixed/Unrated ${sourceConsensus.politicalDistribution.mixed}`,
+    ].join("\n")
+  );
+
+  sections.push(
+    [
+      "IMPORTANT CONSENSUS INTERPRETATION",
+      "- Reporting alignment measures similarity in the major facts and themes described by independent publishers.",
+      "- Reporting alignment does not prove that every claim is true.",
+      "- A high reporting-alignment score must not be described as full factual verification.",
+      "- Source quality and political distribution are context signals, not proof of truth.",
+      "- When reporting agreement is unavailable, do not invent or estimate cross-source agreement.",
+    ].join("\n")
+  );
 
   sections.push(
     [
@@ -225,7 +302,9 @@ function buildPromptContext(
     ].join("\n")
   );
 
-  return sections.join("\n\n---\n\n");
+  return sections.join(
+    "\n\n---\n\n"
+  );
 }
 
 export async function buildEvidenceContext(
@@ -233,11 +312,25 @@ export async function buildEvidenceContext(
   options: BuildEvidenceContextOptions = {}
 ): Promise<EvidenceContext> {
   const rankedSources =
-    await gatherStorySources(primaryArticle);
+    await gatherStorySources(
+      primaryArticle
+    );
 
-  const selectedSources = rankedSources
-    .slice(0, MAX_EVIDENCE_SOURCES)
-    .map(createEvidenceSource);
+  const selectedRankedSources =
+    rankedSources.slice(
+      0,
+      MAX_EVIDENCE_SOURCES
+    );
+
+  const selectedSources =
+    selectedRankedSources.map(
+      createEvidenceSource
+    );
+
+  const sourceConsensus =
+    calculateSourceConsensus(
+      selectedRankedSources
+    );
 
   const sourceCount =
     selectedSources.length;
@@ -249,7 +342,8 @@ export async function buildEvidenceContext(
 
   const ratedSourceCount =
     selectedSources.filter(
-      (source) => source.isRated
+      (source) =>
+        source.isRated
     ).length;
 
   const primaryContent =
@@ -257,41 +351,55 @@ export async function buildEvidenceContext(
 
   return {
     primaryArticle: {
-      title: cleanText(
-        primaryArticle.title
-      ),
+      title:
+        cleanText(
+          primaryArticle.title
+        ),
 
-      description: cleanText(
-        primaryArticle.description
-      ),
+      description:
+        cleanText(
+          primaryArticle.description
+        ),
 
-      content: truncateText(
-        primaryContent,
-        MAX_PRIMARY_CONTENT_LENGTH
-      ),
+      content:
+        truncateText(
+          primaryContent,
+          MAX_PRIMARY_CONTENT_LENGTH
+        ),
 
-      url: cleanText(
-        primaryArticle.url
-      ),
+      url:
+        cleanText(
+          primaryArticle.url
+        ),
 
       sourceName:
-        getSourceName(primaryArticle),
+        getSourceName(
+          primaryArticle
+        ),
 
       publishedAt:
-        getPublishedAt(primaryArticle),
+        getPublishedAt(
+          primaryArticle
+        ),
     },
 
-    sources: selectedSources,
+    sources:
+      selectedSources,
 
     sourceCount,
+
     independentSourceCount,
+
     ratedSourceCount,
+
+    sourceConsensus,
 
     promptContext:
       buildPromptContext(
         primaryArticle,
         selectedSources,
-        primaryContent
+        primaryContent,
+        sourceConsensus
       ),
   };
 }
