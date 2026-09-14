@@ -4,9 +4,6 @@ import type { AnalysisResult } from "@/app/types/analysis";
 import type { Article } from "@/app/types/article";
 import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 
-import HomepageForecast from "@/app/components/forecasts/HomepageForecast";
-import FeaturedHomepagePoll from "@/app/components/polls/FeaturedHomepagePoll";
-
 import BigStoryCard from "./BigStoryCard";
 import HomeHero from "./HomeHero";
 import HomeRightRail from "./HomeRightRail";
@@ -23,6 +20,7 @@ type HomePublicationProps = {
 };
 
 const BIG_STORY_COUNT = 4;
+const LEAD_STORY_COUNT = 1;
 
 export default function HomePublication({
   articles,
@@ -32,19 +30,29 @@ export default function HomePublication({
   isLoading,
   errorMessage,
 }: HomePublicationProps) {
-  const bigStories = articles.slice(0, BIG_STORY_COUNT);
-  const moreStoriesPool = articles.slice(BIG_STORY_COUNT);
+  const leadArticle = featuredArticle ?? articles[0] ?? null;
+  const bigStories = articles.slice(
+    LEAD_STORY_COUNT,
+    LEAD_STORY_COUNT + BIG_STORY_COUNT
+  );
+  const moreStoriesPool = articles.slice(LEAD_STORY_COUNT + BIG_STORY_COUNT);
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-5 sm:px-6 lg:px-7">
-      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-        <HomeHero />
-
-        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <HomeRightRail />
+    <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-7">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="order-1">
+          <HomeHero
+            article={leadArticle}
+            summary={featuredAnalysis?.summary}
+            isLoading={isLoading}
+          />
         </div>
 
-        <div className="min-w-0 space-y-5">
+        <div className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <HomeRightRail articles={articles} isLoading={isLoading} />
+        </div>
+
+        <div className="order-3 min-w-0">
           {errorMessage ? (
             <div className="rounded-xl bg-[#FF2638]/10 px-6 py-8 text-red-200">
               {errorMessage}
@@ -69,7 +77,7 @@ export default function HomePublication({
               </div>
 
               {bigStories.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {bigStories.map((article, index) => {
                     const articleIndex = articles.findIndex(
                       (candidate) => candidate.url === article.url
@@ -92,7 +100,7 @@ export default function HomePublication({
                   })}
                 </div>
               ) : isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
@@ -103,25 +111,20 @@ export default function HomePublication({
               ) : null}
             </section>
           )}
-
-          {!errorMessage ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <FeaturedHomepagePoll />
-              <HomepageForecast />
-            </div>
-          ) : null}
         </div>
       </div>
 
-      {!errorMessage ? (
-        <MoreStoriesList
-          articles={moreStoriesPool}
-          previews={analysisResults}
-          articleIndexOffset={BIG_STORY_COUNT}
-        />
-      ) : null}
+      <div className="space-y-5">
+        {!errorMessage ? (
+          <MoreStoriesList
+            articles={moreStoriesPool}
+            previews={analysisResults}
+            articleIndexOffset={LEAD_STORY_COUNT + BIG_STORY_COUNT}
+          />
+        ) : null}
 
-      <UnderstandAnyArticle />
+        <UnderstandAnyArticle />
+      </div>
     </div>
   );
 }

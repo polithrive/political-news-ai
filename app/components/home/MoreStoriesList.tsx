@@ -110,6 +110,16 @@ export default function MoreStoriesList({
                     className="object-cover"
                   />
                 ) : null}
+                {article.url ? (
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 z-[1] flex items-end justify-center bg-gradient-to-t from-[#020D21]/80 to-transparent pb-1.5 text-[10px] font-semibold text-white hover:from-[#020D21]/90"
+                  >
+                    Read
+                  </a>
+                ) : null}
               </div>
 
               <div>

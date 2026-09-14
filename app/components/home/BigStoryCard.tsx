@@ -56,6 +56,16 @@ export default function BigStoryCard({
             <RelativeTime publishedAt={article.publishedAt} />
           </span>
         </div>
+        {article.url ? (
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute right-3 top-3 z-[1] rounded-md bg-[#020D21]/82 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#38BDF8] hover:text-[#03111F]"
+          >
+            Read article
+          </a>
+        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
