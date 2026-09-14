@@ -31,6 +31,7 @@
   --color-foreground: var(--foreground);
 
   --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-source-serif);
   --font-mono: var(--font-geist-mono);
 
   --color-brand-navy: var(--polithrive-navy);
@@ -61,8 +62,11 @@
 
 html {
   min-height: 100%;
+  font-size: 16px;
   scroll-behavior: smooth;
   background: var(--polithrive-navy-deep);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -90,8 +94,8 @@ body {
 
   font-family:
     var(--font-geist-sans),
-    Arial,
-    Helvetica,
+    ui-sans-serif,
+    system-ui,
     sans-serif;
 
   text-rendering: optimizeLegibility;
