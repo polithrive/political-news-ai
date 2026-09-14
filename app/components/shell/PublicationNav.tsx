@@ -57,7 +57,7 @@ export default function PublicationNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#17446D]/35 bg-[#020D21]/92 backdrop-blur-xl">
+    <header className="border-b border-[#17446D]/35 bg-[#020D21]/92 backdrop-blur-xl">
       <div className="mx-auto grid h-[76px] w-full max-w-[1440px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 sm:px-6 lg:px-7">
         <BrandLogo />
 

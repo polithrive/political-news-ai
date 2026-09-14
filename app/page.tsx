@@ -32,6 +32,7 @@ function HomePage() {
     <SiteShell
       searchTerm={searchTerm}
       onSearchTermChange={setSearchTerm}
+      trendingArticles={articles}
     >
       {searchTerm.trim() ? (
         <SearchResults
