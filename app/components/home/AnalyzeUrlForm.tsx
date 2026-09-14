@@ -44,8 +44,7 @@ export default function AnalyzeUrlForm() {
     setErrorMessage(null);
     setIsSubmitting(true);
 
-    const submittedArticle =
-      createUrlSubmittedArticle(trimmedUrl);
+    const submittedArticle = createUrlSubmittedArticle(trimmedUrl);
 
     saveSelectedArticle(submittedArticle);
 
@@ -55,29 +54,22 @@ export default function AnalyzeUrlForm() {
   }
 
   return (
-    <section className="mb-7 rounded-[22px] border border-[#17446D]/70 bg-[#04162C]/78 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#55C8FF]">
-            Analyze any article
-          </p>
+    <div className="mx-auto max-w-3xl text-center">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
+        Understand any article
+      </p>
 
-          <h2 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
-            Generate an Intelligence Report from a URL
-          </h2>
+      <h2 className="mt-3 font-serif text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl">
+        Paste an article. See what you're missing.
+      </h2>
 
-          <p className="mt-2 text-sm leading-6 text-[#9CB0C5]">
-            Paste a news article link. The Angle Report will extract
-            the story, gather related reporting, and open the same
-            Intelligence Report used for homepage stories.
-          </p>
-        </div>
-      </div>
+      <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#9CB0C5]">
+        We'll look at the piece you submitted alongside related
+        reporting, so you can see what it says, what others add, and
+        what remains uncertain.
+      </p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-5"
-      >
+      <form onSubmit={handleSubmit} className="mt-8">
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             type="url"
@@ -86,29 +78,24 @@ export default function AnalyzeUrlForm() {
             placeholder="https://example.com/news-article"
             disabled={isSubmitting}
             aria-label="News article URL"
-            className="min-w-0 flex-1 rounded-xl border border-[#1769A4]/70 bg-[#051831]/80 px-4 py-3 text-sm text-[#F8FAFC] outline-none transition placeholder:text-[#7890AC] focus:border-[#38BDF8] disabled:opacity-60"
+            className="min-w-0 flex-1 rounded-xl border border-[#1769A4]/40 bg-[#051831]/70 px-4 py-3.5 text-sm text-[#F8FAFC] outline-none transition placeholder:text-[#7890AC] focus:border-[#38BDF8] disabled:opacity-60"
           />
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-[#FF2638] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(255,38,56,0.18)] transition hover:bg-[#FF4656] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-[#FF2638] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#FF4656] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting
-              ? "Opening report..."
-              : "Analyze URL"}
+            {isSubmitting ? "Opening brief..." : "See what you're missing"}
           </button>
         </div>
       </form>
 
       {errorMessage ? (
-        <p
-          role="alert"
-          className="mt-3 text-sm text-red-300"
-        >
+        <p role="alert" className="mt-3 text-sm text-red-300">
           {errorMessage}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }

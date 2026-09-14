@@ -403,9 +403,9 @@ export default function AIChat({
       <div className="relative">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeader
-            eyebrow="Ask The Angle Report"
-            title="Go Deeper Into This Story"
-            subtitle="Ask follow-up questions about the evidence, political perspectives, implications, or anything else contained in this intelligence report."
+            eyebrow="Ask about this story"
+            title="What else do you want to understand?"
+            subtitle="Ask about what reporting agrees on, where it differs, or what remains uncertain."
           />
 
           <div
@@ -429,7 +429,7 @@ export default function AIChat({
             />
 
             <span className="text-xs font-semibold uppercase tracking-[0.14em]">
-              Report-Aware AI
+              Uses this brief
             </span>
           </div>
         </div>

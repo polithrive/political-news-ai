@@ -103,6 +103,15 @@ function normalizeString(
     : fallback;
 }
 
+function optionalTrimmedString(
+  value: unknown
+): string | undefined {
+  return typeof value === "string" &&
+    value.trim()
+    ? value.trim()
+    : undefined;
+}
+
 function normalizeStringArray(
   value: unknown,
   maximumItems: number
@@ -198,6 +207,10 @@ sourcesReviewed:
         Math.round(candidate.sourcesReviewed)
       )
     : 0,
+
+    whyThisMatters: optionalTrimmedString(
+      candidate.whyThisMatters
+    ),
   };
 }
 
@@ -227,7 +240,7 @@ async function generatePreview(
 
         temperature: 0.1,
 
-        max_completion_tokens: 220,
+        max_completion_tokens: 280,
 
         response_format: {
           type: "json_object",
@@ -276,7 +289,8 @@ Return exactly:
   "confidence": 80,
   "trustScore": 85,
   "consensusScore": 70,
-  "sourcesReviewed": 5
+  "sourcesReviewed": 5,
+  "whyThisMatters": "Maximum 22 words on why a reader should care, based only on the title and description. Omit if that cannot be supported."
 }
 
 Requirements:
@@ -284,6 +298,7 @@ Requirements:
 - lean must be Left, Center, or Right.
 - keyFacts must contain no more than 2 short entries.
 - Separate article claims from confirmed facts.
+- whyThisMatters must not invent consequences or importance beyond the supplied text.
 - Return JSON only.
 `,
           },
@@ -344,7 +359,7 @@ const getCachedPreview =
     [
       "politicalpulse",
       "homepage-preview",
-      "v2",
+      "v3",
     ],
     {
       revalidate:

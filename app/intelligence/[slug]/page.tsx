@@ -5,13 +5,18 @@ import {
   useEffect,
   useLayoutEffect,
   useState,
+  type ReactNode,
 } from "react";
 
+import DeepAnalysis from "@/app/components/brief/DeepAnalysis";
+import SixtySecondBrief from "@/app/components/brief/SixtySecondBrief";
+import StoryBriefHeader from "@/app/components/brief/StoryBriefHeader";
+import Footer from "@/app/components/Footer";
+import SiteShell from "@/app/components/shell/SiteShell";
 import AIChat from "@/app/components/intelligence/AIChat";
 import ConsensusEngine from "@/app/components/intelligence/ConsensusEngine";
 import DebatePanel from "@/app/components/intelligence/DebatePanel";
 import EvidencePanel from "@/app/components/intelligence/EvidencePanel";
-import ExecutiveSummary from "@/app/components/intelligence/ExecutiveSummary";
 import FactCheck from "@/app/components/intelligence/FactCheck";
 import ImpactAnalysis from "@/app/components/intelligence/ImpactAnalysis";
 import IntelligenceGraph from "@/app/components/intelligence/IntelligenceGraph";
@@ -19,10 +24,7 @@ import IntelligenceOverview from "@/app/components/intelligence/IntelligenceOver
 import IntelligenceSectionSkeleton from "@/app/components/intelligence/IntelligenceSectionSkeleton";
 import KeyFacts from "@/app/components/intelligence/KeyFacts";
 import PerspectiveAnalysis from "@/app/components/intelligence/PerspectiveAnalysis";
-import ReportBlock from "@/app/components/intelligence/ReportBlock";
-import ReportHeader from "@/app/components/intelligence/ReportHeader";
 import SourceComparison from "@/app/components/intelligence/SourceComparison";
-import StickyReportNavigation from "@/app/components/intelligence/StickyReportNavigation";
 import StoryTimeline from "@/app/components/intelligence/StoryTimeline";
 import TrustScore from "@/app/components/intelligence/TrustScore";
 
@@ -47,29 +49,12 @@ import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
 
-function SectionIntro({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
+function StoryPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-5">
-      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-400">
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-        {title}
-      </h2>
-
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400 sm:text-base">
-        {description}
-      </p>
-    </div>
+    <SiteShell>
+      {children}
+      <Footer />
+    </SiteShell>
   );
 }
 
@@ -145,7 +130,7 @@ export default function IntelligenceReportPage() {
 
         if (!isCancelled) {
           setErrorMessage(
-            "The Angle Report could not generate this intelligence report. Please return to the homepage and try opening the story again."
+            "The Angle Report could not generate this brief. Please return to the homepage and try opening the story again."
           );
         }
       } finally {
@@ -246,7 +231,7 @@ export default function IntelligenceReportPage() {
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : "The Angle Report could not generate this intelligence report from the submitted URL. Please return to the homepage and try again."
+              : "The Angle Report could not generate this brief from the submitted URL. Please return to the homepage and try again."
           );
           setIsGraphLoading(false);
         }
@@ -379,40 +364,38 @@ export default function IntelligenceReportPage() {
 
   if (isInitializingArticle) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8">
-          <div className="h-48 animate-pulse rounded-3xl border border-slate-800 bg-slate-900/70" />
+      <StoryPageShell>
+        <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+          <div className="h-40 animate-pulse rounded-2xl bg-[#06172D]" />
         </section>
-      </main>
+      </StoryPageShell>
     );
   }
 
   if (!article) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-4xl px-6 py-16">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-400">
-              No article selected
-            </p>
+      <StoryPageShell>
+        <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
+            No story selected
+          </p>
 
-            <h1 className="mt-4 text-4xl font-extrabold">
-              Open an Intelligence Report from The Angle Report homepage.
-            </h1>
+          <h1 className="mt-4 font-serif text-4xl font-black tracking-[-0.03em]">
+            Open a 60-second brief from Today.
+          </h1>
 
-            <p className="mt-4 max-w-2xl text-slate-400">
-              The Angle Report needs a selected news story before it can generate a complete intelligence report.
-            </p>
+          <p className="mt-4 max-w-2xl text-[#9CB0C5]">
+            The Angle Report needs a selected story before it can prepare this brief.
+          </p>
 
-            <Link
-              href="/"
-              className="mt-6 inline-flex rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
-            >
-              Return to homepage
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="mt-6 inline-flex rounded-xl bg-[#FF2638] px-5 py-3 font-semibold text-white transition hover:bg-[#FF4151]"
+          >
+            Return to Today
+          </Link>
         </section>
-      </main>
+      </StoryPageShell>
     );
   }
 
@@ -421,24 +404,25 @@ export default function IntelligenceReportPage() {
     (errorMessage || !report)
   ) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8">
-          <ReportHeader
+      <StoryPageShell>
+        <section className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
+          <StoryBriefHeader
             article={article}
+            isUrlArticle={isUrlSubmittedArticle(article)}
           />
 
-          <div className="mt-6 rounded-3xl border border-red-900/60 bg-red-950/20 p-8">
-            <p className="font-semibold uppercase tracking-wide text-red-400">
-              Report generation failed
+          <div className="mt-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#FF7A86]">
+              Brief unavailable
             </p>
 
-            <h2 className="mt-4 text-3xl font-extrabold">
-              We could not complete this intelligence report.
+            <h2 className="mt-3 font-serif text-3xl font-black tracking-[-0.03em]">
+              We could not complete this brief.
             </h2>
 
-            <p className="mt-4 max-w-2xl text-slate-300">
+            <p className="mt-4 max-w-2xl text-[#9CB0C5]">
               {errorMessage ??
-                "An unexpected error occurred while generating the report."}
+                "An unexpected error occurred while preparing this story."}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -447,21 +431,21 @@ export default function IntelligenceReportPage() {
                 onClick={() =>
                   window.location.reload()
                 }
-                className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500"
+                className="rounded-xl bg-[#FF2638] px-5 py-3 font-semibold text-white transition hover:bg-[#FF4151]"
               >
                 Try again
               </button>
 
               <Link
                 href="/"
-                className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                className="rounded-xl px-5 py-3 font-semibold text-[#9CB0C5] transition hover:text-white"
               >
-                Return to homepage
+                Return to Today
               </Link>
             </div>
           </div>
         </section>
-      </main>
+      </StoryPageShell>
     );
   }
 
@@ -473,272 +457,133 @@ export default function IntelligenceReportPage() {
     : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8 lg:py-10">
-        <ReportHeader
+    <StoryPageShell>
+      <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 lg:py-14">
+        <StoryBriefHeader
           article={article}
+          isUrlArticle={isUrlSubmittedArticle(article)}
+          showDescription={
+            !isUrlSubmittedArticle(article) || isReportLoading
+          }
+          sourceCount={
+            report?.trustScore.sourceCount ??
+            report?.overview.sourcesReviewed
+          }
+          ratedSourceCount={
+            report?.trustScore.ratedSourceCount
+          }
+          evidenceStrength={
+            report?.trustScore.evidenceStrength
+          }
+          otherSourceCount={
+            report?.evidence.relatedSources?.filter(
+              (source) => !source.isPrimary
+            ).length
+          }
         />
 
-        <div className="mt-7 grid gap-7 xl:grid-cols-[215px_minmax(0,1fr)]">
-          <StickyReportNavigation
+        {report ? (
+          <SixtySecondBrief
+            article={article}
             report={report}
           />
+        ) : (
+          <div className="mt-10 space-y-4">
+            <div className="h-6 w-40 animate-pulse rounded bg-[#06172D]" />
+            <div className="h-24 animate-pulse rounded-2xl bg-[#06172D]" />
+            <div className="h-24 animate-pulse rounded-2xl bg-[#06172D]" />
+            <p className="text-sm text-[#7A93AA]">
+              {isUrlSubmittedArticle(article)
+                ? "Looking at this article alongside related reporting..."
+                : "Preparing the 60-second brief..."}
+            </p>
+          </div>
+        )}
 
-          <div className="min-w-0">
-            <section id="executive-intelligence">
-              <SectionIntro
-                eyebrow="Executive Intelligence"
-                title="The story at a glance"
-                description="Start with the central assessment, trust signals, and the most important facts before exploring the deeper analysis."
-              />
+        {report && reportContext ? (
+          <section id="ask-about-this-story" className="mt-12">
+            <AIChat
+              reportTitle={article.title}
+              reportContext={reportContext}
+            />
+          </section>
+        ) : null}
 
-              {report ? (
-                <>
-                  <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-                    <ReportBlock
-                      id="executive-summary"
-                      className="mt-0"
-                    >
-                      <ExecutiveSummary
-                        report={report}
-                      />
-                    </ReportBlock>
-
-                    <ReportBlock
-                      id="trust-score"
-                      className="mt-0"
-                    >
-                      <TrustScore
-                        trustScore={
-                          report.trustScore
-                        }
-                      />
-                    </ReportBlock>
-                  </div>
-
-                  <div className="mt-5 grid gap-5 lg:grid-cols-2">
-                    <ReportBlock
-                      id="key-facts"
-                      className="mt-0"
-                    >
-                      <KeyFacts
-                        report={report}
-                      />
-                    </ReportBlock>
-
-                    <ReportBlock
-                      id="intelligence-overview"
-                      className="mt-0"
-                    >
-                      <IntelligenceOverview
-                        report={report}
-                      />
-                    </ReportBlock>
-                  </div>
-                </>
-              ) : (
-                <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-                  <IntelligenceSectionSkeleton
-                    label="Executive Brief"
-                    title="Building the executive summary"
-                    description="The Angle Report is identifying the central facts, context, and significance of this story."
-                    blocks={3}
-                  />
-
-                  <IntelligenceSectionSkeleton
-                    label="Trust Score"
-                    title="Evaluating source confidence"
-                    description="The Angle Report is reviewing source quality, reporting agreement, and evidence strength."
-                    blocks={2}
-                  />
-                </div>
-              )}
-            </section>
-
-            <section className="mt-12">
-              <SectionIntro
-                eyebrow="Understand the Story"
-                title="What it means and where perspectives differ"
-                description="Move from the core facts into political framing, impact, verification, and the strongest areas of agreement and disagreement."
-              />
-
-              {report ? (
-                <div className="space-y-5">
-                  <ReportBlock
-                    id="perspective-analysis"
-                    className="mt-0"
-                  >
-                    <PerspectiveAnalysis
-                      report={report}
-                    />
-                  </ReportBlock>
-
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    <ReportBlock
-                      id="impact-analysis"
-                      className="mt-0"
-                    >
-                      <ImpactAnalysis
-                        report={report}
-                      />
-                    </ReportBlock>
-
-                    <ReportBlock
-                      id="fact-check"
-                      className="mt-0"
-                    >
-                      <FactCheck
-                        report={report}
-                      />
-                    </ReportBlock>
-                  </div>
-
-                  <ReportBlock
-                    id="consensus"
-                    className="mt-0"
-                  >
-                    <ConsensusEngine
-                      report={report}
-                    />
-                  </ReportBlock>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  <IntelligenceSectionSkeleton
-                    label="Perspective Analysis"
-                    title="Comparing political viewpoints"
-                    description="The Angle Report is evaluating progressive, centrist, and conservative interpretations."
-                    blocks={3}
-                  />
-
-                  <IntelligenceSectionSkeleton
-                    label="Impact Analysis"
-                    title="Evaluating potential impact"
-                    description="The Angle Report is identifying who may be affected and the likely short- and long-term consequences."
-                    blocks={3}
-                  />
-                </div>
-              )}
-            </section>
-
-            <section className="mt-12">
-              <SectionIntro
-                eyebrow="Explore Deeper"
-                title="Context, chronology, sources, and evidence"
-                description="Use the deeper intelligence tools when you want to understand how the story developed, what connects to it, and how the reporting compares."
-              />
-
-              <div className="space-y-5">
-                <ReportBlock
-                  id="story-timeline"
-                  className="mt-0"
-                >
-                  <StoryTimeline
-                    article={article}
-                  />
-                </ReportBlock>
-
-                <ReportBlock
-                  id="intelligence-graph"
-                  className="mt-0"
-                >
-                  {graph ? (
-                    <IntelligenceGraph
-                      graph={graph}
-                    />
-                  ) : isGraphLoading ? (
-                    <IntelligenceSectionSkeleton
-                      label="Intelligence Graph"
-                      title="Building connected context"
-                      description="The Angle Report is identifying the people, organizations, events, and issues connected to this story."
-                      blocks={3}
-                    />
-                  ) : (
-                    <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 md:p-8">
-                      <p className="text-sm font-semibold uppercase tracking-wide text-red-400">
-                        Intelligence Graph
-                      </p>
-
-                      <h2 className="mt-2 text-2xl font-extrabold text-white">
-                        Connected context unavailable
-                      </h2>
-
-                      <p className="mt-3 max-w-3xl text-slate-400">
-                        {graphErrorMessage ??
-                          "The Angle Report could not identify reliable story connections from the available article information."}
-                      </p>
-                    </section>
-                  )}
-                </ReportBlock>
-
-                {report ? (
-                  <>
-                    <ReportBlock
-                      id="political-debate"
-                      className="mt-0"
-                    >
-                      <DebatePanel
-                        report={report}
-                      />
-                    </ReportBlock>
-
-                    <div className="grid gap-5 lg:grid-cols-2">
-                      <ReportBlock
-                        id="source-comparison"
-                        className="mt-0"
-                      >
-                        <SourceComparison
-                          report={report}
-                        />
-                      </ReportBlock>
-
-                      <ReportBlock
-                        id="evidence"
-                        className="mt-0"
-                      >
-                        <EvidencePanel
-                          report={report}
-                        />
-                      </ReportBlock>
-                    </div>
-                  </>
-                ) : (
-                  <IntelligenceSectionSkeleton
-                    label="Evidence"
-                    title="Reviewing supporting information"
-                    description="The Angle Report is assembling source evidence, methodology, and conflicting reporting."
-                    blocks={3}
-                  />
-                )}
-              </div>
-            </section>
-
-            {report && reportContext ? (
-              <section className="mt-12">
-                <SectionIntro
-                  eyebrow="Ask The Angle Report"
-                  title="Continue the analysis"
-                  description="Ask follow-up questions about this report using the same intelligence context shown above."
+        <div className="mt-16">
+          <DeepAnalysis>
+            {report ? (
+              <>
+                <TrustScore
+                  trustScore={report.trustScore}
                 />
 
-                <ReportBlock
-                  id="ask-ai"
-                  className="mt-0"
-                >
-                  <AIChat
-                    reportTitle={
-                      article.title
-                    }
-                    reportContext={
-                      reportContext
-                    }
-                  />
-                </ReportBlock>
+                <KeyFacts report={report} />
+
+                <IntelligenceOverview
+                  report={report}
+                />
+
+                <PerspectiveAnalysis
+                  report={report}
+                />
+
+                <ImpactAnalysis
+                  report={report}
+                />
+
+                <FactCheck report={report} />
+
+                <ConsensusEngine
+                  report={report}
+                />
+              </>
+            ) : (
+              <IntelligenceSectionSkeleton
+                label="Deep analysis"
+                title="Building the deeper report"
+                description="The Angle Report is assembling evidence, perspectives, and verification for this story."
+                blocks={3}
+              />
+            )}
+
+            <StoryTimeline article={article} />
+
+            {graph ? (
+              <IntelligenceGraph graph={graph} />
+            ) : isGraphLoading ? (
+              <IntelligenceSectionSkeleton
+                label="Connected context"
+                title="Building connected context"
+                description="The Angle Report is identifying the people, organizations, events, and issues connected to this story."
+                blocks={3}
+              />
+            ) : (
+              <section className="rounded-3xl border border-[#17446D]/70 bg-[#04162C]/95 p-6 md:p-8">
+                <p className="text-sm font-semibold uppercase tracking-wide text-[#FF7A86]">
+                  Connected context
+                </p>
+
+                <h2 className="mt-2 text-2xl font-extrabold text-white">
+                  Connected context unavailable
+                </h2>
+
+                <p className="mt-3 max-w-3xl text-[#9CB0C5]">
+                  {graphErrorMessage ??
+                    "The Angle Report could not identify reliable story connections from the available article information."}
+                </p>
               </section>
+            )}
+
+            {report ? (
+              <>
+                <DebatePanel report={report} />
+                <SourceComparison report={report} />
+                <EvidencePanel report={report} />
+              </>
             ) : null}
-          </div>
+          </DeepAnalysis>
         </div>
-      </section>
-    </main>
+      </article>
+    </StoryPageShell>
   );
 }

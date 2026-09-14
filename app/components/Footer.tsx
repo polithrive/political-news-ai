@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 export default function Footer() {
-  const year = new Date().getFullYear();
-
   return (
-    <footer className="border-t border-[#17446D]/65 bg-[#020D21]">
+    <footer className="border-t border-[#17446D]/65 bg-[#020D21]/88 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-12 px-6 py-14 sm:px-8 lg:flex-row lg:justify-between">
         {/* Brand */}
         <div className="max-w-lg">
@@ -30,13 +28,12 @@ export default function Footer() {
           </Link>
 
           <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.34em] text-[#55C8FF]">
-            Ideas from every side.
+            From every angle.
           </p>
 
           <p className="mt-6 max-w-md text-sm leading-7 text-[#9CB0C5]">
-            AI-powered news intelligence designed to help people
-            understand the story behind the headline, evaluate the
-            evidence, compare perspectives, and see the full picture.
+            Other sites give you more headlines. This one finishes the
+            story from every angle.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -65,37 +62,28 @@ export default function Footer() {
             <ul className="space-y-3 text-[#8EA3B7]">
               <li>
                 <Link
-                  href="/"
+                  href="/#today"
                   className="transition hover:text-[#55C8FF]"
                 >
-                  Home
+                  Today
                 </Link>
               </li>
 
               <li>
                 <Link
-                  href="/#top-stories"
+                  href="/#understand-any-article"
                   className="transition hover:text-[#55C8FF]"
                 >
-                  Top Stories
+                  Understand Any Article
                 </Link>
               </li>
 
               <li>
                 <Link
-                  href="/#intelligence"
+                  href="/#more-stories"
                   className="transition hover:text-[#55C8FF]"
                 >
-                  Intelligence Reports
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/#topics"
-                  className="transition hover:text-[#55C8FF]"
-                >
-                  Topics
+                  More Stories
                 </Link>
               </li>
             </ul>
@@ -147,16 +135,13 @@ export default function Footer() {
 
           <div>
             <h3 className="mb-4 text-xs font-black uppercase tracking-[0.18em] text-white">
-              Intelligence
+              Read
             </h3>
 
             <ul className="space-y-3 text-[#8EA3B7]">
-              <li>Trust Score</li>
-              <li>Perspective Analysis</li>
-              <li>Fact Check</li>
-              <li>Consensus Engine</li>
-              <li>Source Comparison</li>
-              <li>AI Intelligence</li>
+              <li>60-second brief</li>
+              <li>What you're missing</li>
+              <li>Related reporting</li>
             </ul>
           </div>
         </div>
@@ -165,7 +150,7 @@ export default function Footer() {
       <div className="border-t border-[#17446D]/55">
         <div className="mx-auto flex w-full max-w-[1500px] flex-col items-center justify-between gap-4 px-6 py-6 text-xs text-[#647B92] sm:px-8 md:flex-row">
           <p>
-            © {year} The Angle Report. All rights reserved.
+            © 2026 The Angle Report. All rights reserved.
           </p>
 
           <p className="text-center md:text-right">

@@ -23,4 +23,6 @@ export type IntelligencePreview = {
   consensusScore: number;
 
   sourcesReviewed: number;
+
+  whyThisMatters?: string;
 };

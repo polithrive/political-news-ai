@@ -49,7 +49,7 @@ export function createUrlSubmittedArticle(
   return {
     title: "Analyzing submitted article...",
     description:
-      "The Angle Report is extracting this article and building an Intelligence Report from the available evidence.",
+      "The Angle Report is reading this article and comparing it with related reporting.",
     url,
     urlToImage: "",
     publishedAt: new Date().toISOString(),

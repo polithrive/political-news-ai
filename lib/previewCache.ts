@@ -4,7 +4,7 @@ import type { Article } from "@/app/types/article";
 const PREVIEW_CACHE_PREFIX =
   "politicalpulse:homepage-preview";
 
-const PREVIEW_CACHE_VERSION = "v1";
+const PREVIEW_CACHE_VERSION = "v2";
 
 const PREVIEW_CACHE_TTL_MS =
   1000 * 60 * 60 * 6;

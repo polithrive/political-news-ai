@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "Understand the full story through evidence, context, source analysis, and multiple perspectives. The Angle Report helps you see every angle behind the news.",
+    "Finish today's biggest stories in 60 seconds. See every angle, what reporting agrees on, and what a single article left out.",
 
   applicationName: "The Angle Report",
 
@@ -52,16 +52,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "The Angle Report",
-    title: "The Angle Report | Ideas From Every Side",
+    title: "The Angle Report | Understand the news from every angle",
     description:
-      "Go beyond the headline with evidence, context, source analysis, and multiple perspectives.",
+      "Finish today's biggest stories in 60 seconds. Paste any article to see what you're missing.",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "The Angle Report | Ideas From Every Side",
+    title: "The Angle Report | Understand the news from every angle",
     description:
-      "Go beyond the headline with evidence, context, source analysis, and multiple perspectives.",
+      "Finish today's biggest stories in 60 seconds. Paste any article to see what you're missing.",
   },
 
   robots: {

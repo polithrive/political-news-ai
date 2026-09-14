@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import Footer from "@/app/components/Footer";
+import SiteShell from "@/app/components/shell/SiteShell";
+
 const sections = [
   {
     title: "1. Information we collect",
@@ -93,7 +96,8 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <SiteShell>
+    <main className="bg-[#020D21] text-white">
       <section className="border-b border-slate-800 bg-slate-900/50">
         <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
@@ -187,5 +191,7 @@ export default function PrivacyPage() {
         </section>
       </section>
     </main>
+    <Footer />
+    </SiteShell>
   );
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-import BreakingNews from "./components/BreakingNews";
 import Footer from "./components/Footer";
-import HomeDashboard from "./components/home/HomeDashboard";
-import Navbar from "./components/Navbar";
+import HomePublication from "./components/home/HomePublication";
 import SearchResults from "./components/SearchResults";
+import SiteShell from "./components/shell/SiteShell";
 import { useHomepageIntelligence } from "./hooks/useHomepageIntelligence";
 
-export default function Home() {
-  const [searchTerm, setSearchTerm] =
-    useState("");
+function HomePage() {
+  const searchParams = useSearchParams();
+  const queryFromUrl = searchParams.get("q") ?? "";
+  const [searchTerm, setSearchTerm] = useState(queryFromUrl);
 
   const {
     articles,
@@ -23,49 +24,49 @@ export default function Home() {
     errorMessage,
   } = useHomepageIntelligence();
 
-  function handleTopicSelect(
-    topic: string
-  ) {
-    setSearchTerm(topic);
-
-    window.requestAnimationFrame(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    });
-  }
+  useEffect(() => {
+    setSearchTerm(queryFromUrl);
+  }, [queryFromUrl]);
 
   return (
-    <main className="min-h-screen bg-[#020D21] text-white">
-      <Navbar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
-
-      <BreakingNews />
-
+    <SiteShell
+      searchTerm={searchTerm}
+      onSearchTermChange={setSearchTerm}
+    >
       {searchTerm.trim() ? (
         <SearchResults
           searchTerm={searchTerm}
           articles={articles}
         />
-      ) : null}
-
-      <HomeDashboard
-        articles={articles}
-        analysisResults={analysisResults}
-        featuredArticle={featuredArticle}
-        featuredAnalysis={featuredAnalysis}
-        isLoading={
-          isNewsLoading ||
-          isFeaturedAnalysisLoading
-        }
-        errorMessage={errorMessage}
-        onTopicSelect={handleTopicSelect}
-      />
+      ) : (
+        <HomePublication
+          articles={articles}
+          analysisResults={analysisResults}
+          featuredArticle={featuredArticle}
+          featuredAnalysis={featuredAnalysis}
+          isLoading={
+            isNewsLoading ||
+            isFeaturedAnalysisLoading
+          }
+          errorMessage={errorMessage}
+        />
+      )}
 
       <Footer />
-    </main>
+    </SiteShell>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <SiteShell>
+          <div className="min-h-[50vh] bg-[#020D21]" />
+        </SiteShell>
+      }
+    >
+      <HomePage />
+    </Suspense>
   );
 }

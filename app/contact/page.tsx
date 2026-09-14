@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import Footer from "@/app/components/Footer";
+import SiteShell from "@/app/components/shell/SiteShell";
+
 const contactOptions = [
   {
     title: "General feedback",
@@ -33,7 +36,8 @@ const contactOptions = [
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <SiteShell>
+    <main className="bg-[#020D21] text-white">
       <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
           Contact PoliticalPulse
@@ -183,5 +187,7 @@ export default function ContactPage() {
         </div>
       </section>
     </main>
+    <Footer />
+    </SiteShell>
   );
 }

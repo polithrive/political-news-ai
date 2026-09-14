@@ -1,5 +1,11 @@
+import type { AnalysisResult } from "../types/analysis";
 import type { Article } from "../types/article";
 import type { IntelligencePreview } from "../types/intelligencePreview";
+
+import {
+  cachePreview,
+  getCachedPreview,
+} from "@/lib/previewCache";
 
 const ANALYSIS_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -40,6 +46,15 @@ function normalizeString(
     value.trim()
     ? value.trim()
     : fallback;
+}
+
+function optionalTrimmedString(
+  value: unknown
+): string | undefined {
+  return typeof value === "string" &&
+    value.trim()
+    ? value.trim()
+    : undefined;
 }
 
 function normalizeStringArray(
@@ -163,7 +178,24 @@ function normalizePreview(
       normalizeSourcesReviewed(
         candidate.sourcesReviewed
       ),
+
+    whyThisMatters: optionalTrimmedString(
+      candidate.whyThisMatters
+    ),
   };
+}
+
+function isUsableCachedPreview(
+  preview: AnalysisResult
+): boolean {
+  return (
+    typeof preview.summary === "string" &&
+    preview.summary.trim().length > 0 &&
+    typeof preview.biasScore === "number" &&
+    Number.isFinite(preview.biasScore) &&
+    typeof preview.confidence === "number" &&
+    Number.isFinite(preview.confidence)
+  );
 }
 
 function createPreviewFallback(
@@ -203,6 +235,18 @@ function createPreviewFallback(
 export async function analyzeArticle(
   article: Article
 ): Promise<IntelligencePreview> {
+  const cachedPreview = getCachedPreview(article);
+
+  if (
+    cachedPreview &&
+    isUsableCachedPreview(cachedPreview)
+  ) {
+    return normalizePreview(
+      cachedPreview,
+      article
+    );
+  }
+
   const controller = new AbortController();
 
   const timeoutId = window.setTimeout(() => {
@@ -244,7 +288,14 @@ export async function analyzeArticle(
       return createPreviewFallback(article);
     }
 
-    return normalizePreview(data, article);
+    const preview = normalizePreview(
+      data,
+      article
+    );
+
+    cachePreview(article, preview);
+
+    return preview;
   } catch (error) {
     if (
       error instanceof DOMException &&

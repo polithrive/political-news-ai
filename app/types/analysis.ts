@@ -25,4 +25,6 @@ export type AnalysisResult = {
   consensusScore?: number;
 
   sourcesReviewed?: number;
+
+  whyThisMatters?: string;
 };

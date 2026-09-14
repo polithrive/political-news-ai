@@ -103,18 +103,22 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
   useEffect(() => {
     let isCancelled = false;
 
-    async function analyzeSideStories(
+    async function analyzeHomepagePreviews(
       homepageArticles: Article[]
     ) {
-      const sideStories = homepageArticles.slice(
-        1,
+      const previewArticles = homepageArticles.slice(
+        0,
         PREVIEW_ARTICLE_COUNT
       );
 
-      await Promise.all(
-        sideStories.map(async (article, offset) => {
-          const articleIndex = offset + 1;
+      if (previewArticles.length === 0) {
+        return;
+      }
 
+      setIsFeaturedAnalysisLoading(true);
+
+      await Promise.all(
+        previewArticles.map(async (article, articleIndex) => {
           try {
             const analysis = await analyzeArticle(
               article
@@ -122,6 +126,11 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
 
             if (isCancelled) {
               return;
+            }
+
+            if (articleIndex === 0) {
+              setFeaturedAnalysis(analysis);
+              setIsFeaturedAnalysisLoading(false);
             }
 
             setAnalysisResults((previousResults) => ({
@@ -135,6 +144,13 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
               }:`,
               error
             );
+
+            if (
+              articleIndex === 0 &&
+              !isCancelled
+            ) {
+              setIsFeaturedAnalysisLoading(false);
+            }
           }
         })
       );
@@ -143,11 +159,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
     async function loadHomepageIntelligence() {
       try {
         setIsNewsLoading(true);
-        setIsFeaturedAnalysisLoading(false);
         setErrorMessage(null);
-        setArticles([]);
-        setAnalysisResults({});
-        setFeaturedAnalysis(null);
 
         const latestArticles = await getLatestNews();
 
@@ -167,33 +179,13 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
         }
 
         setArticles(homepageArticles);
+        setAnalysisResults({});
+        setFeaturedAnalysis(null);
         setIsNewsLoading(false);
 
-        const featuredArticle = homepageArticles[0];
-
-        if (!featuredArticle) {
-          return;
-        }
-
-        setIsFeaturedAnalysisLoading(true);
-
-        const featuredPreview = await analyzeArticle(
-          featuredArticle
+        await analyzeHomepagePreviews(
+          homepageArticles
         );
-
-        if (isCancelled) {
-          return;
-        }
-
-        setFeaturedAnalysis(featuredPreview);
-
-        setAnalysisResults({
-          0: featuredPreview,
-        });
-
-        setIsFeaturedAnalysisLoading(false);
-
-        await analyzeSideStories(homepageArticles);
       } catch (error) {
         console.error(
           "Failed to load homepage intelligence:",
