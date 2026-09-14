@@ -1,99 +1,161 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
 import type { AnalysisResult } from "@/app/types/analysis";
 import type { Article } from "@/app/types/article";
 
-import StoryBriefLink from "./StoryBriefLink";
+import { createSlug } from "@/lib/createSlug";
+import { saveSelectedArticle } from "@/lib/selectedArticle";
+
+import RelativeTime from "./RelativeTime";
 import StoryImage from "./StoryImage";
+import { matchesTopicFilter, storyCategory } from "./storyMeta";
+
+const TOPIC_FILTERS = [
+  "All",
+  "U.S. Politics",
+  "World",
+  "Economy",
+  "Technology",
+  "Health",
+  "Business",
+  "More",
+] as const;
 
 type MoreStoriesListProps = {
   articles: Article[];
   previews: Record<number, AnalysisResult | undefined>;
   articleIndexOffset: number;
-  hasMore: boolean;
-  onLoadMore: () => void;
 };
+
+const PAGE_SIZE = 6;
 
 export default function MoreStoriesList({
   articles,
   previews,
   articleIndexOffset,
-  hasMore,
-  onLoadMore,
 }: MoreStoriesListProps) {
+  const [filter, setFilter] =
+    useState<(typeof TOPIC_FILTERS)[number]>("All");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const filtered = useMemo(
+    () => articles.filter((article) => matchesTopicFilter(article, filter)),
+    [articles, filter]
+  );
+
+  const visible = filtered.slice(0, visibleCount);
+
   if (articles.length === 0) {
     return null;
   }
 
   return (
     <section id="more-stories" className="scroll-mt-28">
-      <div className="mb-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
-          More stories
-        </p>
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
+            More stories
+          </p>
+          <p className="text-sm text-[#9CB0C5]">
+            Stay informed with the latest analysis.
+          </p>
+        </div>
 
-        <h2 className="mt-2 font-serif text-3xl font-black tracking-[-0.03em] text-white">
-          Keep reading
-        </h2>
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {TOPIC_FILTERS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => {
+                setFilter(item);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold ${
+                filter === item
+                  ? "bg-[#38BDF8] text-[#03111F]"
+                  : "text-[#D7E4F4] hover:text-white"
+              }`}
+            >
+              {item === "More" ? "More ▾" : item}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="divide-y divide-[#17446D]/50">
-        {articles.map((article, index) => {
-          const preview = previews[articleIndexOffset + index];
-          const summary =
-            preview?.summary?.trim() ||
-            article.description?.trim() ||
-            "";
+      <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+        {visible.map((article, index) => {
+          const originalIndex = articles.findIndex(
+            (candidate) => candidate.url === article.url
+          );
+          const preview =
+            previews[
+              articleIndexOffset +
+                (originalIndex >= 0 ? originalIndex : index)
+            ];
+          const sourceCount = preview?.sourcesReviewed;
 
           return (
             <article
               key={article.url || `${article.title}-${index}`}
-              className="grid gap-5 py-6 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-start"
+              className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-4"
             >
-              <div className="relative hidden h-24 overflow-hidden rounded-xl bg-[#0A2846] sm:block">
+              <div className="relative h-[72px] overflow-hidden rounded-lg bg-[#05182E]">
                 {article.urlToImage ? (
                   <StoryImage
                     src={article.urlToImage}
-                    sizes="140px"
+                    sizes="92px"
                     className="object-cover"
                   />
                 ) : null}
               </div>
 
               <div>
-                {article.source?.name ? (
-                  <p className="text-[11px] font-medium text-[#7A93AA]">
-                    {article.source.name}
-                  </p>
-                ) : null}
-
-                <h3 className="mt-1 font-serif text-xl font-bold leading-snug text-white">
+                <Link
+                  href={`/intelligence/${createSlug(article.title)}`}
+                  prefetch={false}
+                  onClick={() => saveSelectedArticle(article)}
+                  className="font-serif text-[1.05rem] font-bold leading-snug text-white hover:text-[#8EDCFF]"
+                >
                   {article.title}
-                </h3>
-
-                {summary ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#9CB0C5]">
-                    {summary}
-                  </p>
-                ) : null}
-
-                <div className="mt-3">
-                  <StoryBriefLink article={article} />
-                </div>
+                </Link>
+                <p className="mt-1.5 text-[12px] text-[#9CB0C5]">
+                  <RelativeTime publishedAt={article.publishedAt} />
+                  <span className="mx-1.5 text-[#4E6A84]">•</span>
+                  {storyCategory(article)}
+                  {typeof sourceCount === "number" && sourceCount > 0 ? (
+                    <>
+                      <span className="mx-1.5 text-[#4E6A84]">•</span>
+                      {sourceCount === 1
+                        ? "1 source"
+                        : `${sourceCount} sources`}
+                    </>
+                  ) : null}
+                </p>
               </div>
             </article>
           );
         })}
       </div>
 
-      {hasMore ? (
-        <div className="mt-4 flex justify-center">
+      {visible.length === 0 ? (
+        <p className="text-sm text-[#9CB0C5]">
+          No stories in this topic yet. Try All.
+        </p>
+      ) : null}
+
+      {visibleCount < filtered.length ? (
+        <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={onLoadMore}
-            className="rounded-xl px-6 py-3 text-sm font-semibold text-[#E2F3FF] transition hover:text-white"
+            onClick={() =>
+              setVisibleCount((currentCount) => currentCount + PAGE_SIZE)
+            }
+            className="rounded-full border border-[#3A6A96] px-6 py-2.5 text-sm font-semibold text-white hover:border-[#55C8FF]"
           >
-            Load more
+            Load more stories
           </button>
         </div>
       ) : null}

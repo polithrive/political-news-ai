@@ -6,6 +6,9 @@ import Link from "next/link";
 
 import ShareBriefButton from "./ShareBriefButton";
 import EvidenceLine from "./EvidenceLine";
+import CoverageMeter from "@/app/components/coverage/CoverageMeter";
+import { coverageFromPreview } from "@/app/lib/coverageFraming";
+import { createSlug } from "@/lib/createSlug";
 
 import type { Article } from "@/app/types/article";
 import type { EvidenceStrength } from "@/app/types/trust";
@@ -18,6 +21,9 @@ type StoryBriefHeaderProps = {
   isUrlArticle?: boolean;
   otherSourceCount?: number | null;
   showDescription?: boolean;
+  biasScore?: number | null;
+  lean?: string | null;
+  biasReasoning?: string | null;
 };
 
 function formatPublishedDate(publishedAt: string) {
@@ -74,6 +80,9 @@ export default function StoryBriefHeader({
   isUrlArticle = false,
   otherSourceCount,
   showDescription = true,
+  biasScore,
+  lean,
+  biasReasoning,
 }: StoryBriefHeaderProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const publishedDate = formatPublishedDate(article.publishedAt);
@@ -152,6 +161,16 @@ export default function StoryBriefHeader({
 
         <ShareBriefButton title={article.title} />
       </div>
+
+      <CoverageMeter
+        articleTitle={article.title}
+        articlePath={`/intelligence/${createSlug(article.title)}`}
+        coverage={coverageFromPreview({
+          biasScore: biasScore ?? undefined,
+          lean: lean ?? undefined,
+          biasReasoning: biasReasoning ?? undefined,
+        })}
+      />
 
       {hasUsableImage ? (
         <div className="relative mt-8 h-56 overflow-hidden rounded-2xl bg-[#06172D] sm:h-72">

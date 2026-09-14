@@ -91,6 +91,7 @@ export default function RootLayout({
     >
       <body
         className={`${geistSans.className} flex min-h-full flex-col bg-[#020D21]`}
+        suppressHydrationWarning
       >
         {children}
       </body>

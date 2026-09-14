@@ -45,6 +45,7 @@ import {
   isUrlSubmittedArticle,
 } from "@/lib/services/urlAnalysisReport";
 
+import { leanFromCoverageScore } from "@/app/lib/coverageFraming";
 import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
@@ -479,6 +480,12 @@ export default function IntelligenceReportPage() {
             report?.evidence.relatedSources?.filter(
               (source) => !source.isPrimary
             ).length
+          }
+          biasScore={report?.overview.biasScore}
+          lean={
+            typeof report?.overview.biasScore === "number"
+              ? leanFromCoverageScore(report.overview.biasScore)
+              : null
           }
         />
 
