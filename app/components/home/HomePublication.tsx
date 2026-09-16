@@ -9,6 +9,7 @@ import HomeHero from "./HomeHero";
 import HomeRightRail from "./HomeRightRail";
 import MoreStoriesList from "./MoreStoriesList";
 import HomeFeatureTools from "./HomeFeatureTools";
+import TheAngleModule from "./TheAngleModule";
 
 type HomePublicationProps = {
   articles: Article[];
@@ -114,7 +115,11 @@ export default function HomePublication({
         </div>
       </div>
 
+      <TheAngleModule article={leadArticle} preview={featuredAnalysis} />
+
       <div className="space-y-5">
+        <HomeFeatureTools />
+
         {!errorMessage ? (
           <MoreStoriesList
             articles={moreStoriesPool}
@@ -122,8 +127,6 @@ export default function HomePublication({
             articleIndexOffset={LEAD_STORY_COUNT + BIG_STORY_COUNT}
           />
         ) : null}
-
-        <HomeFeatureTools />
       </div>
     </div>
   );

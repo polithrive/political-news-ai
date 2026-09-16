@@ -103,13 +103,12 @@ export default function MoreStoriesList({
               className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-4"
             >
               <div className="relative h-[72px] overflow-hidden rounded-lg bg-[#05182E]">
-                {article.urlToImage ? (
-                  <StoryImage
-                    src={article.urlToImage}
-                    sizes="92px"
-                    className="object-cover"
-                  />
-                ) : null}
+                <StoryImage
+                  src={article.urlToImage}
+                  category={storyCategory(article)}
+                  sizes="92px"
+                  className="object-cover object-center"
+                />
               </div>
 
               <div>

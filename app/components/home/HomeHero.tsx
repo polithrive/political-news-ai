@@ -84,20 +84,20 @@ export default function HomeHero({
             ) : null}
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
+              <StoryBriefLink
+                article={article}
+                className="inline-flex items-center rounded-full bg-[#FF2638] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
+              />
               {article.url ? (
                 <a
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center rounded-full bg-[#FF2638] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
+                  className="inline-flex items-center rounded-full border border-[#3A6A96] px-4 py-2.5 text-sm font-semibold text-white hover:border-[#55C8FF]"
                 >
-                  Read article →
+                  Read original →
                 </a>
               ) : null}
-              <StoryBriefLink
-                article={article}
-                className="inline-flex items-center rounded-full border border-[#3A6A96] px-4 py-2.5 text-sm font-semibold text-white hover:border-[#55C8FF]"
-              />
             </div>
           </>
         ) : (

@@ -116,6 +116,13 @@ export default function PublicationNav({
                   Understand any article
                 </Link>
                 <Link
+                  href="/premium"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
+                >
+                  Premium
+                </Link>
+                <Link
                   href="/about"
                   onClick={() => setIsMoreOpen(false)}
                   className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
@@ -169,12 +176,14 @@ export default function PublicationNav({
             {account ? account.email.split("@")[0] : "Sign in"}
           </Link>
 
-          <Link
-            href="/premium"
-            className="inline-flex h-8 items-center rounded-full bg-[#FF2638] px-3.5 text-[13px] font-semibold text-white hover:bg-[#FF4151]"
-          >
-            {account?.trialStartedAt ? "Premium" : "Try Premium"}
-          </Link>
+          {!account ? (
+            <Link
+              href="/signin"
+              className="inline-flex h-8 items-center rounded-full bg-[#FF2638] px-3.5 text-[13px] font-semibold text-white hover:bg-[#FF4151]"
+            >
+              Create free account
+            </Link>
+          ) : null}
 
           <button
             type="button"

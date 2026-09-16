@@ -32,23 +32,16 @@ function HomePage() {
     <SiteShell
       searchTerm={searchTerm}
       onSearchTermChange={setSearchTerm}
-      trendingArticles={articles}
     >
       {searchTerm.trim() ? (
-        <SearchResults
-          searchTerm={searchTerm}
-          articles={articles}
-        />
+        <SearchResults searchTerm={searchTerm} articles={articles} />
       ) : (
         <HomePublication
           articles={articles}
           analysisResults={analysisResults}
           featuredArticle={featuredArticle}
           featuredAnalysis={featuredAnalysis}
-          isLoading={
-            isNewsLoading ||
-            isFeaturedAnalysisLoading
-          }
+          isLoading={isNewsLoading || isFeaturedAnalysisLoading}
           errorMessage={errorMessage}
         />
       )}

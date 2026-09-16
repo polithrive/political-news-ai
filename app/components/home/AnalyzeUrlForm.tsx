@@ -71,7 +71,7 @@ export default function AnalyzeUrlForm({
               placeholder={
                 compact
                   ? "Paste article or source URL"
-                  : "https://example.com/news-article"
+                  : "Paste an article URL"
               }
               disabled={isSubmitting}
               className="min-w-0 flex-1 bg-transparent text-sm text-[#F8FAFC] outline-none placeholder:text-[#7890AC] disabled:opacity-60"
