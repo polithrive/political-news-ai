@@ -1,78 +1,11 @@
 import type { Article } from "@/app/types/article";
 
-const CATEGORY_RULES: { label: string; keywords: string[] }[] = [
-  {
-    label: "U.S. Politics",
-    keywords: [
-      "united states",
-      "u.s.",
-      "washington",
-      "white house",
-      "congress",
-      "senate",
-      "trump",
-      "biden",
-    ],
-  },
-  {
-    label: "World",
-    keywords: [
-      "ukraine",
-      "russia",
-      "china",
-      "israel",
-      "gaza",
-      "europe",
-      "nato",
-      "india",
-      "iran",
-    ],
-  },
-  {
-    label: "Economy",
-    keywords: [
-      "economy",
-      "inflation",
-      "market",
-      "fed ",
-      "tariff",
-      "trade",
-      "jobs",
-      "gdp",
-    ],
-  },
-  {
-    label: "Technology",
-    keywords: [
-      "tech",
-      "ai ",
-      "artificial intelligence",
-      "software",
-      "cyber",
-      "apple",
-      "google",
-    ],
-  },
-  {
-    label: "Health",
-    keywords: ["health", "hospital", "vaccine", "fda", "medical", "covid"],
-  },
-  {
-    label: "Business",
-    keywords: ["business", "company", "ceo", "earnings", "merger", "startup"],
-  },
-];
-
 export function storyCategory(article: Article): string {
-  const haystack = `${article.title} ${article.description}`.toLowerCase();
-
-  for (const rule of CATEGORY_RULES) {
-    if (rule.keywords.some((keyword) => haystack.includes(keyword))) {
-      return rule.label;
-    }
+  if (article.curation?.category) {
+    return article.curation.category;
   }
 
-  return "Politics";
+  return "Other";
 }
 
 export function relativeTime(
@@ -84,7 +17,7 @@ export function relativeTime(
     return "";
   }
 
-  const diffMs = Date.now() - published.getTime();
+  const diffMs = now - published.getTime();
   const minutes = Math.max(0, Math.round(diffMs / 60000));
 
   if (minutes < 60) {

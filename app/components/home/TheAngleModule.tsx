@@ -21,7 +21,9 @@ export default function TheAngleModule({
   const whatHappened =
     preview?.summary?.trim() || article.description?.trim() || "";
   const whyItMatters = preview?.whyThisMatters?.trim() || "";
-  const sourceCount = preview?.sourcesReviewed;
+  const relatedSources = article.curation?.relatedSources ?? [];
+  const clusterSize = article.curation?.clusterSize ?? 0;
+  const sourceCount = clusterSize > 1 ? clusterSize : undefined;
   const category = storyCategory(article);
 
   return (
@@ -41,6 +43,7 @@ export default function TheAngleModule({
             <StoryImage
               src={article.urlToImage}
               category={category}
+              sourceCount={sourceCount}
               sizes="(max-width: 1024px) 100vw, 40vw"
               className="object-cover object-center"
             />
@@ -77,10 +80,11 @@ export default function TheAngleModule({
             ) : null}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              {typeof sourceCount === "number" && sourceCount > 0 ? (
+              {sourceCount ? (
                 <p className="text-[12px] text-[#7890AC]">
-                  Analyzed across {sourceCount}{" "}
-                  {sourceCount === 1 ? "source" : "sources"}
+                  Reported by {relatedSources.slice(0, 4).join(", ")}
+                  {relatedSources.length > 4 ? " and others" : ""} · {sourceCount}{" "}
+                  {sourceCount === 1 ? "source" : "sources"} in this feed
                 </p>
               ) : (
                 <span />

@@ -2,6 +2,29 @@ import type { AnalysisResult } from "@/app/types/analysis";
 
 export type ArticleAnalysisOrigin = "url";
 
+export type StoryGeography = "US" | "WORLD" | "UNKNOWN";
+
+export type StoryTopic =
+  | "POLITICS"
+  | "ECONOMY"
+  | "TECHNOLOGY"
+  | "HEALTH"
+  | "BUSINESS"
+  | "WORLD"
+  | "CULTURE"
+  | "OTHER";
+
+export type HomepageCuration = {
+  category: string;
+  geography: StoryGeography;
+  topic: StoryTopic;
+  clusterSize: number;
+  relatedSources: string[];
+  score: number;
+  selectionReason: string;
+  acquisitionPools?: string[];
+};
+
 export type Article = {
   title: string;
   description: string;
@@ -12,6 +35,8 @@ export type Article = {
   source: {
     name: string;
   };
+
+  curation?: HomepageCuration;
 
   preview?: AnalysisResult;
 

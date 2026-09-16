@@ -19,6 +19,9 @@ function HomePage() {
     analysisResults,
     featuredArticle,
     featuredAnalysis,
+    bigStories,
+    trendingArticles,
+    moreStories,
     isNewsLoading,
     isFeaturedAnalysisLoading,
     errorMessage,
@@ -38,6 +41,9 @@ function HomePage() {
       ) : (
         <HomePublication
           articles={articles}
+          bigStories={bigStories}
+          trendingArticles={trendingArticles}
+          moreStories={moreStories}
           analysisResults={analysisResults}
           featuredArticle={featuredArticle}
           featuredAnalysis={featuredAnalysis}

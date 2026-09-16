@@ -1,6 +1,11 @@
 "use client";
 
+import Link from "next/link";
+
 import type { Article } from "@/app/types/article";
+
+import { createSlug } from "@/lib/createSlug";
+import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 type TrendingStoriesCardProps = {
   articles: Article[];
@@ -23,10 +28,10 @@ export default function TrendingStoriesCard({
         <ol className="mt-2.5 space-y-2">
           {trending.map((article, index) => (
             <li key={article.url || `${article.title}-${index}`}>
-              <a
-                href={article.url || "#"}
-                target={article.url ? "_blank" : undefined}
-                rel={article.url ? "noopener noreferrer" : undefined}
+              <Link
+                href={`/intelligence/${createSlug(article.title)}`}
+                prefetch={false}
+                onClick={() => saveSelectedArticle(article)}
                 className="flex gap-2.5 hover:text-[#8EDCFF]"
               >
                 <span className="w-4 shrink-0 font-serif text-sm font-bold text-[#55C8FF]">
@@ -35,7 +40,7 @@ export default function TrendingStoriesCard({
                 <span className="line-clamp-2 text-[12px] font-semibold leading-snug text-white">
                   {article.title}
                 </span>
-              </a>
+              </Link>
             </li>
           ))}
         </ol>

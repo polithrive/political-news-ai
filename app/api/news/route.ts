@@ -1,3 +1,6 @@
+import { analyzeNewsApiPool, curateHomepageFeed } from "@/lib/services/homepageCuration";
+import { acquireHomepageCandidates } from "@/lib/services/newsAcquisition";
+
 const NEWS_API_BASE_URL =
   "https://newsapi.org/v2";
 
@@ -72,6 +75,20 @@ const POLITICAL_NEWS_QUERY = [
   ")",
 ].join(" ");
 
+const GLOBAL_IMPORTANCE_TERMS = [
+  "war ",
+  "invasion",
+  "ceasefire",
+  "airstrike",
+  "missile",
+  "nuclear",
+  "nato",
+  "earthquake",
+  "hurricane",
+  "pandemic",
+  "coup",
+];
+
 const STRONG_POLITICAL_TERMS = [
   "white house",
   "congress",
@@ -135,6 +152,7 @@ const EXCLUDED_TERMS = [
   "television series",
   "album",
   "concert",
+  "rapper",
   "box office",
   "nba",
   "nfl",
@@ -170,6 +188,7 @@ type NewsApiArticle = {
   urlToImage?: string | null;
   publishedAt?: string | null;
   content?: string | null;
+  acquisitionPools?: string[];
 };
 
 function cleanSearchQuery(
@@ -324,6 +343,51 @@ function isPoliticalArticle(
   );
 }
 
+function isGloballyImportantArticle(
+  article: NewsApiArticle
+): boolean {
+  const articleText =
+    getArticleText(article);
+
+  return GLOBAL_IMPORTANCE_TERMS.some(
+    (term) => articleText.includes(term)
+  );
+}
+
+function isHomepageCandidate(
+  article: NewsApiArticle
+): boolean {
+  if (!isUsableArticle(article)) {
+    return false;
+  }
+
+  const articleText =
+    getArticleText(article);
+
+  const containsExcludedTerm =
+    EXCLUDED_TERMS.some((term) =>
+      articleText.includes(term)
+    );
+
+  if (containsExcludedTerm) {
+    return false;
+  }
+
+  const pools = article.acquisitionPools ?? [];
+
+  if (
+    pools.includes("us-headlines") ||
+    pools.includes("world")
+  ) {
+    return true;
+  }
+
+  return (
+    isPoliticalArticle(article) ||
+    isGloballyImportantArticle(article)
+  );
+}
+
 const NEAR_DUPLICATE_STOP_WORDS = new Set([
   ...RELATED_STOP_WORDS,
   "after",
@@ -470,18 +534,47 @@ function deduplicateArticles(
 
 function prepareHomepageArticles(
   articles: unknown[]
-): NewsApiArticle[] {
-  return filterNearDuplicateStories(
-    deduplicateArticles(
-      articles
-        .filter(isNewsApiArticle)
-        .filter(isUsableArticle)
-        .filter(isPoliticalArticle)
-    )
-  ).slice(
+): ReturnType<typeof curateHomepageFeed> {
+  const usable = articles
+    .filter(isNewsApiArticle)
+    .filter(isUsableArticle);
+  const candidates = deduplicateArticles(
+    usable.filter(isHomepageCandidate)
+  );
+
+  console.info(
+    "NewsAPI candidate pool:",
+    analyzeNewsApiPool(usable)
+  );
+  console.info(
+    "Homepage candidate filter:",
+    analyzeNewsApiPool(candidates)
+  );
+
+  const curated = curateHomepageFeed(candidates).slice(
     0,
     MAX_HOMEPAGE_ARTICLES
   );
+
+  console.info(
+    "Homepage curation:",
+    curated.slice(0, 8).map((article, index) => ({
+      slot:
+        index === 0
+          ? "lead"
+          : index < 5
+            ? `big-${index}`
+            : `trending-${index - 4}`,
+      title: article.title,
+      category: article.curation?.category,
+        source: article.source.name,
+        score: article.curation?.score,
+        pools: article.curation?.acquisitionPools,
+        reason: article.curation?.selectionReason,
+    }))
+  );
+
+  return curated;
 }
 
 function prepareRelatedArticles(
@@ -554,8 +647,6 @@ export async function GET(
         "q"
       );
 
-    let newsApiUrl: URL;
-
     if (isRelatedMode) {
       const relatedQuery =
         buildRelatedQuery(
@@ -581,7 +672,7 @@ export async function GET(
         );
       }
 
-      newsApiUrl =
+      const newsApiUrl =
         new URL(
           `${NEWS_API_BASE_URL}/everything`
         );
@@ -591,28 +682,11 @@ export async function GET(
         relatedQuery
       );
 
-      /*
-       * Do not restrict searchIn for
-       * related reporting.
-       *
-       * NewsAPI can search all supported
-       * article fields, which gives us a
-       * larger candidate pool for
-       * independent coverage.
-       */
       newsApiUrl.searchParams.set(
         "language",
         "en"
       );
 
-      /*
-       * Let NewsAPI provide a relevancy-
-       * ordered candidate pool.
-       *
-       * PoliticalPulse performs its own
-       * final relevance and source
-       * diversity scoring afterward.
-       */
       newsApiUrl.searchParams.set(
         "sortBy",
         "relevancy"
@@ -634,133 +708,138 @@ export async function GET(
           relatedQuery,
         }
       );
-    } else {
-      newsApiUrl =
-        new URL(
-          `${NEWS_API_BASE_URL}/everything`
+
+      const newsApiStartedAt =
+        performance.now();
+
+      const response =
+        await fetchNewsApi(
+          newsApiUrl.toString(),
+          apiKey
         );
 
-      newsApiUrl.searchParams.set(
-        "q",
-        POLITICAL_NEWS_QUERY
-      );
+      const newsApiFetchMs =
+        getDurationMs(
+          newsApiStartedAt
+        );
 
-      newsApiUrl.searchParams.set(
-        "searchIn",
-        "title,description"
-      );
+      const data =
+        (await response.json()) as
+          NewsApiErrorResponse & {
+            articles?: unknown[];
+            totalResults?: number;
+          };
 
-      newsApiUrl.searchParams.set(
-        "language",
-        "en"
-      );
+      if (!response.ok) {
+        console.error(
+          "NewsAPI request failed:",
+          {
+            status:
+              response.status,
 
-      newsApiUrl.searchParams.set(
-        "sortBy",
-        "publishedAt"
-      );
+            code:
+              data.code,
 
-      newsApiUrl.searchParams.set(
-        "pageSize",
-        String(
-          DEFAULT_PAGE_SIZE
+            message:
+              data.message,
+
+            newsApiFetchMs,
+          }
+        );
+
+        return Response.json(
+          {
+            status: "error",
+
+            code:
+              data.code ??
+              "newsApiError",
+
+            message:
+              data.message ??
+              "PoliticalPulse could not retrieve news.",
+
+            articles: [],
+          },
+          {
+            status:
+              response.status,
+          }
+        );
+      }
+
+      const rawArticles =
+        Array.isArray(
+          data.articles
         )
+          ? data.articles
+          : [];
+
+      const articles =
+        prepareRelatedArticles(
+          rawArticles
+        );
+
+      console.info(
+        "PoliticalPulse news performance:",
+        {
+          mode: "related",
+
+          rawArticleCount:
+            rawArticles.length,
+
+          articleCount:
+            articles.length,
+
+          totalResults:
+            data.totalResults ?? 0,
+
+          newsApiFetchMs,
+
+          totalRouteMs:
+            getDurationMs(
+              routeStartedAt
+            ),
+        }
       );
+
+      return Response.json({
+        status: "ok",
+
+        totalResults:
+          articles.length,
+
+        articles,
+      });
     }
 
-    const newsApiStartedAt =
+    const acquisitionStartedAt =
       performance.now();
 
-    const response =
-      await fetchNewsApi(
-        newsApiUrl.toString(),
+    const acquired =
+      await acquireHomepageCandidates(
         apiKey
       );
 
-    const newsApiFetchMs =
-      getDurationMs(
-        newsApiStartedAt
-      );
-
-    const data =
-      (await response.json()) as
-        NewsApiErrorResponse & {
-          articles?: unknown[];
-          totalResults?: number;
-        };
-
-    if (!response.ok) {
-      console.error(
-        "NewsAPI request failed:",
-        {
-          status:
-            response.status,
-
-          code:
-            data.code,
-
-          message:
-            data.message,
-
-          newsApiFetchMs,
-        }
-      );
-
-      return Response.json(
-        {
-          status: "error",
-
-          code:
-            data.code ??
-            "newsApiError",
-
-          message:
-            data.message ??
-            "PoliticalPulse could not retrieve news.",
-
-          articles: [],
-        },
-        {
-          status:
-            response.status,
-        }
-      );
-    }
-
-    const rawArticles =
-      Array.isArray(
-        data.articles
-      )
-        ? data.articles
-        : [];
-
     const articles =
-      isRelatedMode
-        ? prepareRelatedArticles(
-            rawArticles
-          )
-        : prepareHomepageArticles(
-            rawArticles
-          );
+      prepareHomepageArticles(
+        acquired.articles
+      );
 
     console.info(
       "PoliticalPulse news performance:",
       {
-        mode:
-          isRelatedMode
-            ? "related"
-            : "political",
+        mode: "homepage",
 
-        rawArticleCount:
-          rawArticles.length,
+        acquisition: acquired.diagnostics,
 
         articleCount:
           articles.length,
 
-        totalResults:
-          data.totalResults ?? 0,
-
-        newsApiFetchMs,
+        newsApiFetchMs:
+          getDurationMs(
+            acquisitionStartedAt
+          ),
 
         totalRouteMs:
           getDurationMs(

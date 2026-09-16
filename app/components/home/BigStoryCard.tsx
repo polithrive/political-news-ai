@@ -32,7 +32,10 @@ export default function BigStoryCard({
 }: BigStoryCardProps) {
   const summary = storySummary(article, preview);
   const category = storyCategory(article);
-  const sourceCount = preview?.sourcesReviewed;
+  const sourceCount =
+    article.curation && article.curation.clusterSize > 1
+      ? article.curation.clusterSize
+      : undefined;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl bg-[#04162C]">
@@ -40,6 +43,7 @@ export default function BigStoryCard({
         <StoryImage
           src={article.urlToImage}
           category={category}
+          sourceCount={sourceCount}
           priority={priority}
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 20vw"
           className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"

@@ -13,6 +13,9 @@ import TheAngleModule from "./TheAngleModule";
 
 type HomePublicationProps = {
   articles: Article[];
+  bigStories?: Article[];
+  trendingArticles?: Article[];
+  moreStories?: Article[];
   analysisResults: Record<number, AnalysisResult>;
   featuredArticle: Article | null;
   featuredAnalysis: IntelligencePreview | null;
@@ -20,11 +23,11 @@ type HomePublicationProps = {
   errorMessage: string | null;
 };
 
-const BIG_STORY_COUNT = 4;
-const LEAD_STORY_COUNT = 1;
-
 export default function HomePublication({
   articles,
+  bigStories = [],
+  trendingArticles = [],
+  moreStories = [],
   analysisResults,
   featuredArticle,
   featuredAnalysis,
@@ -32,11 +35,6 @@ export default function HomePublication({
   errorMessage,
 }: HomePublicationProps) {
   const leadArticle = featuredArticle ?? articles[0] ?? null;
-  const bigStories = articles.slice(
-    LEAD_STORY_COUNT,
-    LEAD_STORY_COUNT + BIG_STORY_COUNT
-  );
-  const moreStoriesPool = articles.slice(LEAD_STORY_COUNT + BIG_STORY_COUNT);
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-7">
@@ -50,7 +48,10 @@ export default function HomePublication({
         </div>
 
         <div className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <HomeRightRail articles={articles} isLoading={isLoading} />
+          <HomeRightRail
+            articles={trendingArticles}
+            isLoading={isLoading}
+          />
         </div>
 
         <div className="order-3 min-w-0">
@@ -121,11 +122,7 @@ export default function HomePublication({
         <HomeFeatureTools />
 
         {!errorMessage ? (
-          <MoreStoriesList
-            articles={moreStoriesPool}
-            previews={analysisResults}
-            articleIndexOffset={LEAD_STORY_COUNT + BIG_STORY_COUNT}
-          />
+          <MoreStoriesList articles={moreStories} />
         ) : null}
       </div>
     </div>

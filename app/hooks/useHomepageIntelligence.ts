@@ -7,77 +7,23 @@ import type { Article } from "@/app/types/article";
 import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 
 import { analyzeArticle } from "@/app/lib/analysis";
+import { splitHomepageSections } from "@/lib/services/homepageSections";
 import { getLatestNews } from "@/lib/news";
 
 const PREVIEW_ARTICLE_COUNT = 3;
-const DIVERSITY_WINDOW = 12;
-const MAX_PER_PUBLISHER_IN_WINDOW = 2;
 
 type HomepageIntelligenceState = {
   articles: Article[];
   analysisResults: Record<number, AnalysisResult>;
   featuredArticle: Article | null;
   featuredAnalysis: IntelligencePreview | null;
+  bigStories: Article[];
+  trendingArticles: Article[];
+  moreStories: Article[];
   isNewsLoading: boolean;
   isFeaturedAnalysisLoading: boolean;
   errorMessage: string | null;
 };
-
-function normalizePublisherName(
-  value: string | undefined
-): string {
-  return (value ?? "unknown")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-/*
- * Reorders the fetched homepage pool so a single
- * publisher does not dominate the first visible
- * stories. Deferred articles remain in the array
- * for Load More, search, and Intelligence Report
- * selection.
- */
-function applyPublisherDiversity(
-  articles: Article[]
-): Article[] {
-  const windowArticles: Article[] = [];
-  const deferredArticles: Article[] = [];
-  const remainingArticles: Article[] = [];
-  const publisherCounts = new Map<string, number>();
-
-  for (const article of articles) {
-    const publisherKey = normalizePublisherName(
-      article.source?.name
-    );
-
-    if (windowArticles.length < DIVERSITY_WINDOW) {
-      const currentCount =
-        publisherCounts.get(publisherKey) ?? 0;
-
-      if (currentCount >= MAX_PER_PUBLISHER_IN_WINDOW) {
-        deferredArticles.push(article);
-        continue;
-      }
-
-      windowArticles.push(article);
-      publisherCounts.set(
-        publisherKey,
-        currentCount + 1
-      );
-      continue;
-    }
-
-    remainingArticles.push(article);
-  }
-
-  return [
-    ...windowArticles,
-    ...deferredArticles,
-    ...remainingArticles,
-  ];
-}
 
 export function useHomepageIntelligence(): HomepageIntelligenceState {
   const [articles, setArticles] =
@@ -167,10 +113,7 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
           return;
         }
 
-        const homepageArticles =
-          applyPublisherDiversity(latestArticles);
-
-        if (homepageArticles.length === 0) {
+        if (latestArticles.length === 0) {
           setErrorMessage(
             "The Angle Report did not receive any live articles."
           );
@@ -178,13 +121,13 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
           return;
         }
 
-        setArticles(homepageArticles);
+        setArticles(latestArticles);
         setAnalysisResults({});
         setFeaturedAnalysis(null);
         setIsNewsLoading(false);
 
         await analyzeHomepagePreviews(
-          homepageArticles
+          latestArticles
         );
       } catch (error) {
         console.error(
@@ -214,11 +157,16 @@ export function useHomepageIntelligence(): HomepageIntelligenceState {
     };
   }, []);
 
+  const sections = splitHomepageSections(articles);
+
   return {
     articles,
     analysisResults,
-    featuredArticle: articles[0] ?? null,
+    featuredArticle: sections.lead,
     featuredAnalysis,
+    bigStories: sections.bigStories,
+    trendingArticles: sections.trending,
+    moreStories: sections.moreStories,
     isNewsLoading,
     isFeaturedAnalysisLoading,
     errorMessage,

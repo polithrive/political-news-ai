@@ -20,6 +20,10 @@ export default function HomeFeatureTools() {
           Compare the reporting, see what&apos;s corroborated, discover other
           perspectives, and understand what&apos;s still uncertain.
         </p>
+        <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[#7890AC]">
+          We analyze the story across multiple sources — not just the article
+          you paste.
+        </p>
         <div className="mt-6 max-w-2xl">
           <AnalyzeUrlForm submitLabel="Analyze article →" />
         </div>

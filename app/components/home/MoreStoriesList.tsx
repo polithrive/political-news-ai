@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import type { AnalysisResult } from "@/app/types/analysis";
 import type { Article } from "@/app/types/article";
 
 import { createSlug } from "@/lib/createSlug";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 import RelativeTime from "./RelativeTime";
+import StoryBriefLink from "./StoryBriefLink";
 import StoryImage from "./StoryImage";
 import { matchesTopicFilter, storyCategory } from "./storyMeta";
 
@@ -26,16 +26,12 @@ const TOPIC_FILTERS = [
 
 type MoreStoriesListProps = {
   articles: Article[];
-  previews: Record<number, AnalysisResult | undefined>;
-  articleIndexOffset: number;
 };
 
 const PAGE_SIZE = 6;
 
 export default function MoreStoriesList({
   articles,
-  previews,
-  articleIndexOffset,
 }: MoreStoriesListProps) {
   const [filter, setFilter] =
     useState<(typeof TOPIC_FILTERS)[number]>("All");
@@ -87,15 +83,10 @@ export default function MoreStoriesList({
 
       <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
         {visible.map((article, index) => {
-          const originalIndex = articles.findIndex(
-            (candidate) => candidate.url === article.url
-          );
-          const preview =
-            previews[
-              articleIndexOffset +
-                (originalIndex >= 0 ? originalIndex : index)
-            ];
-          const sourceCount = preview?.sourcesReviewed;
+          const sourceCount =
+            article.curation && article.curation.clusterSize > 1
+              ? article.curation.clusterSize
+              : undefined;
 
           return (
             <article
@@ -106,6 +97,7 @@ export default function MoreStoriesList({
                 <StoryImage
                   src={article.urlToImage}
                   category={storyCategory(article)}
+                  sourceCount={sourceCount}
                   sizes="92px"
                   className="object-cover object-center"
                 />
@@ -134,16 +126,11 @@ export default function MoreStoriesList({
                       </>
                     ) : null}
                   </p>
-                  {article.url ? (
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center rounded-full bg-[#FF2638] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#FF4151]"
-                    >
-                      Read article
-                    </a>
-                  ) : null}
+                  <StoryBriefLink
+                    article={article}
+                    label="60-sec brief"
+                    className="inline-flex items-center rounded-full bg-[#FF2638] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#FF4151]"
+                  />
                 </div>
               </div>
             </article>
