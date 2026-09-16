@@ -6,8 +6,8 @@ import MorningBriefSignup from "@/app/components/home/MorningBriefSignup";
 const footerLinks = [
   { label: "Today", href: "/#today" },
   { label: "Understand Any Article", href: "/#understand-any-article" },
-  { label: "Forecasts", href: "/#forecasts" },
-  { label: "Polls", href: "/#polls" },
+  { label: "Forecasts", href: "/forecasts" },
+  { label: "Polls", href: "/polls" },
   { label: "My Angle", href: "/signin" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },

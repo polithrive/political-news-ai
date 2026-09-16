@@ -91,7 +91,7 @@ export default function HomepageForecast() {
           {forecast.predictionCount.toLocaleString()} predictions
         </p>
         <Link
-          href="#forecasts"
+          href="/forecasts"
           className="font-semibold text-[#55C8FF] hover:text-[#8EDCFF]"
         >
           See all forecasts →

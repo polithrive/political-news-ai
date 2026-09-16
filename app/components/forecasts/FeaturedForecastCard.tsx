@@ -42,7 +42,7 @@ export default function FeaturedForecastCard() {
       </p>
 
       <Link
-        href="#homepage-forecast"
+        href="/forecasts"
         className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-[#214B70] px-3 py-2 text-sm font-semibold text-white hover:border-[#55C8FF]"
       >
         See all forecasts →

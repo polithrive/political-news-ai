@@ -123,7 +123,7 @@ export default function FeaturedHomepagePoll() {
       </div>
 
       <Link
-        href="#polls"
+        href="/polls"
         className="mt-auto pt-4 text-sm font-semibold text-[#55C8FF] hover:text-[#8EDCFF]"
       >
         See more polls →

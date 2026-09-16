@@ -95,6 +95,20 @@ export default function PublicationNav({
             {isMoreOpen ? (
               <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl bg-[#04162C] py-2 shadow-xl">
                 <Link
+                  href="/polls"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
+                >
+                  Polls
+                </Link>
+                <Link
+                  href="/forecasts"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
+                >
+                  Forecasts
+                </Link>
+                <Link
                   href="/#understand-any-article"
                   onClick={() => setIsMoreOpen(false)}
                   className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"

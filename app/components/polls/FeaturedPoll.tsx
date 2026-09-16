@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import {
   MOCK_FEATURED_POLL,
@@ -188,7 +189,9 @@ export default function FeaturedPoll({
               >
                 See the arguments →
               </button>
-              <span className="text-[#9CB0C5]">See more polls →</span>
+              <Link href="/polls" className="text-[#55C8FF] hover:text-[#8EDCFF]">
+                See more polls →
+              </Link>
             </div>
 
             {showArguments && poll.arguments ? (

@@ -53,7 +53,7 @@ export default function TopPollCard() {
       </p>
 
       <Link
-        href="#the-question"
+        href="/polls"
         className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-[#214B70] px-3 py-2 text-sm font-semibold text-white hover:border-[#55C8FF]"
       >
         See more polls →
