@@ -61,7 +61,7 @@ export default function BigStoryCard({
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute right-3 top-3 z-[1] rounded-md bg-[#020D21]/82 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#38BDF8] hover:text-[#03111F]"
+            className="absolute right-3 top-3 z-[1] rounded-md bg-[#FF2638] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#FF4151]"
           >
             Read article
           </a>

@@ -18,7 +18,15 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-export default function AnalyzeUrlForm() {
+type AnalyzeUrlFormProps = {
+  compact?: boolean;
+  submitLabel?: string;
+};
+
+export default function AnalyzeUrlForm({
+  compact = false,
+  submitLabel = "Analyze Article →",
+}: AnalyzeUrlFormProps) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -52,7 +60,7 @@ export default function AnalyzeUrlForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className={`flex flex-col gap-3 ${compact ? "" : "sm:flex-row"}`}>
           <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#05182E] px-3.5 py-2.5">
             <LinkIcon className="h-4 w-4 shrink-0 text-[#55C8FF]" />
             <span className="sr-only">News article URL</span>
@@ -60,7 +68,11 @@ export default function AnalyzeUrlForm() {
               type="url"
               value={url}
               onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://example.com/news-article"
+              placeholder={
+                compact
+                  ? "Paste article or source URL"
+                  : "https://example.com/news-article"
+              }
               disabled={isSubmitting}
               className="min-w-0 flex-1 bg-transparent text-sm text-[#F8FAFC] outline-none placeholder:text-[#7890AC] disabled:opacity-60"
             />
@@ -70,9 +82,13 @@ export default function AnalyzeUrlForm() {
             type="submit"
             disabled={isSubmitting}
             suppressHydrationWarning
-            className="rounded-lg bg-[#38BDF8] px-5 py-2.5 text-sm font-bold text-[#03111F] transition hover:bg-[#55C8FF] disabled:cursor-not-allowed disabled:opacity-60"
+            className={
+              compact
+                ? "w-full rounded-full bg-gradient-to-r from-[#2B8CFF] to-[#38BDF8] px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                : "rounded-lg bg-[#38BDF8] px-5 py-2.5 text-sm font-bold text-[#03111F] transition hover:bg-[#55C8FF] disabled:cursor-not-allowed disabled:opacity-60"
+            }
           >
-            {isSubmitting ? "Opening brief..." : "Analyze Article →"}
+            {isSubmitting ? "Opening brief..." : submitLabel}
           </button>
         </div>
       </form>

@@ -110,16 +110,6 @@ export default function MoreStoriesList({
                     className="object-cover"
                   />
                 ) : null}
-                {article.url ? (
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute inset-0 z-[1] flex items-end justify-center bg-gradient-to-t from-[#020D21]/80 to-transparent pb-1.5 text-[10px] font-semibold text-white hover:from-[#020D21]/90"
-                  >
-                    Read
-                  </a>
-                ) : null}
               </div>
 
               <div>
@@ -131,19 +121,31 @@ export default function MoreStoriesList({
                 >
                   {article.title}
                 </Link>
-                <p className="mt-1.5 text-[12px] text-[#9CB0C5]">
-                  <RelativeTime publishedAt={article.publishedAt} />
-                  <span className="mx-1.5 text-[#4E6A84]">•</span>
-                  {storyCategory(article)}
-                  {typeof sourceCount === "number" && sourceCount > 0 ? (
-                    <>
-                      <span className="mx-1.5 text-[#4E6A84]">•</span>
-                      {sourceCount === 1
-                        ? "1 source"
-                        : `${sourceCount} sources`}
-                    </>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                  <p className="text-[12px] text-[#9CB0C5]">
+                    <RelativeTime publishedAt={article.publishedAt} />
+                    <span className="mx-1.5 text-[#4E6A84]">•</span>
+                    {storyCategory(article)}
+                    {typeof sourceCount === "number" && sourceCount > 0 ? (
+                      <>
+                        <span className="mx-1.5 text-[#4E6A84]">•</span>
+                        {sourceCount === 1
+                          ? "1 source"
+                          : `${sourceCount} sources`}
+                      </>
+                    ) : null}
+                  </p>
+                  {article.url ? (
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-full bg-[#FF2638] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#FF4151]"
+                    >
+                      Read article
+                    </a>
                   ) : null}
-                </p>
+                </div>
               </div>
             </article>
           );

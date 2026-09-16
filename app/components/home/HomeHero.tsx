@@ -89,7 +89,7 @@ export default function HomeHero({
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center rounded-full bg-[#38BDF8] px-5 py-2.5 text-sm font-semibold text-[#03111F] transition hover:bg-[#55C8FF]"
+                  className="inline-flex items-center rounded-full bg-[#FF2638] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
                 >
                   Read article →
                 </a>

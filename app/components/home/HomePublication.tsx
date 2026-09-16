@@ -8,7 +8,7 @@ import BigStoryCard from "./BigStoryCard";
 import HomeHero from "./HomeHero";
 import HomeRightRail from "./HomeRightRail";
 import MoreStoriesList from "./MoreStoriesList";
-import UnderstandAnyArticle from "./UnderstandAnyArticle";
+import HomeFeatureTools from "./HomeFeatureTools";
 
 type HomePublicationProps = {
   articles: Article[];
@@ -123,7 +123,7 @@ export default function HomePublication({
           />
         ) : null}
 
-        <UnderstandAnyArticle />
+        <HomeFeatureTools />
       </div>
     </div>
   );

@@ -15,10 +15,10 @@ export default function BrandLogo({
     <Link href={href} aria-label="The Angle Report home" className="shrink-0">
       <span
         className={`block font-serif font-black leading-[0.82] tracking-[-0.05em] text-white ${
-          isFooter ? "text-[28px]" : "text-[20px]"
+          isFooter ? "text-[28px]" : "text-[26px]"
         }`}
       >
-        <span className={`block text-[#38BDF8] ${isFooter ? "text-[12px]" : "text-[11px]"}`}>
+        <span className={`block text-[#38BDF8] ${isFooter ? "text-[12px]" : "text-[13px]"}`}>
           the
         </span>
         angle report
@@ -26,7 +26,7 @@ export default function BrandLogo({
       </span>
       <span
         className={`mt-1 block font-sans font-semibold uppercase tracking-[0.16em] text-[#55C8FF] ${
-          isFooter ? "text-[9px]" : "text-[8px]"
+          isFooter ? "text-[9px]" : "text-[9px]"
         }`}
       >
         Ideas from every side.
