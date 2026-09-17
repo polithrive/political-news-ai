@@ -14,7 +14,7 @@ export default function DeepAnalysis({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <section id="deep-analysis" className="scroll-mt-28 border-t border-[#17446D]/40 pt-8">
+    <section id="deep-analysis" className="scroll-mt-28 border-t border-[#17446D]/40 pt-6">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -29,7 +29,7 @@ export default function DeepAnalysis({
             return next;
           });
         }}
-        className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#17446D]/70 bg-[#04162C]/80 px-5 py-4 text-left transition hover:border-[#38BDF8]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8] sm:px-6"
+        className="flex w-full items-center justify-between gap-4 rounded-xl border border-[#17446D]/60 bg-[#04162C]/80 px-4 py-3.5 text-left transition hover:border-[#38BDF8]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8] sm:px-5"
       >
         <div>
           <h2 className="font-serif text-2xl font-black tracking-[-0.03em] text-white sm:text-[1.65rem]">

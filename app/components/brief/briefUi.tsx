@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { getSourceRating } from "@/lib/services/sourceRanking";
+
 export function isPlaceholderText(value: string): boolean {
   const lower = value.toLowerCase();
 
@@ -44,6 +46,19 @@ export function readerFacingBriefText(
   }
 
   return usableText(stripEvidenceSourceCitations(value));
+}
+
+export function formatPublisherDisplayName(
+  name: string,
+  url?: string | null
+): string {
+  const trimmed = name.trim();
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  return getSourceRating(trimmed, url).displayName || trimmed;
 }
 
 export function usableList(items: string[] | undefined): string[] {

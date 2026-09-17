@@ -20,6 +20,7 @@ type AIChatProps = {
   reportContext: string;
   reportTitle?: string;
   variant?: "default" | "compact";
+  independentSourceCount?: number;
 };
 
 type ChatErrorResponse = {
@@ -102,8 +103,13 @@ function getSuggestedQuestions(
   }
 }
 
-const COMPACT_PROMPTS = [
+const COMPACT_PROMPTS_MULTI_SOURCE = [
   "What do the sources agree on?",
+  "What is still unclear?",
+];
+
+const COMPACT_PROMPTS_LIMITED_EVIDENCE = [
+  "What does the reporting support?",
   "What is still unclear?",
 ];
 
@@ -111,8 +117,14 @@ export default function AIChat({
   reportContext,
   reportTitle,
   variant = "default",
+  independentSourceCount,
 }: AIChatProps) {
   const isCompact = variant === "compact";
+  const compactPrompts =
+    typeof independentSourceCount === "number" &&
+    independentSourceCount < 2
+      ? COMPACT_PROMPTS_LIMITED_EVIDENCE
+      : COMPACT_PROMPTS_MULTI_SOURCE;
   const [messages, setMessages] =
     useState<ChatMessage[]>([]);
 
@@ -392,19 +404,19 @@ export default function AIChat({
     return (
       <section
         aria-label="Ask The Angle"
-        className="rounded-2xl border border-[#17446D]/70 bg-[#04162C] p-5 sm:p-6"
+        className="rounded-xl border border-[#17446D]/60 bg-[#04162C] p-4 sm:p-5"
       >
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
           Ask The Angle
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8EA3B7]">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8EA3B7]">
           Have a question about this story? Get answers based on the
           reporting we&apos;ve analyzed.
         </p>
 
         {messages.length === 0 ? (
           <div className="mt-4 flex flex-wrap gap-2">
-            {COMPACT_PROMPTS.map((prompt) => (
+            {compactPrompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"

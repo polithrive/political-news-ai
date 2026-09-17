@@ -471,7 +471,7 @@ export default function IntelligenceReportPage() {
 
   return (
     <StoryPageShell>
-      <article className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 lg:py-14">
+      <article className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 lg:py-10">
         <StoryBriefHeader
           article={article}
           isUrlArticle={isUrlSubmittedArticle(article)}
@@ -499,16 +499,20 @@ export default function IntelligenceReportPage() {
         )}
 
         {report && reportContext ? (
-          <section id="ask-about-this-story" className="mt-10">
+          <section id="ask-about-this-story" className="mt-6 sm:mt-7">
             <AIChat
               variant="compact"
               reportTitle={article.title}
               reportContext={reportContext}
+              independentSourceCount={
+                report.brief?.independentSourceCount ??
+                report.overview.sourcesReviewed
+              }
             />
           </section>
         ) : null}
 
-        <div className="mt-8">
+        <div className="mt-6">
           <DeepAnalysis
             onOpen={() => {
               if (article) {

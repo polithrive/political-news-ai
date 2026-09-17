@@ -49,7 +49,7 @@ export default function StoryBriefHeader({
   const dek = article.description?.trim() || null;
 
   return (
-    <header className="border-b border-[#17446D]/40 pb-8 lg:pb-10">
+    <header className="border-b border-[#17446D]/40 pb-6 lg:pb-7">
       <div
         className={
           hasUsableImage
