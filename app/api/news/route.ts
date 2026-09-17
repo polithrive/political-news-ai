@@ -855,6 +855,12 @@ export async function GET(
         articles.length,
 
       articles,
+
+      rateLimited:
+        acquired.diagnostics.rateLimited === true,
+
+      servedFromLastGood:
+        acquired.diagnostics.servedFromLastGood === true,
     });
   } catch (error) {
     console.error(

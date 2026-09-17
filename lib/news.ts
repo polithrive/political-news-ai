@@ -6,6 +6,7 @@ type NewsApiResponse = {
   articles?: Article[];
   error?: string;
   message?: string;
+  rateLimited?: boolean;
 };
 
 export async function getLatestNews(): Promise<Article[]> {
@@ -38,6 +39,12 @@ export async function getLatestNews(): Promise<Article[]> {
     if (!Array.isArray(data.articles)) {
       throw new Error(
         "The news API returned an invalid articles response."
+      );
+    }
+
+    if (data.articles.length === 0 && data.rateLimited) {
+      throw new Error(
+        "NewsAPI's developer quota is exhausted (100 requests per 24 hours). The homepage will refill when the quota resets, usually within 12 hours."
       );
     }
 

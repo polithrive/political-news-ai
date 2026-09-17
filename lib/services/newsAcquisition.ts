@@ -69,7 +69,13 @@ type NewsApiListResponse = {
   message?: string;
   articles?: unknown[];
   totalResults?: number;
+  rateLimited?: boolean;
 };
+
+let lastSuccessfulArticles: AcquiredArticle[] = [];
+let lastRateLimitedAt = 0;
+
+const RATE_LIMIT_COOLDOWN_MS = 15 * 60 * 1000;
 
 async function fetchNewsApi(
   url: string,
@@ -85,6 +91,8 @@ async function fetchNewsApi(
   });
 
   const data = (await response.json()) as NewsApiListResponse;
+  const rateLimited =
+    response.status === 429 || data.code === "rateLimited";
 
   if (!response.ok) {
     console.error("NewsAPI pool request failed:", {
@@ -93,7 +101,7 @@ async function fetchNewsApi(
       code: data.code,
       message: data.message,
     });
-    return { articles: [], totalResults: 0 };
+    return { articles: [], totalResults: 0, rateLimited };
   }
 
   return data;
@@ -173,12 +181,44 @@ export type AcquisitionDiagnostics = {
   uniqueToPool: Record<AcquisitionPool, number>;
   rawTotal: number;
   afterDedupe: number;
+  rateLimited?: boolean;
+  servedFromLastGood?: boolean;
 };
+
+function emptyPoolCounts(): Record<AcquisitionPool, number> {
+  return {
+    "us-headlines": 0,
+    discovery: 0,
+    world: 0,
+  };
+}
 
 export async function acquireHomepageCandidates(apiKey: string): Promise<{
   articles: AcquiredArticle[];
   diagnostics: AcquisitionDiagnostics;
 }> {
+  const inRateLimitCooldown =
+    lastRateLimitedAt > 0 &&
+    Date.now() - lastRateLimitedAt < RATE_LIMIT_COOLDOWN_MS;
+
+  if (inRateLimitCooldown && lastSuccessfulArticles.length > 0) {
+    console.info("Homepage acquisition: serving last-good snapshot during NewsAPI rate-limit cooldown.");
+
+    return {
+      articles: lastSuccessfulArticles,
+      diagnostics: {
+        requestCount: 0,
+        cacheSeconds: NEWS_CACHE_SECONDS,
+        poolCounts: emptyPoolCounts(),
+        uniqueToPool: emptyPoolCounts(),
+        rawTotal: lastSuccessfulArticles.length,
+        afterDedupe: lastSuccessfulArticles.length,
+        rateLimited: true,
+        servedFromLastGood: true,
+      },
+    };
+  }
+
   const usHeadlinesUrl = new URL(`${NEWS_API_BASE_URL}/top-headlines`);
   usHeadlinesUrl.searchParams.set("country", "us");
   usHeadlinesUrl.searchParams.set("pageSize", "50");
@@ -205,13 +245,32 @@ export async function acquireHomepageCandidates(apiKey: string): Promise<{
     fetchNewsApi(worldUrl.toString(), apiKey),
   ]);
 
+  const rateLimited = Boolean(
+    usHeadlines.rateLimited ||
+      discovery.rateLimited ||
+      world.rateLimited
+  );
+
+  if (rateLimited) {
+    lastRateLimitedAt = Date.now();
+  }
+
   const pools = {
     "us-headlines": collectPool(usHeadlines.articles, "us-headlines"),
     discovery: collectPool(discovery.articles, "discovery"),
     world: collectPool(world.articles, "world"),
   };
 
-  const merged = mergeAcquiredArticles(pools);
+  let merged = mergeAcquiredArticles(pools);
+  let servedFromLastGood = false;
+
+  if (merged.length > 0) {
+    lastSuccessfulArticles = merged;
+  } else if (lastSuccessfulArticles.length > 0) {
+    merged = lastSuccessfulArticles;
+    servedFromLastGood = true;
+    console.info("Homepage acquisition: NewsAPI returned no articles; serving last-good snapshot.");
+  }
   const uniqueToPool: Record<AcquisitionPool, number> = {
     "us-headlines": 0,
     discovery: 0,
@@ -238,6 +297,8 @@ export async function acquireHomepageCandidates(apiKey: string): Promise<{
       pools.discovery.length +
       pools.world.length,
     afterDedupe: merged.length,
+    rateLimited,
+    servedFromLastGood,
   };
 
   console.info("Homepage acquisition:", diagnostics);
