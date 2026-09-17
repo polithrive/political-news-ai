@@ -10,8 +10,9 @@ const SOURCE_GATHER_TIMEOUT_MS = 7_000;
 
 const MIN_RELEVANCE_SCORE = 30;
 
-const MAX_QUERY_KEYWORDS = 5;
+const MAX_QUERY_KEYWORDS = 6;
 const MIN_QUERY_KEYWORDS = 3;
+const MAX_RELATED_QUERIES = 3;
 
 function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -144,10 +145,96 @@ const WEAK_QUERY_TERMS = new Set([
   "call",
   "calls",
   "called",
+  "fury",
+  "furious",
+  "pathetic",
+  "inside",
+  "including",
+  "looming",
+  "outrage",
+  "outraged",
+  "shocking",
+  "stunning",
+  "slams",
+  "slam",
+  "slammed",
+  "reveals",
+  "revealed",
+  "convince",
+  "questions",
+  "positions",
+  "top",
+  "could",
+  "should",
+  "might",
+  "president",
+  "end",
+  "human",
+  "life",
 ]);
 
 const WEAK_RELEVANCE_TERMS = new Set([
-  ...WEAK_QUERY_TERMS,
+  "breaking",
+  "latest",
+  "live",
+  "news",
+  "report",
+  "reports",
+  "update",
+  "updates",
+  "analysis",
+  "opinion",
+  "exclusive",
+  "watch",
+  "today",
+  "tomorrow",
+  "yesterday",
+  "week",
+  "month",
+  "year",
+  "years",
+  "new",
+  "more",
+  "most",
+  "show",
+  "shows",
+  "showed",
+  "showing",
+  "than",
+  "after",
+  "before",
+  "over",
+  "under",
+  "about",
+  "amid",
+  "among",
+  "work",
+  "works",
+  "working",
+  "toward",
+  "towards",
+  "political",
+  "question",
+  "long",
+  "term",
+  "interest",
+  "interests",
+  "stress",
+  "stresses",
+  "stressed",
+  "package",
+  "solution",
+  "plan",
+  "plans",
+  "move",
+  "moves",
+  "moving",
+  "seek",
+  "seeks",
+  "sought",
+  "call",
+  "calls",
+  "called",
   "appear",
   "appears",
   "appeared",
@@ -212,125 +299,560 @@ function getQueryKeywords(
   );
 }
 
+const DESCRIPTION_GLUE_TERMS = new Set([
+  "currently",
+  "unknown",
+  "where",
+  "spent",
+  "cultivating",
+  "previous",
+  "failed",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+  "officials",
+  "holds",
+  "years",
+  "allies",
+  "both",
+  "major",
+  "parties",
+  "discussing",
+  "three",
+  "would",
+  "which",
+  "last",
+  "until",
+  "after",
+  "widely",
+  "condemned",
+  "came",
+  "come",
+  "coming",
+  "election",
+  "day",
+]);
+
+const EVENT_QUERY_TERMS = new Set([
+  "vote",
+  "votes",
+  "voting",
+  "strike",
+  "drone",
+  "jets",
+  "airspace",
+  "hearing",
+  "confirmation",
+  "impeachment",
+  "shutdown",
+  "shuts",
+  "canceling",
+  "cancelling",
+  "canceled",
+  "cancelled",
+  "extinction",
+  "nomination",
+  "nominee",
+  "surgeon",
+  "iran",
+  "lithuania",
+  "lithuanian",
+  "nato",
+  "war",
+  "defect",
+  "speaker",
+  "senate",
+  "house",
+  "capitol",
+]);
+
+const GENERIC_PUBLISHER_WORDS = new Set([
+  "the",
+  "news",
+  "daily",
+  "post",
+  "times",
+  "tribune",
+  "herald",
+  "press",
+  "mail",
+  "sun",
+  "star",
+  "journal",
+  "story",
+  "raw",
+  "new",
+  "york",
+  "washington",
+  "associated",
+  "national",
+  "public",
+  "radio",
+  "media",
+  "digital",
+  "online",
+]);
+
+const HOST_BRAND_TOKENS: Record<string, string[]> = {
+  npr: ["npr"],
+  bbc: ["bbc"],
+  reuters: ["reuters"],
+  cnn: ["cnn"],
+  apnews: ["apnews"],
+  cbsnews: ["cbsnews", "cbs"],
+  nbcnews: ["nbcnews", "nbc"],
+  abcnews: ["abcnews"],
+  foxnews: ["foxnews"],
+  nytimes: ["nytimes", "nyt"],
+  washingtonpost: ["washingtonpost", "wapo"],
+  theguardian: ["guardian"],
+  politico: ["politico"],
+  cnbc: ["cnbc"],
+  bloomberg: ["bloomberg"],
+  aljazeera: ["aljazeera"],
+};
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hostnameFromArticleUrl(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function getPublisherBrandTokens(article: Article): Set<string> {
+  const tokens = new Set<string>();
+  const sourceName = article.source?.name?.trim() ?? "";
+  const sourceRating = getSourceRating(sourceName, article.url);
+  const names = [sourceName, sourceRating.displayName].filter(Boolean);
+
+  for (const name of names) {
+    for (const token of normalizeText(name).split(" ")) {
+      if (
+        token.length >= 3 &&
+        !GENERIC_PUBLISHER_WORDS.has(token) &&
+        !STOP_WORDS.has(token)
+      ) {
+        tokens.add(token);
+      }
+    }
+  }
+
+  const host = hostnameFromArticleUrl(article.url ?? "");
+  const hostLabel = host.split(".")[0] ?? "";
+  const brandTokens = HOST_BRAND_TOKENS[hostLabel];
+
+  if (brandTokens) {
+    for (const token of brandTokens) {
+      tokens.add(token);
+    }
+  }
+
+  return tokens;
+}
+
+function stripPublisherSuffix(title: string, article: Article): string {
+  let value = title.trim();
+  const sourceName = article.source?.name?.trim() ?? "";
+  const displayName = getSourceRating(sourceName, article.url).displayName;
+  const names = Array.from(new Set([sourceName, displayName])).filter(Boolean);
+
+  for (const name of names) {
+    const pattern = new RegExp(
+      `(?:\\s*[-–—|:]+\\s*|\\s+)(?:the\\s+)?${escapeRegExp(name)}\\s*$`,
+      "i"
+    );
+    value = value.replace(pattern, "").trim();
+  }
+
+  return value;
+}
+
+function tokenizeOriginal(value: string): string[] {
+  return value.match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)?/gu) ?? [];
+}
+
+function isMostlyTitleCase(title: string): boolean {
+  const words = tokenizeOriginal(title).filter(
+    (word) => word.replace(/['’]/g, "").length >= 4
+  );
+
+  if (words.length < 4) {
+    return false;
+  }
+
+  const capitalized = words.filter((word) =>
+    /^\p{Lu}/u.test(word)
+  ).length;
+
+  return capitalized / words.length >= 0.75;
+}
+
+function isAcronymToken(token: string): boolean {
+  return (
+    token === "AI" ||
+    (/^[\p{Lu}]{2,5}$/u.test(token) && token.length >= 2)
+  );
+}
+
+function extractEntityTerms(text: string): string[] {
+  const tokens = tokenizeOriginal(text);
+  const titleCase = isMostlyTitleCase(text);
+  const entities: string[] = [];
+
+  function add(term: string): void {
+    const normalized = normalizeText(term.replace(/['’]s$/i, ""));
+
+    if (
+      !normalized ||
+      STOP_WORDS.has(normalized) ||
+      WEAK_QUERY_TERMS.has(normalized) ||
+      DESCRIPTION_GLUE_TERMS.has(normalized) ||
+      (GENERIC_PUBLISHER_WORDS.has(normalized) &&
+        !EVENT_QUERY_TERMS.has(normalized)) ||
+      normalized === "dr" ||
+      entities.includes(normalized)
+    ) {
+      return;
+    }
+
+    entities.push(normalized);
+  }
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const next = tokens[index + 1];
+
+    if (isAcronymToken(token)) {
+      add(token);
+    }
+
+    const currentIsProper = /^\p{Lu}/u.test(token);
+    const nextIsProper =
+      Boolean(next) &&
+      /^\p{Lu}/u.test(next) &&
+      !STOP_WORDS.has(normalizeText(next));
+
+    if (currentIsProper && nextIsProper) {
+      add(token);
+      add(next);
+      index += 1;
+      continue;
+    }
+
+    if (
+      currentIsProper &&
+      !titleCase &&
+      token.replace(/['’]/g, "").length >= 4
+    ) {
+      add(token);
+    }
+
+    if (/['’]s$/i.test(token) && /^\p{Lu}/u.test(token)) {
+      add(token);
+    }
+  }
+
+  return entities;
+}
+
+function queryTermWeight(
+  term: string,
+  options: {
+    entities: Set<string>;
+    fromTitle: boolean;
+  }
+): number {
+  let weight = 0;
+
+  if (options.entities.has(term)) {
+    weight += 6;
+  }
+
+  if (EVENT_QUERY_TERMS.has(term)) {
+    weight += 5;
+  }
+
+  if (term.length >= 8) {
+    weight += 3;
+  } else if (term.length >= 6) {
+    weight += 2;
+  } else if (term.length >= 5) {
+    weight += 1;
+  }
+
+  if (options.fromTitle) {
+    weight += 2;
+  }
+
+  if (/\d/.test(term)) {
+    weight += 2;
+  }
+
+  return weight;
+}
+
+function rankQueryTerms(
+  terms: string[],
+  entities: Set<string>,
+  fromTitle: boolean
+): string[] {
+  return [...terms].sort((left, right) => {
+    const weightDelta =
+      queryTermWeight(right, { entities, fromTitle }) -
+      queryTermWeight(left, { entities, fromTitle });
+
+    if (weightDelta !== 0) {
+      return weightDelta;
+    }
+
+    return terms.indexOf(left) - terms.indexOf(right);
+  });
+}
+
+function querySimilarity(left: string, right: string): number {
+  const leftTerms = new Set(left.split(" "));
+  const rightTerms = new Set(right.split(" "));
+  let intersection = 0;
+
+  for (const term of leftTerms) {
+    if (rightTerms.has(term)) {
+      intersection += 1;
+    }
+  }
+
+  const union = new Set([...leftTerms, ...rightTerms]).size;
+
+  return union === 0 ? 0 : intersection / union;
+}
+
+function takeStrongTerms(
+  ranked: string[],
+  count: number,
+  extra: string[] = [],
+  entities: Set<string> = new Set()
+): string[] {
+  const selected: string[] = [];
+
+  function add(term: string): boolean {
+    if (!term || selected.includes(term)) {
+      return false;
+    }
+
+    selected.push(term);
+    return selected.length >= count;
+  }
+
+  for (const term of extra) {
+    if (add(term)) {
+      return selected;
+    }
+  }
+
+  for (const term of ranked) {
+    const weight = queryTermWeight(term, {
+      entities,
+      fromTitle: true,
+    });
+
+    if (weight < 6) {
+      continue;
+    }
+
+    if (add(term)) {
+      return selected;
+    }
+  }
+
+  if (selected.length < MIN_QUERY_KEYWORDS) {
+    for (const term of ranked) {
+      if (add(term) || selected.length >= MIN_QUERY_KEYWORDS) {
+        break;
+      }
+    }
+  }
+
+  return selected;
+}
+
 /*
  * Build a focused search query rather than
  * sending the complete headline to NewsAPI.
  *
- * The goal is to preserve the people,
- * organizations, locations, policies, and
- * event-specific terms most likely to identify
- * the same underlying story.
- *
- * Headline order is preserved because important
- * entities and event terms tend to appear early
- * in news headlines.
+ * Queries should describe the underlying event
+ * (people, places, institutions, distinctive
+ * actions) rather than the publisher's headline
+ * framing.
  */
-function buildRelatedStoryQueries(
+export function buildRelatedStoryQueries(
   article: Article
 ): string[] {
-  const titleKeywords =
-    getQueryKeywords(article.title);
-
-  const descriptionKeywords =
-    getQueryKeywords(
-      article.description ?? ""
+  const publisherTokens =
+    getPublisherBrandTokens(article);
+  const strippedTitle =
+    stripPublisherSuffix(
+      article.title,
+      article
     );
 
-  const allKeywords = Array.from(
-    new Set([
-      ...titleKeywords,
-      ...descriptionKeywords,
-    ])
+  const titleEntities = extractEntityTerms(
+    strippedTitle
+  );
+  const descriptionEntities =
+    extractEntityTerms(
+      article.description ?? ""
+    );
+  const entities = new Set([
+    ...titleEntities,
+    ...descriptionEntities,
+  ]);
+
+  function usableTerms(
+    value: string,
+    allowGlue: boolean
+  ): string[] {
+    return getQueryKeywords(value).filter(
+      (keyword) => {
+        if (publisherTokens.has(keyword)) {
+          return false;
+        }
+
+        if (
+          GENERIC_PUBLISHER_WORDS.has(keyword) &&
+          !EVENT_QUERY_TERMS.has(keyword)
+        ) {
+          return false;
+        }
+
+        if (
+          !allowGlue &&
+          DESCRIPTION_GLUE_TERMS.has(keyword)
+        ) {
+          return false;
+        }
+
+        return true;
+      }
+    );
+  }
+
+  const titleTerms = usableTerms(strippedTitle, true);
+  const descriptionTerms = usableTerms(
+    article.description ?? "",
+    false
+  );
+  const rankedTitle = rankQueryTerms(
+    titleTerms,
+    entities,
+    true
+  );
+  const rankedDescription = rankQueryTerms(
+    descriptionTerms,
+    entities,
+    false
+  );
+  const eventTitleTerms = titleTerms.filter(
+    (term) => EVENT_QUERY_TERMS.has(term)
   );
 
-  if (allKeywords.length === 0) {
-    const fallback =
-      normalizeText(article.title);
-
+  if (
+    titleTerms.length === 0 &&
+    descriptionTerms.length === 0
+  ) {
+    const fallback = normalizeText(strippedTitle);
     return fallback ? [fallback] : [];
   }
 
   const queries: string[] = [];
 
-  function addQuery(
-    keywords: string[]
-  ): void {
-    const uniqueKeywords =
-      Array.from(
-        new Set(keywords)
-      ).filter(Boolean);
+  function addQuery(keywords: string[]): void {
+    const uniqueKeywords = Array.from(
+      new Set(keywords.filter(Boolean))
+    );
 
-    if (
-      uniqueKeywords.length <
-      MIN_QUERY_KEYWORDS
-    ) {
+    if (uniqueKeywords.length < MIN_QUERY_KEYWORDS) {
       return;
     }
 
-    const query =
-      uniqueKeywords
-        .slice(0, MAX_QUERY_KEYWORDS)
-        .join(" ");
+    const query = uniqueKeywords
+      .slice(0, MAX_QUERY_KEYWORDS)
+      .join(" ");
 
-    if (
-      query &&
-      !queries.includes(query)
-    ) {
+    if (!query) {
+      return;
+    }
+
+    const tooSimilar = queries.some(
+      (existing) => querySimilarity(existing, query) >= 0.6
+    );
+
+    if (!tooSimilar && !queries.includes(query)) {
       queries.push(query);
     }
   }
 
-  // Compact entity/event query.
-  addQuery(
-    titleKeywords.slice(0, 3)
+  const distinctiveEventTerms = eventTitleTerms.filter(
+    (term) => !titleEntities.includes(term)
+  );
+  const descriptionEventTerms = descriptionTerms.filter((term) =>
+    EVENT_QUERY_TERMS.has(term)
   );
 
-  // Mix early identifiers with later event terms.
-  if (titleKeywords.length >= 4) {
-    addQuery([
-      ...titleKeywords.slice(0, 2),
-      ...titleKeywords.slice(-2),
-    ]);
-  }
+  addQuery(
+    takeStrongTerms(
+      rankedTitle,
+      5,
+      [
+        ...titleEntities.slice(0, 3),
+        ...distinctiveEventTerms.slice(0, 2),
+        ...descriptionEventTerms.slice(0, 2),
+      ],
+      entities
+    )
+  );
 
-  // Supplement headline identity with description terms.
-  if (descriptionKeywords.length > 0) {
-    addQuery([
-      ...titleKeywords.slice(0, 2),
-      ...descriptionKeywords.slice(0, 3),
-    ]);
-  }
+  addQuery(
+    takeStrongTerms(
+      rankedTitle,
+      5,
+      [...distinctiveEventTerms, ...titleEntities.slice(0, 2)],
+      entities
+    )
+  );
 
-  if (
-    queries.length === 0 &&
-    allKeywords.length >=
-      MIN_QUERY_KEYWORDS
-  ) {
+  addQuery(
+    takeStrongTerms(
+      rankedTitle,
+      5,
+      [
+        ...descriptionEntities.slice(0, 3),
+        ...rankedDescription.slice(0, 3),
+        ...titleEntities.slice(0, 2),
+      ],
+      entities
+    )
+  );
+
+  if (queries.length === 0) {
     addQuery(
-      allKeywords.slice(
-        0,
-        MAX_QUERY_KEYWORDS
+      takeStrongTerms(
+        [...rankedTitle, ...rankedDescription],
+        MAX_QUERY_KEYWORDS,
+        [],
+        entities
       )
     );
   }
 
-  if (
-    queries.length < 3 &&
-    allKeywords.length >
-      MIN_QUERY_KEYWORDS
-  ) {
-    addQuery(
-      allKeywords.slice(
-        0,
-        Math.min(
-          MAX_QUERY_KEYWORDS,
-          allKeywords.length
-        )
-      )
-    );
-  }
-
-  return queries.slice(0, 3);
+  return queries.slice(0, MAX_RELATED_QUERIES);
 }
 
 function createPrimarySource(
