@@ -23,10 +23,57 @@ export type ReportEvidence = {
 
   /*
    * Optional richer source records from the
-   * URL-analysis evidence set. Homepage reports
-   * may omit this field.
+   * evidence set. Homepage and URL reports may
+   * both include this when related sources were
+   * gathered.
    */
   relatedSources?: ReportRelatedSource[];
+};
+
+export type EvidenceBriefSupport = {
+  sourceId: string;
+  publisher: string;
+  supportText: string;
+  supportField: "title" | "description";
+};
+
+export type EvidenceBriefRejected = {
+  kind: "fact" | "angle" | "coverage" | "uncertainty";
+  reason: string;
+  sourceId?: string;
+  supportText?: string;
+  claim?: string;
+};
+
+export type EvidenceBriefFact = {
+  text: string;
+  supportedBy: string[];
+  evidence: EvidenceBriefSupport[];
+};
+
+export type EvidenceBriefAngle = {
+  label: string;
+  summary: string;
+  representedBy: string[];
+  evidence: EvidenceBriefSupport[];
+};
+
+export type EvidenceBriefCoverageDifference = {
+  text: string;
+  representedBy: string[];
+  evidence: EvidenceBriefSupport[];
+};
+
+export type EvidenceBrief = {
+  whatHappened: string;
+  whyItMatters: string;
+  corroboratedFacts: EvidenceBriefFact[];
+  angles: EvidenceBriefAngle[];
+  uncertainties: string[];
+  coverageDifferences: EvidenceBriefCoverageDifference[];
+  limitedEvidence: boolean;
+  independentSourceCount: number;
+  rejectedEvidence?: EvidenceBriefRejected[];
 };
 
 export type DebatePerspective = {
@@ -100,4 +147,10 @@ export type IntelligenceReport = {
   perspectiveAnalysis: PoliticalPerspectiveAnalysis;
 
   evidence: ReportEvidence;
+
+  /*
+   * Evidence-grounded 60-Second Brief fields.
+   * Optional so older cached reports remain readable.
+   */
+  brief?: EvidenceBrief;
 };

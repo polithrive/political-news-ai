@@ -8,6 +8,7 @@ import type { TrustScore } from "@/app/types/trust";
 
 import type { MergedAnalysis } from "@/lib/ai/mergeAnalysis";
 import type { EvidenceSource } from "@/lib/services/evidenceContext";
+import { normalizeEvidenceBrief } from "@/lib/services/evidenceBrief";
 
 type AnalyzeUrlArticle = {
   title: string;
@@ -298,6 +299,32 @@ export function mapAnalyzeUrlToIntelligenceReport(
     )
   );
 
+  const executiveSummary = toStringValue(
+    analysis?.summary,
+    article.description || "No executive summary is available."
+  );
+
+  const whyThisMatters = toStringValue(
+    analysis?.whyThisMatters,
+    "The Angle Report could not determine why this story matters from the available reporting."
+  );
+
+  const independentSourceCount = Math.max(
+    1,
+    toNumberValue(
+      payload.evidence?.independentSourceCount,
+      evidenceSourceNames.length || 1
+    )
+  );
+
+  const brief = normalizeEvidenceBrief({
+    rawBrief: analysis?.brief,
+    sources: payload.evidence?.sources ?? [],
+    independentSourceCount,
+    whatHappenedFallback: executiveSummary,
+    whyItMattersFallback: whyThisMatters,
+  });
+
   const report: IntelligenceReport = {
     article,
 
@@ -310,15 +337,9 @@ export function mapAnalyzeUrlToIntelligenceReport(
 
     trustScore: payload.trustScore,
 
-    executiveSummary: toStringValue(
-      analysis?.summary,
-      article.description || "No executive summary is available."
-    ),
+    executiveSummary,
 
-    whyThisMatters: toStringValue(
-      analysis?.whyThisMatters,
-      "The Angle Report could not determine why this story matters from the available reporting."
-    ),
+    whyThisMatters,
 
     whoIsAffected: toStringArray(analysis?.whoIsAffected),
 
@@ -385,6 +406,8 @@ export function mapAnalyzeUrlToIntelligenceReport(
       relatedSources:
         relatedSources.length > 0 ? relatedSources : undefined,
     },
+
+    brief,
   };
 
   return {

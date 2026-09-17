@@ -15,6 +15,7 @@ const MAX_DESCRIPTION_LENGTH = 1_200;
 const MAX_PRIMARY_CONTENT_LENGTH = 8_000;
 
 export type EvidenceSource = {
+  sourceId: string;
   index: number;
   title: string;
   description: string;
@@ -50,6 +51,7 @@ export type EvidenceContext = {
 
 type BuildEvidenceContextOptions = {
   primaryContent?: string;
+  rankedSources?: RankedArticle[];
 };
 
 function cleanText(
@@ -103,6 +105,7 @@ function createEvidenceSource(
   } = rankedSource;
 
   return {
+    sourceId: `S${index + 1}`,
     index: index + 1,
 
     title:
@@ -229,7 +232,7 @@ function buildPromptContext(
               : "Reliability: Not independently rated";
 
           return [
-            `SOURCE ${source.index}${
+            `SOURCE ID: ${source.sourceId}${
               source.isPrimary
                 ? " — PRIMARY"
                 : ""
@@ -255,6 +258,17 @@ function buildPromptContext(
         "RELATED SOURCE EVIDENCE",
         ...sourceSections,
       ].join("\n\n")
+    );
+
+    sections.push(
+      [
+        "VALID SOURCE IDS",
+        "Use only these IDs in brief evidence arrays:",
+        ...sources.map(
+          (source) =>
+            `${source.sourceId} | ${source.sourceName}`
+        ),
+      ].join("\n")
     );
   }
 
@@ -299,6 +313,11 @@ function buildPromptContext(
       "- When evidence is incomplete, uncertain, or conflicting, state that clearly.",
       "- Source reliability metadata is a supporting signal, not proof that an individual claim is true.",
       "- Base conclusions only on the evidence provided in this context.",
+      "- When citing brief evidence, use only the SOURCE ID values listed above (S1, S2, …).",
+      "- Support fragments must be copied from that source's Title or Description only.",
+      "- Do not copy from PRIMARY ARTICLE CONTENT for brief support fragments.",
+      "- Multiple sources covering the same event is not the same as corroboration of a specific fact.",
+      "- Do not describe corroborated reporting as proven truth.",
     ].join("\n")
   );
 
@@ -312,9 +331,10 @@ export async function buildEvidenceContext(
   options: BuildEvidenceContextOptions = {}
 ): Promise<EvidenceContext> {
   const rankedSources =
-    await gatherStorySources(
+    options.rankedSources ??
+    (await gatherStorySources(
       primaryArticle
-    );
+    ));
 
   const selectedRankedSources =
     rankedSources.slice(

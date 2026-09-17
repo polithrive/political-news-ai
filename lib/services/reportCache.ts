@@ -4,7 +4,7 @@ import type { IntelligenceReport } from "@/app/types/report";
 const REPORT_CACHE_PREFIX =
   "politicalpulse:intelligence-report";
 
-const REPORT_CACHE_VERSION = "v2";
+const REPORT_CACHE_VERSION = "v4";
 
 const REPORT_CACHE_TTL_MS =
   1000 * 60 * 60 * 6;

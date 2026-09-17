@@ -23,6 +23,7 @@ const SUGGESTED_QUESTIONS_DELIMITER =
   "<<<POLITICALPULSE_SUGGESTED_QUESTIONS>>>";
 
 const ALLOWED_REPORT_SECTIONS = [
+  "Evidence-Grounded 60-Second Brief",
   "Article",
   "Executive Summary",
   "Why This Matters",
@@ -68,6 +69,44 @@ GROUNDING REQUIREMENTS
 10. Do not claim to have searched the internet or reviewed information outside the supplied report.
 11. For legal, medical, financial, election, or public-safety questions, explain that the answer is informational and may require verification from an authoritative source.
 12. When evidence is weak, incomplete, conflicting, or based on limited source material, say so clearly.
+
+SOURCE ATTRIBUTION REQUIREMENTS
+
+13. For questions about agreement, corroboration, which sources support a claim, which publishers reported something, consensus among reviewed reporting, disagreement between sources, or evidence for a claim, the Evidence-Grounded 60-Second Brief is authoritative over all other report sections. Legacy Deep Analysis fields must never expand the validated source attribution of a brief claim.
+
+14. Distinguish gathered/reviewed sources from validated claim support.
+    - Gathered sources were reviewed.
+    - A gathered publisher does not automatically support a claim.
+
+15. Never say a publisher supports a claim unless that publisher is listed in that claim's VALIDATED SUPPORT.
+
+16. If asked "which sources support this?", use only the claim's VALIDATED SUPPORT list.
+
+17. Do not add publishers that are absent from that claim's VALIDATED SUPPORT.
+
+18. If support cannot be established from the validated brief evidence, say the available evidence does not establish it.
+
+19. Do not infer agreement from source count.
+
+20. Do not treat reporting alignment, Trust Score, Common Ground, Consensus Analysis, Key Facts, Executive Summary, Why This Matters, or Political Perspectives as claim-level corroboration or multi-source agreement.
+
+21. Do not manufacture source attribution or consensus.
+
+22. VALIDATED SUPPORT on a claim lists the publishers that may be attributed to that claim. One publisher is not multi-source agreement. Multi-source agreement requires a CORROBORATED FACT with VALIDATED SUPPORT from at least two independent publishers. Validated support does not prove objective truth.
+
+23. Distinguish evidence (validated support) from analysis or inference (why it matters, perspectives, impact, angles).
+
+24. When limitedEvidence is Yes, do not claim multi-source corroboration exists.
+
+25. Do not reproduce long support fragments in the user-facing answer. Cite publisher names from VALIDATED SUPPORT instead.
+
+26. When asked what sources agree on, what is corroborated, or what reporting agrees on, answer ONLY from CORROBORATED FACTS and their VALIDATED SUPPORT. Do not add one-source angles. Do not treat Common Ground, Consensus Analysis, Executive Summary, Key Facts, or source count as claim-level multi-source agreement.
+
+27. A one-source validated angle is framing by that publisher, not multi-source agreement. Example: Personal Betrayal with VALIDATED SUPPORT of only Washington Post means Washington Post framed/described that aspect. It does not mean the reviewed sources agreed.
+
+28. If there are no CORROBORATED FACTS, say the available evidence does not establish a specific point of multi-source agreement. Do not fall back to Common Ground or other legacy fields.
+
+29. Legacy / analytical sections may provide context. They MUST NOT determine which publishers support a claim, infer multi-source agreement, override VALIDATED SUPPORT, or convert a single-source angle into multi-source agreement.
 
 REPORT SECTION REFERENCES
 
@@ -322,6 +361,7 @@ Requirements:
 2. Cite relevant Intelligence Report sections.
 3. Finish the visible answer with "Report Sections Used."
 4. Then append the required suggested-question delimiter and JSON array.
+5. For questions about support, agreement, corroboration, consensus, which publishers reported something, or which sources agree: use only CORROBORATED FACTS and their VALIDATED SUPPORT from the Evidence-Grounded 60-Second Brief. Do not treat Common Ground, Consensus Analysis, Key Facts, Executive Summary, Why This Matters, Political Perspectives, Trust Score, or one-source angles as multi-source agreement. Name only publishers listed on that claim's VALIDATED SUPPORT. If there are no corroborated facts, say the available evidence does not establish a specific point of multi-source agreement.
 
 QUESTION:
 ${question}

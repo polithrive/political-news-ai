@@ -35,6 +35,8 @@ export type MergedAnalysis = {
   factCheck:
     SummaryAnalysis["factCheck"];
 
+  brief?: unknown;
+
   evidence: {
     primarySources: string[];
     conflictingReporting: string[];
@@ -183,6 +185,8 @@ export function mergeAnalysis({
 
     factCheck:
       summaryAnalysis.factCheck,
+
+    brief: summaryAnalysis.brief,
 
     evidence: {
       primarySources:

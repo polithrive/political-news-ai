@@ -98,6 +98,11 @@ export default function IntelligenceReportPage() {
     setGraphErrorMessage,
   ] = useState<string | null>(null);
 
+  const [
+    graphArticle,
+    setGraphArticle,
+  ] = useState<Article | null>(null);
+
   useLayoutEffect(() => {
     let isCancelled = false;
 
@@ -141,46 +146,6 @@ export default function IntelligenceReportPage() {
       }
     }
 
-    async function generateGraph(
-      selectedArticle: Article
-    ) {
-      try {
-        setIsGraphLoading(true);
-        setGraphErrorMessage(null);
-
-        const generatedGraph =
-          await generateIntelligenceGraph(
-            selectedArticle
-          );
-
-        if (isCancelled) {
-          return;
-        }
-
-        cacheIntelligenceGraph(
-          selectedArticle,
-          generatedGraph
-        );
-
-        setGraph(generatedGraph);
-      } catch (error) {
-        console.error(
-          "Failed to generate Intelligence Graph:",
-          error
-        );
-
-        if (!isCancelled) {
-          setGraphErrorMessage(
-            "The Angle Report could not generate connected context for this story."
-          );
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsGraphLoading(false);
-        }
-      }
-    }
-
     async function generateUrlReport(
       selectedArticle: Article
     ) {
@@ -208,20 +173,6 @@ export default function IntelligenceReportPage() {
 
         setArticle(analyzedArticle);
         setReport(generatedReport);
-
-        const cachedGraph =
-          getCachedIntelligenceGraph(
-            analyzedArticle
-          );
-
-        if (cachedGraph) {
-          setGraph(cachedGraph);
-          setIsGraphLoading(false);
-        } else {
-          void generateGraph(
-            analyzedArticle
-          );
-        }
       } catch (error) {
         console.error(
           "Failed to generate URL intelligence report:",
@@ -274,7 +225,7 @@ export default function IntelligenceReportPage() {
         )
       ) {
         setIsReportLoading(true);
-        setIsGraphLoading(true);
+        setIsGraphLoading(false);
         void generateUrlReport(
           selectedArticle
         );
@@ -296,10 +247,7 @@ export default function IntelligenceReportPage() {
         setGraph(cachedGraph);
         setIsGraphLoading(false);
       } else {
-        setIsGraphLoading(true);
-        void generateGraph(
-          selectedArticle
-        );
+        setIsGraphLoading(false);
       }
 
       setIsInitializingArticle(false);
@@ -311,6 +259,71 @@ export default function IntelligenceReportPage() {
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!graphArticle || graph) {
+      return;
+    }
+
+    const selectedArticle = graphArticle;
+
+    const cachedGraph =
+      getCachedIntelligenceGraph(
+        selectedArticle
+      );
+
+    if (cachedGraph) {
+      setGraph(cachedGraph);
+      setIsGraphLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function generateGraph() {
+      try {
+        setIsGraphLoading(true);
+        setGraphErrorMessage(null);
+
+        const generatedGraph =
+          await generateIntelligenceGraph(
+            selectedArticle
+          );
+
+        if (isCancelled) {
+          return;
+        }
+
+        cacheIntelligenceGraph(
+          selectedArticle,
+          generatedGraph
+        );
+
+        setGraph(generatedGraph);
+      } catch (error) {
+        console.error(
+          "Failed to generate Intelligence Graph:",
+          error
+        );
+
+        if (!isCancelled) {
+          setGraphErrorMessage(
+            "The Angle Report could not generate connected context for this story."
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsGraphLoading(false);
+        }
+      }
+    }
+
+    void generateGraph();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [graph, graphArticle]);
 
   useEffect(() => {
     if (!report) {
@@ -517,7 +530,13 @@ export default function IntelligenceReportPage() {
         ) : null}
 
         <div className="mt-16">
-          <DeepAnalysis>
+          <DeepAnalysis
+            onOpen={() => {
+              if (article) {
+                setGraphArticle(article);
+              }
+            }}
+          >
             {report ? (
               <>
                 <TrustScore

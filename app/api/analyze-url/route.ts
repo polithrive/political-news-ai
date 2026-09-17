@@ -58,6 +58,15 @@ function createSummaryFallback(): SummaryAnalysis {
     category: "Unknown",
 
     confidence: 0,
+
+    brief: {
+      whatHappened: "",
+      whyItMatters: "",
+      corroboratedFacts: [],
+      angles: [],
+      uncertainties: [],
+      coverageDifferences: [],
+    },
   };
 }
 

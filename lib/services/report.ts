@@ -3,15 +3,18 @@ import type {
   DebatePerspective,
   IntelligenceReport,
   PoliticalPerspectiveAnalysis,
+  ReportRelatedSource,
 } from "@/app/types/report";
 
 import {
-  gatherStorySources,
+  buildEvidenceContext,
+  type EvidenceContext,
+  type EvidenceSource,
+} from "./evidenceContext";
+import { normalizeEvidenceBrief } from "./evidenceBrief";
+import {
   type RankedArticle,
 } from "./multiSource";
-import {
-  calculateSourceConsensus,
-} from "./sourceConsensus";
 import { getSourceRating } from "./sourceRanking";
 import { calculateTrustScore } from "./trustScore";
 
@@ -66,6 +69,8 @@ type AnalysisResponse = {
     methodology?: unknown;
     lastAnalyzedAt?: unknown;
   };
+
+  brief?: unknown;
 };
 
 function getDurationMs(
@@ -242,34 +247,44 @@ function createPerspectiveAnalysis(
   };
 }
 
-async function gatherRankedSources(
+async function gatherHomepageEvidence(
   article: Article
-): Promise<RankedArticle[]> {
+): Promise<EvidenceContext> {
   try {
-    const rankedSources =
-      await gatherStorySources(article);
-
-    return rankedSources.length > 0
-      ? rankedSources
-      : [
-          createFallbackRankedSource(
-            article
-          ),
-        ];
+    return await buildEvidenceContext(article);
   } catch (error) {
     console.error(
       "Failed to gather ranked sources for report:",
       error
     );
 
-    return [
-      createFallbackRankedSource(article),
-    ];
+    return buildEvidenceContext(article, {
+      rankedSources: [
+        createFallbackRankedSource(article),
+      ],
+    });
   }
 }
 
+function createRelatedSources(
+  sources: EvidenceSource[]
+): ReportRelatedSource[] {
+  return sources
+    .map((source) => ({
+      title: source.title,
+      url: source.url,
+      sourceName: source.sourceName,
+      isPrimary: source.isPrimary,
+    }))
+    .filter(
+      (source) =>
+        source.sourceName || source.title || source.url
+    );
+}
+
 async function requestReportAnalysis(
-  article: Article
+  article: Article,
+  evidenceContext: string
 ): Promise<AnalysisResponse> {
   const response = await fetch(
     "/api/analyze",
@@ -290,6 +305,7 @@ async function requestReportAnalysis(
           article.description,
         url: article.url,
         source: article.source,
+        evidenceContext,
       }),
     }
   );
@@ -425,6 +441,17 @@ export function getMockIntelligenceReport(): IntelligenceReport {
       lastAnalyzedAt:
         new Date().toISOString(),
     },
+
+    brief: {
+      whatHappened: "",
+      whyItMatters: "",
+      corroboratedFacts: [],
+      angles: [],
+      uncertainties: [],
+      coverageDifferences: [],
+      limitedEvidence: true,
+      independentSourceCount: 1,
+    },
   };
 }
 
@@ -437,48 +464,28 @@ export async function generateIntelligenceReport(
   let sourceGatheringMs = 0;
   let aiAnalysisMs = 0;
 
-  /*
-   * Source gathering and AI analysis remain
-   * parallel so the integrity improvements do
-   * not unnecessarily slow report generation.
-   */
-  const sourceGatheringPromise =
-    (async () => {
-      const startedAt =
-        performance.now();
+  const evidenceStartedAt =
+    performance.now();
 
-      try {
-        return await gatherRankedSources(
-          article
-        );
-      } finally {
-        sourceGatheringMs =
-          getDurationMs(startedAt);
-      }
-    })();
+  const evidenceContext =
+    await gatherHomepageEvidence(
+      article
+    );
 
-  const aiAnalysisPromise =
-    (async () => {
-      const startedAt =
-        performance.now();
+  sourceGatheringMs =
+    getDurationMs(evidenceStartedAt);
 
-      try {
-        return await requestReportAnalysis(
-          article
-        );
-      } finally {
-        aiAnalysisMs =
-          getDurationMs(startedAt);
-      }
-    })();
+  const analysisStartedAt =
+    performance.now();
 
-  const [
-    rankedSources,
-    analysis,
-  ] = await Promise.all([
-    sourceGatheringPromise,
-    aiAnalysisPromise,
-  ]);
+  const analysis =
+    await requestReportAnalysis(
+      article,
+      evidenceContext.promptContext
+    );
+
+  aiAnalysisMs =
+    getDurationMs(analysisStartedAt);
 
   const assemblyStartedAt =
     performance.now();
@@ -487,13 +494,16 @@ export async function generateIntelligenceReport(
     performance.now();
 
   const sourceConsensus =
-    calculateSourceConsensus(
-      rankedSources
-    );
+    evidenceContext.sourceConsensus;
 
   const consensusCalculationMs =
     getDurationMs(
       consensusStartedAt
+    );
+
+  const relatedSources =
+    createRelatedSources(
+      evidenceContext.sources
     );
 
   /*
@@ -503,24 +513,26 @@ export async function generateIntelligenceReport(
    */
   const sourceNames = Array.from(
     new Set(
-      rankedSources
-        .map((source) =>
-          source.article.source?.name?.trim()
-        )
-        .filter(
-          (
-            sourceName
-          ): sourceName is string =>
-            Boolean(sourceName)
-        )
+      [
+        ...sourceConsensus.sourceNames,
+        ...relatedSources.map(
+          (source) => source.sourceName
+        ),
+      ]
+        .map((sourceName) => sourceName.trim())
+        .filter(Boolean)
     )
   );
 
   const analyzedSourceCount =
     sourceNames.length ||
     sourceConsensus.sourceCount ||
-    rankedSources.length ||
+    evidenceContext.sourceCount ||
     1;
+
+  const independentSourceCount =
+    evidenceContext.independentSourceCount ||
+    analyzedSourceCount;
 
   /*
    * AI confidence remains an analysis signal,
@@ -585,6 +597,11 @@ export async function generateIntelligenceReport(
       analysis.commonGround
     );
 
+  /*
+   * Deep Analysis may still use a generic
+   * compatibility fallback. Evidence-grounded
+   * brief fields never inherit that text.
+   */
   const commonGround =
     returnedCommonGround.length > 0
       ? returnedCommonGround
@@ -605,12 +622,33 @@ export async function generateIntelligenceReport(
    * were actually gathered.
    */
   const conflictingReporting =
-    analyzedSourceCount >= 2
+    independentSourceCount >= 2
       ? toStringArray(
           analysis.evidence
             ?.conflictingReporting
         )
       : [];
+
+  const executiveSummary =
+    toStringValue(
+      analysis.summary,
+      article.description ||
+        "No executive summary is available."
+    );
+
+  const whyThisMatters =
+    toStringValue(
+      analysis.whyThisMatters,
+      "The Angle Report could not determine why this story matters from the available reporting."
+    );
+
+  const brief = normalizeEvidenceBrief({
+    rawBrief: analysis.brief,
+    sources: evidenceContext.sources,
+    independentSourceCount,
+    whatHappenedFallback: executiveSummary,
+    whyItMattersFallback: whyThisMatters,
+  });
 
   const trustScoreStartedAt =
     performance.now();
@@ -658,9 +696,9 @@ export async function generateIntelligenceReport(
    * corroboration actually available.
    */
   const evidenceMethodology =
-    analyzedSourceCount <= 1
-      ? "The Angle Report analyzed the available source, evaluated available source metadata, generated parallel AI assessments, and limited report-level trust because independent corroboration was not available."
-      : `The Angle Report gathered ${analyzedSourceCount} independent sources, removed duplicate coverage, evaluated available source metadata, compared the reporting set, and generated a neutral intelligence assessment.`;
+    independentSourceCount <= 1
+      ? "The Angle Report analyzed the available source, evaluated available source metadata, generated evidence-aware AI assessments, and limited report-level trust because independent corroboration was not available."
+      : `The Angle Report gathered ${analyzedSourceCount} sources across ${independentSourceCount} independent publishers, removed duplicate coverage, evaluated available source metadata, compared the reporting set, and generated a neutral intelligence assessment from that evidence context.`;
 
   const report: IntelligenceReport = {
     article,
@@ -683,18 +721,9 @@ export async function generateIntelligenceReport(
 
     trustScore,
 
-    executiveSummary:
-      toStringValue(
-        analysis.summary,
-        article.description ||
-          "No executive summary is available."
-      ),
+    executiveSummary,
 
-    whyThisMatters:
-      toStringValue(
-        analysis.whyThisMatters,
-        "The Angle Report could not determine why this story matters from the available reporting."
-      ),
+    whyThisMatters,
 
     whoIsAffected: toStringArray(
       analysis.whoIsAffected
@@ -734,7 +763,7 @@ export async function generateIntelligenceReport(
       explanation: toStringValue(
         analysis.factCheck
           ?.explanation,
-        analyzedSourceCount <= 1
+        independentSourceCount <= 1
           ? "Independent corroboration is not currently available, so the central claims require additional verification."
           : "Fact-checking details are not currently available."
       ),
@@ -781,7 +810,14 @@ export async function generateIntelligenceReport(
             ?.lastAnalyzedAt,
           new Date().toISOString()
         ),
+
+      relatedSources:
+        relatedSources.length > 0
+          ? relatedSources
+          : undefined,
     },
+
+    brief,
   };
 
   const reportAssemblyMs =
@@ -801,7 +837,9 @@ export async function generateIntelligenceReport(
         article.title.slice(0, 100),
 
       sourceCount:
-        rankedSources.length,
+        evidenceContext.sourceCount,
+
+      independentSourceCount,
 
       ratedSourceCount:
         sourceConsensus.ratedSourceCount,
@@ -812,6 +850,8 @@ export async function generateIntelligenceReport(
       trustScoreCalculationMs,
       reportAssemblyMs,
       totalReportMs,
+      briefRejectedEvidence:
+        brief.rejectedEvidence?.length ?? 0,
     }
   );
 

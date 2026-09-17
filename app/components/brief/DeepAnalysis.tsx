@@ -4,10 +4,12 @@ import { useState, type ReactNode } from "react";
 
 type DeepAnalysisProps = {
   children: ReactNode;
+  onOpen?: () => void;
 };
 
 export default function DeepAnalysis({
   children,
+  onOpen,
 }: DeepAnalysisProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -16,7 +18,17 @@ export default function DeepAnalysis({
       <button
         type="button"
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          setIsOpen((current) => {
+            const next = !current;
+
+            if (next) {
+              onOpen?.();
+            }
+
+            return next;
+          });
+        }}
         className="flex w-full items-center justify-between gap-4 text-left"
       >
         <div>

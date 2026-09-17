@@ -11,10 +11,13 @@ import { mergeAnalysis } from "@/lib/ai/mergeAnalysis";
 type ArticleRequest = {
   title?: unknown;
   description?: unknown;
+  url?: unknown;
 
   source?: {
     name?: unknown;
   };
+
+  evidenceContext?: unknown;
 };
 
 function toSafeString(
@@ -60,6 +63,15 @@ function createSummaryFallback(): SummaryAnalysis {
     category: "Unknown",
 
     confidence: 0,
+
+    brief: {
+      whatHappened: "",
+      whyItMatters: "",
+      corroboratedFacts: [],
+      angles: [],
+      uncertainties: [],
+      coverageDifferences: [],
+    },
   };
 }
 
@@ -162,6 +174,16 @@ export async function POST(
       "Source unavailable"
     );
 
+    const evidenceContext = toSafeString(
+      article.evidenceContext,
+      ""
+    );
+
+    const evidenceContextValue =
+      evidenceContext.length > 0
+        ? evidenceContext
+        : undefined;
+
     const [
       summaryResult,
       politicalResult,
@@ -170,12 +192,14 @@ export async function POST(
         title,
         description,
         sourceName,
+        evidenceContext: evidenceContextValue,
       }),
 
       generatePoliticalAnalysis({
         title,
         description,
         sourceName,
+        evidenceContext: evidenceContextValue,
       }),
     ]);
 

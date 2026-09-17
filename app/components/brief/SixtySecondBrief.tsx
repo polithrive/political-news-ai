@@ -294,41 +294,50 @@ function HomepageStoryBrief({
   article,
   report,
 }: SixtySecondBriefProps) {
-  const whatHappened = usableText(report.executiveSummary);
-  const whyItMatters = usableText(report.whyThisMatters);
+  const brief = report.brief;
 
-  const angles = [
-    { label: "Left", text: usableText(report.perspectives.left) },
-    { label: "Center", text: usableText(report.perspectives.center) },
-    { label: "Right", text: usableText(report.perspectives.right) },
-  ].filter(
-    (angle): angle is { label: string; text: string } =>
-      Boolean(angle.text)
+  const whatHappened = usableText(
+    brief?.whatHappened || report.executiveSummary
+  );
+  const whyItMatters = usableText(
+    brief?.whyItMatters || report.whyThisMatters
   );
 
-  const agreement = usableList(
-    report.commonGround.length > 0
-      ? report.commonGround
-      : report.perspectiveAnalysis.areasOfAgreement
-  );
+  const angles = (brief?.angles ?? [])
+    .map((angle) => ({
+      label: angle.label,
+      text: usableText(angle.summary),
+    }))
+    .filter(
+      (angle): angle is { label: string; text: string } =>
+        Boolean(angle.text)
+    );
 
-  const disputed = usableList(report.evidence.conflictingReporting);
-  const disagreements = usableList(
-    report.perspectiveAnalysis.mainDisagreements
-  );
-  const uncertain = usableList(report.unansweredQuestions);
+  const agreement = (brief?.corroboratedFacts ?? [])
+    .map((fact) => usableText(fact.text))
+    .filter((text): text is string => Boolean(text));
+
+  const coverageDifferences = (brief?.coverageDifferences ?? [])
+    .map((item) => usableText(item.text))
+    .filter((text): text is string => Boolean(text));
+
+  const uncertainties = usableList(brief?.uncertainties);
   const disputedOrUncertain = [
-    ...disputed,
-    ...disagreements.filter((item) => !disputed.includes(item)),
-    ...uncertain.filter(
-      (item) => !disputed.includes(item) && !disagreements.includes(item)
-    ),
+    ...coverageDifferences,
+    ...uncertainties.filter((item) => !coverageDifferences.includes(item)),
   ];
 
   const sources = uniqueSources(report, article);
 
   return (
     <div id="brief" className="divide-y divide-[#17446D]/35">
+      {brief?.limitedEvidence ? (
+        <p className="pt-8 text-sm leading-6 text-[#7A93AA]">
+          Limited independent coverage was available for this story.
+          This brief summarizes the reporting that could be reviewed.
+        </p>
+      ) : null}
+
       {whatHappened ? (
         <BriefSection title="What happened">
           <p className="max-w-3xl text-lg leading-8 text-[#E6EDF4]">
