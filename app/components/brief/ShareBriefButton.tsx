@@ -4,10 +4,12 @@ import { useState } from "react";
 
 type ShareBriefButtonProps = {
   title: string;
+  className?: string;
 };
 
 export default function ShareBriefButton({
   title,
+  className,
 }: ShareBriefButtonProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">(
     "idle"
@@ -55,13 +57,16 @@ export default function ShareBriefButton({
       onClick={() => {
         void shareBrief();
       }}
-      className="text-sm font-semibold text-[#55C8FF] transition hover:text-[#8EDCFF]"
+      className={
+        className ??
+        "text-sm font-semibold text-[#55C8FF] transition hover:text-[#8EDCFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+      }
     >
       {status === "copied"
         ? "Link copied"
         : status === "error"
           ? "Could not share"
-          : "Share this brief"}
+          : "Share"}
     </button>
   );
 }

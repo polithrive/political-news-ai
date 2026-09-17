@@ -45,7 +45,6 @@ import {
   isUrlSubmittedArticle,
 } from "@/lib/services/urlAnalysisReport";
 
-import { leanFromCoverageScore } from "@/app/lib/coverageFraming";
 import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
@@ -379,7 +378,7 @@ export default function IntelligenceReportPage() {
   if (isInitializingArticle) {
     return (
       <StoryPageShell>
-        <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
           <div className="h-40 animate-pulse rounded-2xl bg-[#06172D]" />
         </section>
       </StoryPageShell>
@@ -389,7 +388,7 @@ export default function IntelligenceReportPage() {
   if (!article) {
     return (
       <StoryPageShell>
-        <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
             No story selected
           </p>
@@ -419,7 +418,7 @@ export default function IntelligenceReportPage() {
   ) {
     return (
       <StoryPageShell>
-        <section className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
+        <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
           <StoryBriefHeader
             article={article}
             isUrlArticle={isUrlSubmittedArticle(article)}
@@ -472,34 +471,11 @@ export default function IntelligenceReportPage() {
 
   return (
     <StoryPageShell>
-      <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 lg:py-14">
+      <article className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 lg:py-14">
         <StoryBriefHeader
           article={article}
           isUrlArticle={isUrlSubmittedArticle(article)}
-          showDescription={
-            !isUrlSubmittedArticle(article) || isReportLoading
-          }
-          sourceCount={
-            report?.trustScore.sourceCount ??
-            report?.overview.sourcesReviewed
-          }
-          ratedSourceCount={
-            report?.trustScore.ratedSourceCount
-          }
-          evidenceStrength={
-            report?.trustScore.evidenceStrength
-          }
-          otherSourceCount={
-            report?.evidence.relatedSources?.filter(
-              (source) => !source.isPrimary
-            ).length
-          }
-          biasScore={report?.overview.biasScore}
-          lean={
-            typeof report?.overview.biasScore === "number"
-              ? leanFromCoverageScore(report.overview.biasScore)
-              : null
-          }
+          isLoading={isReportLoading && !report}
         />
 
         {report ? (
@@ -508,28 +484,31 @@ export default function IntelligenceReportPage() {
             report={report}
           />
         ) : (
-          <div className="mt-10 space-y-4">
-            <div className="h-6 w-40 animate-pulse rounded bg-[#06172D]" />
-            <div className="h-24 animate-pulse rounded-2xl bg-[#06172D]" />
-            <div className="h-24 animate-pulse rounded-2xl bg-[#06172D]" />
-            <p className="text-sm text-[#7A93AA]">
+          <div className="mt-10 space-y-5" aria-busy="true" aria-live="polite">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="h-40 animate-pulse rounded-2xl bg-[#06172D]" />
+              <div className="h-40 animate-pulse rounded-2xl bg-[#06172D]" />
+            </div>
+            <div className="h-28 animate-pulse rounded-2xl bg-[#06172D]" />
+            <p className="text-sm text-[#8EA3B7]">
               {isUrlSubmittedArticle(article)
-                ? "Looking at this article alongside related reporting..."
-                : "Preparing the 60-second brief..."}
+                ? "Looking at this article alongside related reporting…"
+                : "Preparing the 60-second brief…"}
             </p>
           </div>
         )}
 
         {report && reportContext ? (
-          <section id="ask-about-this-story" className="mt-12">
+          <section id="ask-about-this-story" className="mt-10">
             <AIChat
+              variant="compact"
               reportTitle={article.title}
               reportContext={reportContext}
             />
           </section>
         ) : null}
 
-        <div className="mt-16">
+        <div className="mt-8">
           <DeepAnalysis
             onOpen={() => {
               if (article) {

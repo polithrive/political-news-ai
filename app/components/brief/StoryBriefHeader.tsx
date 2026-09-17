@@ -5,25 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 import ShareBriefButton from "./ShareBriefButton";
-import EvidenceLine from "./EvidenceLine";
-import CoverageMeter from "@/app/components/coverage/CoverageMeter";
-import { coverageFromPreview } from "@/app/lib/coverageFraming";
-import { createSlug } from "@/lib/createSlug";
 
 import type { Article } from "@/app/types/article";
-import type { EvidenceStrength } from "@/app/types/trust";
 
 type StoryBriefHeaderProps = {
   article: Article;
-  sourceCount?: number | null;
-  ratedSourceCount?: number | null;
-  evidenceStrength?: EvidenceStrength | null;
   isUrlArticle?: boolean;
-  otherSourceCount?: number | null;
-  showDescription?: boolean;
-  biasScore?: number | null;
-  lean?: string | null;
-  biasReasoning?: string | null;
+  isLoading?: boolean;
 };
 
 function formatPublishedDate(publishedAt: string) {
@@ -37,155 +25,119 @@ function formatPublishedDate(publishedAt: string) {
     month: "long",
     day: "numeric",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(publishedDate);
 }
 
-function coverageLine(sourceCount?: number | null) {
-  if (
-    typeof sourceCount !== "number" ||
-    !Number.isFinite(sourceCount) ||
-    sourceCount <= 0
-  ) {
-    return null;
-  }
-
-  if (sourceCount === 1) {
-    return "Analyzed from 1 source";
-  }
-
-  return `Analyzed across ${sourceCount} sources`;
-}
-
-function otherCoverageLine(otherSourceCount?: number | null) {
-  if (
-    typeof otherSourceCount !== "number" ||
-    !Number.isFinite(otherSourceCount) ||
-    otherSourceCount <= 0
-  ) {
-    return null;
-  }
-
-  if (otherSourceCount === 1) {
-    return "Compared with 1 other source";
-  }
-
-  return `Compared with ${otherSourceCount} other sources`;
-}
+const actionClassName =
+  "inline-flex items-center rounded-lg border border-[#214B70] px-3.5 py-2 text-sm font-semibold text-[#55C8FF] transition hover:border-[#38BDF8] hover:text-[#7DD3FC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]";
 
 export default function StoryBriefHeader({
   article,
-  sourceCount,
-  ratedSourceCount,
-  evidenceStrength,
   isUrlArticle = false,
-  otherSourceCount,
-  showDescription = true,
-  biasScore,
-  lean,
-  biasReasoning,
+  isLoading = false,
 }: StoryBriefHeaderProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const publishedDate = formatPublishedDate(article.publishedAt);
-  const coverage = isUrlArticle
-    ? otherCoverageLine(otherSourceCount) || coverageLine(sourceCount)
-    : coverageLine(sourceCount);
   const hasUsableImage = Boolean(article.urlToImage) && !imageFailed;
   const sourceName =
     article.source?.name &&
     article.source.name !== "Submitted article"
       ? article.source.name
       : null;
+  const dek = article.description?.trim() || null;
 
   return (
-    <header className="border-b border-[#17446D]/40 pb-10">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
-        {isUrlArticle ? "Understand any article" : "60-second brief"}
-      </p>
+    <header className="border-b border-[#17446D]/40 pb-8 lg:pb-10">
+      <div
+        className={
+          hasUsableImage
+            ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,42%)] lg:items-start lg:gap-10"
+            : "grid gap-6"
+        }
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
+            {isUrlArticle ? "Understand any article" : "60-second brief"}
+          </p>
 
-      <h1 className="mt-4 max-w-4xl font-serif text-4xl font-black leading-[1.08] tracking-[-0.03em] text-white sm:text-5xl">
-        {article.title}
-      </h1>
+          <h1 className="mt-4 max-w-3xl font-serif text-4xl font-black leading-[1.08] tracking-[-0.03em] text-white sm:text-5xl">
+            {article.title}
+          </h1>
 
-      {showDescription && article.description?.trim() ? (
-        <p className="mt-5 max-w-3xl text-lg leading-8 text-[#9CB0C5]">
-          {article.description.trim()}
-        </p>
-      ) : null}
+          {dek ? (
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#9CB0C5]">
+              {dek}
+            </p>
+          ) : null}
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-[#7A93AA]">
-        <EvidenceLine
-          evidenceStrength={evidenceStrength}
-          sourceCount={sourceCount}
-          ratedSourceCount={ratedSourceCount}
-        />
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#8EA3B7]">
+            {sourceName ? (
+              <span className="font-medium text-[#D5E0EC]">{sourceName}</span>
+            ) : null}
+            {sourceName && publishedDate ? (
+              <span aria-hidden="true">·</span>
+            ) : null}
+            {publishedDate ? <time dateTime={article.publishedAt}>{publishedDate}</time> : null}
+            {isLoading ? (
+              <span className="text-[#7A93AA]">Preparing this brief…</span>
+            ) : null}
+          </div>
 
-        {coverage && !evidenceStrength ? (
-          <span>{coverage}</span>
-        ) : null}
+          <div className="mt-6 flex flex-wrap gap-3">
+            {article.url ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noreferrer"
+                className={actionClassName}
+              >
+                Read original
+                <span aria-hidden="true" className="ml-1">
+                  →
+                </span>
+              </a>
+            ) : null}
 
-        {sourceName ? <span>{sourceName}</span> : null}
+            <ShareBriefButton
+              title={article.title}
+              className={actionClassName}
+            />
 
-        {publishedDate ? <span>{publishedDate}</span> : null}
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        {article.url ? (
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-semibold text-[#55C8FF] transition hover:text-[#8EDCFF]"
-          >
-            {isUrlArticle
-              ? "The article you submitted"
-              : "Original article"}
-            <span aria-hidden="true"> →</span>
-          </a>
-        ) : null}
-
-        {isUrlArticle ? (
-          <Link
-            href="/#understand-any-article"
-            className="text-sm font-semibold text-[#7A93AA] transition hover:text-white"
-          >
-            Paste another article
-          </Link>
-        ) : (
-          <Link
-            href="/"
-            className="text-sm font-semibold text-[#7A93AA] transition hover:text-white"
-          >
-            Back to Today
-          </Link>
-        )}
-
-        <ShareBriefButton title={article.title} />
-      </div>
-
-      <CoverageMeter
-        articleTitle={article.title}
-        articlePath={`/intelligence/${createSlug(article.title)}`}
-        coverage={coverageFromPreview({
-          biasScore: biasScore ?? undefined,
-          lean: lean ?? undefined,
-          biasReasoning: biasReasoning ?? undefined,
-        })}
-      />
-
-      {hasUsableImage ? (
-        <div className="relative mt-8 h-56 overflow-hidden rounded-2xl bg-[#06172D] sm:h-72">
-          <Image
-            src={article.urlToImage as string}
-            alt=""
-            fill
-            priority
-            unoptimized
-            sizes="(max-width: 768px) 100vw, 768px"
-            className="object-cover"
-            onError={() => setImageFailed(true)}
-          />
+            {isUrlArticle ? (
+              <Link
+                href="/#understand-any-article"
+                className="inline-flex items-center px-2 py-2 text-sm font-semibold text-[#8EA3B7] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+              >
+                Paste another article
+              </Link>
+            ) : (
+              <Link
+                href="/"
+                className="inline-flex items-center px-2 py-2 text-sm font-semibold text-[#8EA3B7] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+              >
+                Back to Today
+              </Link>
+            )}
+          </div>
         </div>
-      ) : null}
+
+        {hasUsableImage ? (
+          <div className="relative h-56 overflow-hidden rounded-2xl bg-[#06172D] sm:h-72 lg:h-full lg:min-h-[18rem]">
+            <Image
+              src={article.urlToImage as string}
+              alt=""
+              fill
+              priority
+              unoptimized
+              sizes="(max-width: 1024px) 100vw, 420px"
+              className="object-cover"
+              onError={() => setImageFailed(true)}
+            />
+          </div>
+        ) : null}
+      </div>
     </header>
   );
 }

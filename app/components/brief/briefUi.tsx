@@ -13,6 +13,19 @@ export function isPlaceholderText(value: string): boolean {
   );
 }
 
+const EVIDENCE_SOURCE_CITATION =
+  /[ \t]*[[(][ \t]*S\d+(?:[ \t]*,[ \t]*S\d+)*[ \t]*[\])]/gi;
+
+export function stripEvidenceSourceCitations(value: string): string {
+  return value
+    .replace(EVIDENCE_SOURCE_CITATION, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([.,;:!?])/g, "$1")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function usableText(value: string | undefined): string | null {
   const trimmed = value?.trim();
 
@@ -21,6 +34,16 @@ export function usableText(value: string | undefined): string | null {
   }
 
   return trimmed;
+}
+
+export function readerFacingBriefText(
+  value: string | undefined
+): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  return usableText(stripEvidenceSourceCitations(value));
 }
 
 export function usableList(items: string[] | undefined): string[] {

@@ -19,6 +19,7 @@ import { colors } from "@/lib/design/theme";
 type AIChatProps = {
   reportContext: string;
   reportTitle?: string;
+  variant?: "default" | "compact";
 };
 
 type ChatErrorResponse = {
@@ -101,10 +102,17 @@ function getSuggestedQuestions(
   }
 }
 
+const COMPACT_PROMPTS = [
+  "What do the sources agree on?",
+  "What is still unclear?",
+];
+
 export default function AIChat({
   reportContext,
   reportTitle,
+  variant = "default",
 }: AIChatProps) {
+  const isCompact = variant === "compact";
   const [messages, setMessages] =
     useState<ChatMessage[]>([]);
 
@@ -378,6 +386,127 @@ export default function AIChat({
 
       event.currentTarget.form?.requestSubmit();
     }
+  }
+
+  if (isCompact) {
+    return (
+      <section
+        aria-label="Ask The Angle"
+        className="rounded-2xl border border-[#17446D]/70 bg-[#04162C] p-5 sm:p-6"
+      >
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
+          Ask The Angle
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8EA3B7]">
+          Have a question about this story? Get answers based on the
+          reporting we&apos;ve analyzed.
+        </p>
+
+        {messages.length === 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {COMPACT_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                disabled={isLoading || !reportContext.trim()}
+                onClick={() => {
+                  void askQuestion(undefined, prompt);
+                }}
+                className="rounded-lg border border-[#214B70] px-3 py-2 text-left text-sm text-[#D5E0EC] transition hover:border-[#38BDF8] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="mt-5 space-y-4"
+            aria-live="polite"
+            aria-busy={isLoading}
+          >
+            {messages.map((message) => {
+              const isAssistant = message.role === "assistant";
+              const isCurrentStreamingMessage =
+                isLoading &&
+                isAssistant &&
+                message.id === messages[messages.length - 1]?.id;
+
+              return (
+                <article
+                  key={message.id}
+                  className={`rounded-xl border px-4 py-3 text-sm leading-6 ${
+                    isAssistant
+                      ? "border-[#17446D]/70 bg-[#05182E] text-[#E6EDF4]"
+                      : "border-[#214B70] bg-[#061A31] text-white"
+                  }`}
+                >
+                  {isAssistant ? (
+                    <>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#55C8FF]">
+                        The Angle
+                      </p>
+                      {message.content ? (
+                        <div className="max-w-none text-[#E6EDF4] [&_p]:mb-3 [&_p]:last:mb-0">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : isCurrentStreamingMessage ? (
+                        <p className="text-[#8EA3B7]">Thinking…</p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {errorMessage ? (
+          <p role="alert" className="mt-4 text-sm text-[#FF7A86]">
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <form onSubmit={askQuestion} className="mt-5">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask a question about this story..."
+              disabled={isLoading}
+              aria-label="Ask a question about this story"
+              className="min-w-0 flex-1 rounded-lg border border-[#214B70] bg-[#020D21] px-3 py-2.5 text-base text-white outline-none placeholder:text-[#7A93AA] focus-visible:border-[#38BDF8] disabled:cursor-not-allowed disabled:opacity-60"
+            />
+
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={stopResponse}
+                className="rounded-lg border border-[#214B70] px-4 py-2.5 text-sm font-semibold text-[#D5E0EC] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+              >
+                Stop
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!question.trim() || !reportContext.trim()}
+                className="rounded-lg bg-[#FF2638] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Ask
+              </button>
+            )}
+          </div>
+        </form>
+
+        <p className="mt-3 text-xs leading-5 text-[#7A93AA]">
+          Answers are based on the reporting reviewed for this brief.
+        </p>
+      </section>
+    );
   }
 
   return (
