@@ -1,12 +1,8 @@
-import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+import { notInV1Metadata } from "@/app/components/v1/notInV1";
+import NotInV1Page from "@/app/components/v1/NotInV1Page";
+
+export const metadata = notInV1Metadata;
 
 export default function TimelinePage() {
-  return (
-    <ShellInfoPage
-      kicker="Timeline"
-      title="Timeline tracker"
-      description="Each story's timeline is inside Go deeper on the 60-second brief. Open a story from Home, then expand Go deeper to see how reporting has developed."
-      primaryLabel="Choose a story"
-    />
-  );
+  return <NotInV1Page />;
 }

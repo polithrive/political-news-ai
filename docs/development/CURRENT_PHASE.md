@@ -4,8 +4,8 @@ Product: The Angle Report
 
 ## Checkpoints
 
-- **Protected application checkpoint:** `006ae52` — Add What Changed reader experience
-- Feature expansion is **paused** pending V1 launch work.
+- **Protected application checkpoint (pre-LP1):** `006ae52` — Add What Changed reader experience
+- **LP1 public honesty:** this commit — De-scope incomplete V1 surfaces
 
 ## Completed (product)
 
@@ -13,15 +13,16 @@ Product: The Angle Report
 - Story history snapshots + deterministic diff
 - What Changed reader module
 - V1 launch gap **audit** (docs only) — `docs/development/V1_LAUNCH_GAP_AUDIT.md`
+- **LP1** — hide fake accounts, Morning Brief, polls/forecasts, and related CTAs; `/admin` 404; legal pages branded The Angle Report without a invented inbox
 
 ## Current state
 
-Do **not** start 2B.2.x AI phrasing, clustering, Angle+, forecasts-as-product, or other new features.
+LP1 is complete. Do **not** start LP2 unless authorized.
 
-Next work, if authorized, is the launch plan in the audit (**LP1–LP5**), starting with public honesty de-scope — after Ryan decisions 1–4 where required.
+Do **not** start 2B.2.x AI phrasing, clustering, Angle+, forecasts-as-product, or other new features.
 
 ## Next planned work
 
-V1 launch packages (not feature phases): LP1 honesty → LP2 shareable briefs → LP3 cost/abuse → LP4 measurement → LP5 domain cutover.
+**LP2 — Shareable briefs**, if authorized. Then LP3 cost/abuse → LP4 measurement → LP5 domain cutover.
 
-**IMPORTANT:** Launch implementation has **not** started. This pass is audit documentation only.
+NewsAPI production license remains a launch gate (not LP1).

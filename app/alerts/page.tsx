@@ -1,13 +1,8 @@
-import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+import { notInV1Metadata } from "@/app/components/v1/notInV1";
+import NotInV1Page from "@/app/components/v1/NotInV1Page";
+
+export const metadata = notInV1Metadata;
 
 export default function AlertsPage() {
-  return (
-    <ShellInfoPage
-      kicker="Library"
-      title="Alerts"
-      description="Story alerts are not live yet. When they are, you can get a ping when a watched story moves — without turning Home into a notification feed."
-      primaryHref="/premium"
-      primaryLabel="See Premium"
-    />
-  );
+  return <NotInV1Page />;
 }

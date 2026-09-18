@@ -1,13 +1,8 @@
-import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+import { notInV1Metadata } from "@/app/components/v1/notInV1";
+import NotInV1Page from "@/app/components/v1/NotInV1Page";
+
+export const metadata = notInV1Metadata;
 
 export default function SavedPage() {
-  return (
-    <ShellInfoPage
-      kicker="Library"
-      title="Saved"
-      description="Saved briefs will live here so you can come back to a story without hunting through Today. Sign in on this device, then use Share on a brief for now — personal saves are next."
-      primaryHref="/signin?next=/saved"
-      primaryLabel="Sign in"
-    />
-  );
+  return <NotInV1Page />;
 }

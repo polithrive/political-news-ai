@@ -1,12 +1,8 @@
-import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+import { notInV1Metadata } from "@/app/components/v1/notInV1";
+import NotInV1Page from "@/app/components/v1/NotInV1Page";
+
+export const metadata = notInV1Metadata;
 
 export default function RepublicanPerspectivePage() {
-  return (
-    <ShellInfoPage
-      kicker="Perspectives"
-      title="Republican perspective"
-      description="Every 60-second brief includes a Republican-leaning read when reporting supports it — alongside other angles, what coverage agrees on, and what remains uncertain. Open a story from Home to see it in context."
-      primaryLabel="Read today's stories"
-    />
-  );
+  return <NotInV1Page />;
 }

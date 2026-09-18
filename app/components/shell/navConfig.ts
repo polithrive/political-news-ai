@@ -24,33 +24,9 @@ export const topicNavItems: TopicNavItem[] = [
   { label: "Policy", query: "policy", icon: "shield" },
 ];
 
-export const perspectiveNavItems: LinkNavItem[] = [
-  {
-    label: "Republican Perspective",
-    href: "/perspectives/republican",
-    icon: "republican",
-    accent: "red",
-  },
-  {
-    label: "Democratic Perspective",
-    href: "/perspectives/democratic",
-    icon: "democratic",
-    accent: "blue",
-  },
-  {
-    label: "Side-by-Side Coverage",
-    href: "/coverage",
-    icon: "scales",
-  },
-];
+export const perspectiveNavItems: LinkNavItem[] = [];
 
-export const toolNavItems: LinkNavItem[] = [
-  { label: "Saved", href: "/saved", icon: "bookmark" },
-  { label: "Watchlist", href: "/watchlist", icon: "heart" },
-  { label: "Alerts", href: "/alerts", icon: "bell" },
-  { label: "AI Research (Beta)", href: "/research", icon: "spark" },
-  { label: "Timeline Tracker", href: "/timeline", icon: "clock" },
-];
+export const toolNavItems: LinkNavItem[] = [];
 
 export function topicHref(query: string) {
   return `/?q=${encodeURIComponent(query)}`;

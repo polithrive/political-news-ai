@@ -1,14 +1,10 @@
 import Link from "next/link";
 
 import BrandLogo from "@/app/components/home/BrandLogo";
-import MorningBriefSignup from "@/app/components/home/MorningBriefSignup";
 
 const footerLinks = [
   { label: "Today", href: "/#today" },
   { label: "Understand Any Article", href: "/#understand-any-article" },
-  { label: "Forecasts", href: "/forecasts" },
-  { label: "Polls", href: "/polls" },
-  { label: "My Angle", href: "/signin" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Privacy", href: "/privacy" },
@@ -57,10 +53,8 @@ const socialLinks: { label: string; name: "x" | "in" | "yt" | "ig" }[] = [
 export default function Footer() {
   return (
     <footer className="border-t border-[#17446D]/40 bg-[#020D21]">
-      <div className="mx-auto grid w-full max-w-[1440px] gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[0.8fr_1.3fr_0.7fr] lg:items-center lg:px-7">
+      <div className="mx-auto grid w-full max-w-[1440px] gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-7">
         <BrandLogo size="footer" />
-
-        <MorningBriefSignup compact />
 
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9CB0C5]">

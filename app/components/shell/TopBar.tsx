@@ -1,10 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-
-import { useLocalAccount } from "./useLocalAccount";
 
 type TopBarProps = {
   searchTerm?: string;
@@ -19,7 +16,6 @@ export default function TopBar({
 }: TopBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const account = useLocalAccount();
   const [draft, setDraft] = useState(searchTerm ?? "");
 
   useEffect(() => {
@@ -97,30 +93,6 @@ export default function TopBar({
           </label>
         </form>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {account ? (
-            <Link
-              href="/signin"
-              className="hidden h-10 items-center rounded-xl px-3 text-sm font-semibold text-[#D7E4F4] transition hover:text-white sm:inline-flex"
-            >
-              {account.email.split("@")[0]}
-            </Link>
-          ) : (
-            <Link
-              href="/signin"
-              className="inline-flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-[#D7E4F4] transition hover:text-white"
-            >
-              Sign in
-            </Link>
-          )}
-
-          <Link
-            href="/premium"
-            className="inline-flex h-10 items-center rounded-xl bg-[#FF2638] px-3.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
-          >
-            {account?.trialStartedAt ? "Premium" : "Try Premium"}
-          </Link>
-        </div>
       </div>
     </header>
   );

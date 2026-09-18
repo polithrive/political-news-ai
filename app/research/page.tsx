@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
+
 import UnderstandAnyArticle from "@/app/components/home/UnderstandAnyArticle";
 import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function ResearchPage() {
   return (

@@ -1,12 +1,8 @@
-import ShellInfoPage from "@/app/components/shell/ShellInfoPage";
+import { notInV1Metadata } from "@/app/components/v1/notInV1";
+import NotInV1Page from "@/app/components/v1/NotInV1Page";
+
+export const metadata = notInV1Metadata;
 
 export default function WatchlistPage() {
-  return (
-    <ShellInfoPage
-      kicker="Library"
-      title="Watchlist"
-      description="Follow stories as they develop. This list is coming next; until then, open a 60-second brief and use Go deeper for the timeline on that story."
-      primaryLabel="Read Today"
-    />
-  );
+  return <NotInV1Page />;
 }

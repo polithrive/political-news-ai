@@ -34,3 +34,15 @@ These are decisions reflected in the current repository. They were not written a
 - What Changed must be based on **deterministic snapshot comparison before any AI phrasing**.
 - The existing **Story Timeline must never be used as evidence** for What Changed (it can still initialize from mock data and is a separate UI).
 - **No visible What Changed UI** until deterministic diffing is validated (Phase 2B.1D before Phase 2B.2).
+
+## V1 launch de-scope (LP1)
+
+Ryan’s decisions for public V1 honesty:
+
+- **Accounts:** Hide Sign in / Create free account / Saved / Premium / related account chrome. Do not ship a fake identity product. (`lib/localAccount.ts` may remain unused.)
+- **Morning Brief:** Hide the footer form until a real ESP and consent language exist. Do not invent a monitored newsletter.
+- **Polls and forecasts:** Hide entirely. Do not relabel mocks as Live or illustrative on the homepage.
+- **NewsAPI production license:** Launch-gate only (audit L9 / Decision 4). Not part of LP1.
+- **SSRF hardening:** Later (audit S3 / LP3), not LP1.
+- **Legal contact:** Brand as The Angle Report. Do **not** invent a public email; Contact must say no inbox is published yet.
+- De-scope is **reversible hide / noindex / 404**, not a redesign and not building auth, ESP, or real polls.

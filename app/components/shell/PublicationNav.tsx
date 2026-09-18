@@ -7,8 +7,6 @@ import { FormEvent, useEffect, useState } from "react";
 import BrandLogo from "@/app/components/home/BrandLogo";
 import { SearchIcon } from "@/app/components/home/HomeIcons";
 
-import { useLocalAccount } from "./useLocalAccount";
-
 type PublicationNavProps = {
   searchTerm?: string;
   onSearchTermChange?: (value: string) => void;
@@ -30,7 +28,6 @@ export default function PublicationNav({
 }: PublicationNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const account = useLocalAccount();
   const [draft, setDraft] = useState(searchTerm ?? "");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -95,32 +92,11 @@ export default function PublicationNav({
             {isMoreOpen ? (
               <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl bg-[#04162C] py-2 shadow-xl">
                 <Link
-                  href="/polls"
-                  onClick={() => setIsMoreOpen(false)}
-                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
-                >
-                  Polls
-                </Link>
-                <Link
-                  href="/forecasts"
-                  onClick={() => setIsMoreOpen(false)}
-                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
-                >
-                  Forecasts
-                </Link>
-                <Link
                   href="/#understand-any-article"
                   onClick={() => setIsMoreOpen(false)}
                   className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
                 >
                   Understand any article
-                </Link>
-                <Link
-                  href="/premium"
-                  onClick={() => setIsMoreOpen(false)}
-                  className="block px-4 py-2 text-sm text-[#D7E4F4] hover:text-white"
-                >
-                  Premium
                 </Link>
                 <Link
                   href="/about"
@@ -168,22 +144,6 @@ export default function PublicationNav({
               />
             </label>
           </form>
-
-          <Link
-            href="/signin"
-            className="hidden text-[13px] font-semibold text-[#D7E4F4] hover:text-white sm:inline"
-          >
-            {account ? account.email.split("@")[0] : "Sign in"}
-          </Link>
-
-          {!account ? (
-            <Link
-              href="/signin"
-              className="inline-flex h-8 items-center rounded-full bg-[#FF2638] px-3.5 text-[13px] font-semibold text-white hover:bg-[#FF4151]"
-            >
-              Create free account
-            </Link>
-          ) : null}
 
           <button
             type="button"
