@@ -64,9 +64,6 @@ html {
   min-height: 100%;
   font-size: 16px;
   scroll-behavior: smooth;
-  /* Next 16.3 skips sticky headers when scrolling to hashes / route targets.
-     Offset the html scrollport by the publication header height (76px). */
-  scroll-padding-top: 76px;
   background: var(--polithrive-navy-deep);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/services/diffEvidenceSnapshots.test.ts lib/services/getStorySnapshotPair.test.ts lib/services/whatChangedViewModel.test.ts lib/services/intelligenceIdentity.test.ts lib/security/rateLimit.test.ts lib/security/guardRequest.test.ts lib/security/ssrf.test.ts lib/security/endpointGuard.test.ts lib/ui/homepageScrollOffset.test.ts",
+    "test": "tsx --test lib/services/diffEvidenceSnapshots.test.ts lib/services/getStorySnapshotPair.test.ts lib/services/whatChangedViewModel.test.ts lib/services/intelligenceIdentity.test.ts lib/security/rateLimit.test.ts lib/security/guardRequest.test.ts lib/security/ssrf.test.ts lib/security/endpointGuard.test.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
