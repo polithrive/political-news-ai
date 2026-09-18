@@ -1,0 +1,18 @@
+---
+description: Phased checkpoint workflow for The Angle Report
+alwaysApply: true
+---
+
+# The Angle Report workflow
+
+This repository uses a phased, checkpointed development workflow.
+
+- Before substantial implementation, read `AGENTS.md` and `docs/development/CURRENT_PHASE.md`.
+- Read `docs/development/ARCHITECTURE.md` and `docs/development/DECISIONS.md` when architecture is relevant.
+- Read `docs/development/HANDOFF.md` before continuing previous work.
+- Protect the current Git checkpoint. Do not silently advance development phases.
+- Never expose or commit secrets (`.env.local`, `DATABASE_URL` values, API keys).
+- Preserve evidence and provenance safeguards.
+- Prefer minimal additive changes. Do not broad-refactor unless authorized.
+- Validate builds/diffs before recommending a checkpoint.
+- After substantial work, update `docs/development/HANDOFF.md` for the next engineering agent: facts, files, tests, unresolved issues, and Git state.
