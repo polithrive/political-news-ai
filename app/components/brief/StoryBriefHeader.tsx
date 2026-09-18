@@ -12,6 +12,7 @@ type StoryBriefHeaderProps = {
   article: Article;
   isUrlArticle?: boolean;
   isLoading?: boolean;
+  showReportingUpdated?: boolean;
 };
 
 function formatPublishedDate(publishedAt: string) {
@@ -37,6 +38,7 @@ export default function StoryBriefHeader({
   article,
   isUrlArticle = false,
   isLoading = false,
+  showReportingUpdated = false,
 }: StoryBriefHeaderProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const publishedDate = formatPublishedDate(article.publishedAt);
@@ -80,6 +82,19 @@ export default function StoryBriefHeader({
               <span aria-hidden="true">·</span>
             ) : null}
             {publishedDate ? <time dateTime={article.publishedAt}>{publishedDate}</time> : null}
+            {showReportingUpdated ? (
+              <>
+                {(sourceName || publishedDate) ? (
+                  <span aria-hidden="true">·</span>
+                ) : null}
+                <a
+                  href="#what-changed"
+                  className="font-medium text-[#55C8FF] transition hover:text-[#8EDCFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
+                >
+                  Reporting updated
+                </a>
+              </>
+            ) : null}
             {isLoading ? (
               <span className="text-[#7A93AA]">Preparing this brief…</span>
             ) : null}

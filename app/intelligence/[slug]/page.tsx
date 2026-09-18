@@ -48,10 +48,16 @@ import {
 import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
+import {
+  parseWhatChangedViewModel,
+  type WhatChangedViewModel,
+} from "@/lib/services/whatChangedViewModel";
 
-function persistStorySnapshotBestEffort(snapshotInput: unknown) {
+async function persistStorySnapshotBestEffort(
+  snapshotInput: unknown
+): Promise<WhatChangedViewModel | null> {
   try {
-    void fetch("/api/story-snapshots", {
+    const response = await fetch("/api/story-snapshots", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,9 +65,35 @@ function persistStorySnapshotBestEffort(snapshotInput: unknown) {
       cache: "no-store",
       keepalive: true,
       body: JSON.stringify(snapshotInput),
-    }).catch(() => {});
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      whatChanged?: unknown;
+    } | null;
+
+    return parseWhatChangedViewModel(payload?.whatChanged);
   } catch {
-    // Snapshot persistence must never fail the brief.
+    return null;
+  }
+}
+
+async function loadStorySnapshotChanges(
+  articleUrl: string
+): Promise<WhatChangedViewModel | null> {
+  try {
+    const response = await fetch(
+      `/api/story-snapshot-changes?url=${encodeURIComponent(articleUrl)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
+    const payload = (await response.json().catch(() => null)) as {
+      whatChanged?: unknown;
+    } | null;
+
+    return parseWhatChangedViewModel(payload?.whatChanged);
+  } catch {
+    return null;
   }
 }
 
@@ -82,6 +114,9 @@ export default function IntelligenceReportPage() {
     useState<IntelligenceReport | null>(
       null
     );
+
+  const [whatChanged, setWhatChanged] =
+    useState<WhatChangedViewModel | null>(null);
 
   const [graph, setGraph] =
     useState<IntelligenceGraphData | null>(
@@ -146,7 +181,19 @@ export default function IntelligenceReportPage() {
         );
 
         setReport(generatedReport);
-        persistStorySnapshotBestEffort(snapshotInput);
+
+        try {
+          const nextWhatChanged =
+            await persistStorySnapshotBestEffort(
+              snapshotInput
+            );
+
+          if (!isCancelled) {
+            setWhatChanged(nextWhatChanged);
+          }
+        } catch {
+          // Snapshot persistence must never fail the brief.
+        }
       } catch (error) {
         console.error(
           "Failed to generate intelligence report:",
@@ -193,7 +240,19 @@ export default function IntelligenceReportPage() {
 
         setArticle(analyzedArticle);
         setReport(generatedReport);
-        persistStorySnapshotBestEffort(snapshotInput);
+
+        try {
+          const nextWhatChanged =
+            await persistStorySnapshotBestEffort(
+              snapshotInput
+            );
+
+          if (!isCancelled) {
+            setWhatChanged(nextWhatChanged);
+          }
+        } catch {
+          // Snapshot persistence must never fail the brief.
+        }
       } catch (error) {
         console.error(
           "Failed to generate URL intelligence report:",
@@ -240,6 +299,13 @@ export default function IntelligenceReportPage() {
       if (cachedReport) {
         setReport(cachedReport);
         setIsReportLoading(false);
+        void loadStorySnapshotChanges(selectedArticle.url)
+          .then((nextWhatChanged) => {
+            if (!isCancelled) {
+              setWhatChanged(nextWhatChanged);
+            }
+          })
+          .catch(() => {});
       } else if (
         isUrlSubmittedArticle(
           selectedArticle
@@ -494,16 +560,20 @@ export default function IntelligenceReportPage() {
   return (
     <StoryPageShell>
       <article className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 lg:py-10">
-        <StoryBriefHeader
-          article={article}
-          isUrlArticle={isUrlSubmittedArticle(article)}
-          isLoading={isReportLoading && !report}
-        />
+          <StoryBriefHeader
+            article={article}
+            isUrlArticle={isUrlSubmittedArticle(article)}
+            isLoading={isReportLoading && !report}
+            showReportingUpdated={Boolean(
+              whatChanged && whatChanged.previousCapturedAt
+            )}
+          />
 
         {report ? (
           <SixtySecondBrief
             article={article}
             report={report}
+            whatChanged={whatChanged}
           />
         ) : (
           <div className="mt-10 space-y-5" aria-busy="true" aria-live="polite">

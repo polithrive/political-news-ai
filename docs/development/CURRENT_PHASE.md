@@ -8,33 +8,25 @@ Product: The Angle Report
 - **Protected workflow/docs checkpoint:** `b850c79` — Add agent collaboration workflow
 - **2B.1D audit:** `fc81f5a` — Document Phase 2B.1D architecture audit
 - **Protected application checkpoint (2B.1D):** `43b5d95` — Add deterministic story snapshot diffing
-
-`43b5d95` is the last application-behavior commit. 2B.2 is **audit/design only** until implementation is explicitly authorized.
+- **2B.2 audit:** `d6b0dc2` — Document Phase 2B.2 What Changed audit
+- **Protected application checkpoint (2B.2):** this implementation commit — Add What Changed reader experience
 
 ## Completed
 
 - Phase 2B.1B — story-history database foundation
 - Phase 2B.1C — evidence snapshot writer
-- Phase 2B.1D — deterministic snapshot diff, server-only pair retrieval, tests
-- Phase 2B.2 **architecture + UX audit** (documentation only; see `HANDOFF.md`)
-
-## Current database architecture
-
-- Neon / Postgres
-- Drizzle
-- Tables: `stories`, `story_snapshots`
-- No schema change in 2B.1D or this audit
+- Phase 2B.1D — deterministic snapshot diff + pair lookup
+- Phase 2B.2 audit
+- Phase 2B.2 implementation — reader-facing What Changed module
 
 ## Current state
 
-- Snapshot persist is best-effort after fresh generate; cache hits do not write.
-- Deterministic diffs exist but are unused by UI.
-- There is **no** public history API and **no** What Changed UI.
+- What Changed appears in the 60-second brief only when the reader view model is non-empty.
+- Missing-from-newer and count-only diffs stay internal.
+- Fresh generate: setReport first, then persist POST returns `whatChanged`.
+- Cache hit: GET `/api/story-snapshot-changes`.
+- History failure cannot break the brief.
 
 ## Next planned phase
 
-Phase 2B.2 — implement the reader-facing What Changed module **after this audit is approved**.
-
-**IMPORTANT:** 2B.2 **implementation has not started.**
-
-Do not implement visible What Changed UI until this audit is reviewed and implementation is authorized.
+Not started. Do not add AI phrasing, clustering, or a public history feed unless separately authorized.

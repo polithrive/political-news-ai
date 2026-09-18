@@ -5,6 +5,8 @@ import {
   parseStorySnapshotInput,
 } from "@/lib/services/parseStorySnapshotInput";
 import { persistStorySnapshot } from "@/lib/services/persistStorySnapshot";
+import { diffLatestStorySnapshots } from "@/lib/services/getStorySnapshotPair";
+import { buildWhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
 
 /*
  * MVP boundary: snapshot input currently originates from the client because
@@ -23,13 +25,13 @@ export async function POST(request: Request) {
       contentLength <= 0 ||
       contentLength > STORY_SNAPSHOT_MAX_BODY_BYTES
     ) {
-      return NextResponse.json({ status: "skipped" });
+      return NextResponse.json({ status: "skipped", whatChanged: null });
     }
 
     const rawBody = await request.text();
 
     if (rawBody.length > STORY_SNAPSHOT_MAX_BODY_BYTES) {
-      return NextResponse.json({ status: "skipped" });
+      return NextResponse.json({ status: "skipped", whatChanged: null });
     }
 
     let parsedJson: unknown;
@@ -37,19 +39,40 @@ export async function POST(request: Request) {
     try {
       parsedJson = JSON.parse(rawBody) as unknown;
     } catch {
-      return NextResponse.json({ status: "skipped" });
+      return NextResponse.json({ status: "skipped", whatChanged: null });
     }
 
     const input = parseStorySnapshotInput(parsedJson);
 
     if (!input) {
-      return NextResponse.json({ status: "skipped" });
+      return NextResponse.json({ status: "skipped", whatChanged: null });
     }
 
     const status = await persistStorySnapshot(input);
 
-    return NextResponse.json({ status });
+    if (status === "skipped") {
+      return NextResponse.json({ status, whatChanged: null });
+    }
+
+    try {
+      const lookup = await diffLatestStorySnapshots(input.primary.url);
+
+      if (lookup.status !== "pair") {
+        return NextResponse.json({ status, whatChanged: null });
+      }
+
+      return NextResponse.json({
+        status,
+        whatChanged: buildWhatChangedViewModel({
+          previousCapturedAt: lookup.previous.capturedAt,
+          current: lookup.current.evidence,
+          diff: lookup.diff,
+        }),
+      });
+    } catch {
+      return NextResponse.json({ status, whatChanged: null });
+    }
   } catch {
-    return NextResponse.json({ status: "skipped" });
+    return NextResponse.json({ status: "skipped", whatChanged: null });
   }
 }

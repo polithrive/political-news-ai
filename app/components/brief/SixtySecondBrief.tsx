@@ -6,8 +6,10 @@ import type {
   IntelligenceReport,
 } from "@/app/types/report";
 import type { EvidenceStrength } from "@/app/types/trust";
+import type { WhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
 
 import CorroboratedFact from "./CorroboratedFact";
+import WhatChanged from "./WhatChanged";
 import {
   formatPublisherDisplayName,
   readerFacingBriefText,
@@ -17,6 +19,7 @@ import {
 type SixtySecondBriefProps = {
   article: Article;
   report: IntelligenceReport;
+  whatChanged?: WhatChangedViewModel | null;
 };
 
 type BriefSource = {
@@ -419,6 +422,7 @@ function ReportingReviewed({
 export default function SixtySecondBrief({
   article,
   report,
+  whatChanged = null,
 }: SixtySecondBriefProps) {
   const brief = report.brief;
   const whatHappened = readerFacingBriefText(
@@ -492,6 +496,8 @@ export default function SixtySecondBrief({
         facts={facts}
         sourcesReviewed={sourcesReviewed || sources.length || 1}
       />
+
+      {whatChanged ? <WhatChanged whatChanged={whatChanged} /> : null}
 
       <TheAngles angles={angles} />
 
