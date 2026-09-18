@@ -2,12 +2,18 @@
 
 Product: The Angle Report
 
-Current protected checkpoint: `8c633b3` — Add story evidence snapshot writer
+## Checkpoints (do not conflate)
+
+- **Protected application checkpoint:** `8c633b3` — Add story evidence snapshot writer
+- **Protected workflow/docs checkpoint:** `b850c79` — Add agent collaboration workflow
+
+`8c633b3` is the last application-behavior commit. `b850c79` only added agent collaboration files. Story-history runtime behavior is unchanged since `8c633b3`.
 
 ## Completed
 
 - Phase 2B.1B — story-history database foundation
 - Phase 2B.1C — evidence snapshot writer
+- Phase 2B.1D **architecture audit** (documentation only; see `HANDOFF.md`)
 
 ## Current database architecture
 
@@ -27,9 +33,9 @@ Current protected checkpoint: `8c633b3` — Add story evidence snapshot writer
 
 ## Next planned phase
 
-Phase 2B.1D — deterministic snapshot diffing.
+Phase 2B.1D — **implement** deterministic snapshot diffing.
 
-**IMPORTANT:** Phase 2B.1D has **not** started.
+**IMPORTANT:** 2B.1D **implementation has not started.** The audit is complete; code for diffing is not authorized until this audit is reviewed and implementation is explicitly approved.
 
 Do not implement visible What Changed UI yet.
 
