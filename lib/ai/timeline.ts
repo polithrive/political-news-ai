@@ -12,7 +12,7 @@ export function getMockTimeline(): TimelineEvent[] {
       date: "Today",
       title: "Story is actively developing",
       description:
-        "PoliticalPulse is monitoring new reporting, official responses, and public reaction as this story evolves.",
+        "The Angle Report is monitoring new reporting, official responses, and public reaction as this story evolves.",
     },
     {
       date: "Recent Coverage",

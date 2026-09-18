@@ -438,18 +438,18 @@ const DEFAULT_SOURCE: SourceRating = {
   ownershipType: "Unknown",
 
   editorialApproach:
-    "PoliticalPulse has not yet collected enough source metadata to assign a formal editorial profile.",
+    "The Angle Report has not yet collected enough source metadata to assign a formal editorial profile.",
 
   description:
-    "PoliticalPulse does not currently maintain a verified source profile for this publication.",
+    "The Angle Report does not currently maintain a verified source profile for this publication.",
 
   website: "",
 
   biasExplanation:
-    "PoliticalPulse has not assigned this publication a verified political-lean classification.",
+    "The Angle Report has not assigned this publication a verified political-lean classification.",
 
   trustSummary:
-    "This source has not yet been formally rated by PoliticalPulse.",
+    "This source has not yet been formally rated by The Angle Report.",
 };
 
 /*

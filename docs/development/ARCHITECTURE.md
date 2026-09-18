@@ -158,3 +158,13 @@ Typed client events live in `lib/analytics/`. The only vendor is **Vercel Web An
 - `trackEvent` is fail-open: analytics exceptions never fail the product. Custom events use at most two properties (`surface`, `detail`) because Vercel Pro Web Analytics (without Plus) allows two.
 - `detail` is either an allowlisted outcome/bucket or an 8-character `storyRef` derived from the canonical story key. Article bodies, questions, and raw URLs are not event payloads.
 - Operational visibility is `lib/ops/log.ts` JSON lines in Vercel logs (rate limit, AI disable, extract/NewsAPI/AI failure classes). It is not a separate APM product.
+
+## 20. Launch metadata (LP5 Phase 1)
+
+Canonical public origin is `https://theanglereport.com` (`lib/seo/siteUrl.ts`). `app/layout.tsx` sets `metadataBase` from `NEXT_PUBLIC_APP_URL` or that fallback.
+
+Indexable routes are listed in `app/sitemap.ts` (home + legal/about/contact). De-scoped product surfaces stay `disallow` in `app/robots.ts`. Shareable intelligence URLs remain public and keep `?u=` identity (LP2) but emit **`noindex, follow`**. Malformed brief links emit **`noindex, nofollow`**.
+
+Open Graph and Twitter use a generated 1200×630 brand image (`app/opengraph-image.tsx`). Durable indexable story pages are deferred.
+
+**This section does not mean the public domain has been cut over.**

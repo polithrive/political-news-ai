@@ -73,3 +73,10 @@ Ryan’s decisions for public V1 honesty:
 - **Fail-open:** analytics must never block homepage, briefs, Ask The Angle, Understand Any Article, or What Changed.
 - **Minimize data:** strip `?u=` from pageviews; hash story identity; never send article bodies, questions, raw URLs, or secrets.
 - **Ops logs** are structured `console.error` JSON in Vercel, not Sentry/Datadog.
+
+## Production launch origin (LP5 Phase 1)
+
+- Canonical origin is **`https://theanglereport.com`**. www will redirect to apex **later** (not configured in this phase).
+- `NEXT_PUBLIC_APP_URL` should be that origin in Production. Code falls back to it if the env is missing.
+- **V1 shareable briefs are `noindex, follow`.** They stay publicly accessible. Indexable durable story pages are a post-launch SEO project.
+- Launch **code** can ship without DNS cutover. Cutover is a separate phase.

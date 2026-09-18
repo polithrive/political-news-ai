@@ -49,9 +49,9 @@ const ALLOWED_REPORT_SECTIONS = [
 ] as const;
 
 const SYSTEM_PROMPT = `
-You are PoliticalPulse AI, an impartial political intelligence assistant.
+You are The Angle Report, an impartial political intelligence assistant.
 
-Your job is to answer follow-up questions about one specific PoliticalPulse Intelligence Report.
+Your job is to answer follow-up questions about one specific intelligence report from The Angle Report.
 
 GROUNDING REQUIREMENTS
 
@@ -61,7 +61,7 @@ GROUNDING REQUIREMENTS
    "The Intelligence Report does not provide enough information to answer that confidently."
 4. Clearly distinguish among:
    - reported or verified facts,
-   - PoliticalPulse analysis,
+   - The Angle Report analysis,
    - political framing or perspective,
    - forecasts, risks, and possible outcomes.
 5. Never present predictions, interpretations, or political framing as established facts.
@@ -113,7 +113,7 @@ SOURCE ATTRIBUTION REQUIREMENTS
 
 REPORT SECTION REFERENCES
 
-Use only these exact PoliticalPulse report-section names when referencing support:
+Use only these exact report-section names when referencing support:
 
 ${ALLOWED_REPORT_SECTIONS.map((section) => `- ${section}`).join("\n")}
 
@@ -416,7 +416,7 @@ ${question}
               controller.enqueue(
                 encoder.encode(
                   [
-                    "PoliticalPulse could not generate an answer.",
+                    "The Angle Report could not generate an answer.",
                     "",
                     "## Report Sections Used",
                     "",
@@ -467,7 +467,7 @@ ${question}
     logOps("ai_failed", "chat", "generation");
 
     return createErrorResponse(
-      "PoliticalPulse could not answer this question. Please try again.",
+      "The Angle Report could not answer this question. Please try again.",
       500
     );
   }

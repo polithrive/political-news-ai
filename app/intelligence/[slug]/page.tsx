@@ -4,6 +4,7 @@ import IntelligenceReportClient from "./IntelligenceReportClient";
 import {
   parseIntelligenceArticleUrl,
 } from "@/lib/services/intelligenceIdentity";
+import { intelligenceRobots } from "@/lib/seo/intelligenceRobots";
 
 type IntelligencePageProps = {
   params: Promise<{
@@ -25,7 +26,7 @@ export async function generateMetadata({
   if (!parsed.ok) {
     return {
       title: "Story unavailable",
-      robots: { index: false, follow: false },
+      robots: intelligenceRobots(false),
     };
   }
 
@@ -37,10 +38,7 @@ export async function generateMetadata({
     alternates: {
       canonical: canonicalPath,
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: intelligenceRobots(true),
   };
 }
 

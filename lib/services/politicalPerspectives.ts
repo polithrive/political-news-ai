@@ -64,7 +64,7 @@ Return JSON:
 
   if (!content) {
     throw new Error(
-      "PoliticalPulse could not generate political perspectives."
+      "The Angle Report could not generate political perspectives."
     );
   }
 

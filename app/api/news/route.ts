@@ -768,7 +768,7 @@ export async function GET(
 
             message:
               data.message ??
-              "PoliticalPulse could not retrieve news.",
+              "The Angle Report could not retrieve news.",
 
             articles: [],
           },
@@ -884,7 +884,7 @@ export async function GET(
           "internalError",
 
         message:
-          "PoliticalPulse could not retrieve news at this time.",
+          "The Angle Report could not retrieve news at this time.",
 
         articles: [],
       },

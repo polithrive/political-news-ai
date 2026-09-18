@@ -36,7 +36,7 @@ function toSafeString(
 function createSummaryFallback(): SummaryAnalysis {
   return {
     summary:
-      "PoliticalPulse could not complete the executive summary for this story.",
+      "The Angle Report could not complete the executive summary for this story.",
 
     whyThisMatters:
       "Additional information is needed to determine the story’s broader significance.",
@@ -60,7 +60,7 @@ function createSummaryFallback(): SummaryAnalysis {
       verdict: "Unavailable",
 
       explanation:
-        "PoliticalPulse could not complete the fact-check assessment.",
+        "The Angle Report could not complete the fact-check assessment.",
     },
 
     category: "Unknown",
@@ -134,7 +134,7 @@ function createPoliticalFallback(): PoliticalAnalysis {
       mainDisagreements: [],
 
       politicalPulseAnalysis:
-        "PoliticalPulse could not complete the political perspective analysis.",
+        "The Angle Report could not complete the political perspective analysis.",
 
       debateTemperature: 0,
     },
@@ -242,7 +242,7 @@ export async function POST(
     return Response.json(
       {
         error:
-          "PoliticalPulse could not process this article.",
+          "The Angle Report could not process this article.",
       },
       {
         status: 500,

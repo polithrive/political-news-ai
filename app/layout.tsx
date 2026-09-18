@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 
 import ProductAnalytics from "@/app/components/analytics/ProductAnalytics";
+import { getMetadataBase } from "@/lib/seo/siteUrl";
 
 import "./globals.css";
 
@@ -25,6 +26,8 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getMetadataBase(),
+
   title: {
     default: "The Angle Report",
     template: "%s | The Angle Report",
@@ -62,10 +65,20 @@ export const metadata: Metadata = {
 
   openGraph: {
     type: "website",
+    locale: "en_US",
+    url: "/",
     siteName: "The Angle Report",
     title: "The Angle Report | Understand the news from every angle",
     description:
       "Finish today's biggest stories in 60 seconds. Paste any article to see what you're missing.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "The Angle Report — Ideas from every side.",
+      },
+    ],
   },
 
   twitter: {
@@ -73,6 +86,7 @@ export const metadata: Metadata = {
     title: "The Angle Report | Understand the news from every angle",
     description:
       "Finish today's biggest stories in 60 seconds. Paste any article to see what you're missing.",
+    images: ["/twitter-image"],
   },
 
   robots: {

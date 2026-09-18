@@ -68,7 +68,7 @@ export async function POST(
 
     return Response.json({
       summary:
-        "PoliticalPulse could not generate an AI preview for this story.",
+        "The Angle Report could not generate an AI preview for this story.",
 
       biasScore: 50,
 

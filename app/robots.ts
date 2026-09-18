@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { CANONICAL_ORIGIN, absoluteUrl } from "@/lib/seo/siteUrl";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -19,5 +21,7 @@ export default function robots(): MetadataRoute.Robots {
         "/article",
       ],
     },
+    sitemap: absoluteUrl("/sitemap.xml"),
+    host: new URL(CANONICAL_ORIGIN).host,
   };
 }
