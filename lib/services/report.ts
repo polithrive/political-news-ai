@@ -17,6 +17,8 @@ import {
 } from "./multiSource";
 import { getSourceRating } from "./sourceRanking";
 import { calculateTrustScore } from "./trustScore";
+import { createStorySnapshotInput } from "./buildEvidenceSnapshot";
+import type { StorySnapshotInput } from "./storySnapshotInput";
 
 type DebatePerspectiveResponse = {
   position?: unknown;
@@ -457,7 +459,10 @@ export function getMockIntelligenceReport(): IntelligenceReport {
 
 export async function generateIntelligenceReport(
   article: Article
-): Promise<IntelligenceReport> {
+): Promise<{
+  report: IntelligenceReport;
+  snapshotInput: StorySnapshotInput;
+}> {
   const totalStartedAt =
     performance.now();
 
@@ -855,5 +860,17 @@ export async function generateIntelligenceReport(
     }
   );
 
-  return report;
+  return {
+    report,
+    snapshotInput: createStorySnapshotInput({
+      primary: {
+        url: article.url,
+        title: article.title,
+        sourceName: article.source.name,
+        publishedAt: article.publishedAt,
+      },
+      sources: evidenceContext.sources,
+      brief,
+    }),
+  };
 }

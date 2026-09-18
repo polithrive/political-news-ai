@@ -49,6 +49,22 @@ import type { Article } from "../../types/article";
 import type { IntelligenceGraph as IntelligenceGraphData } from "../../types/intelligenceGraph";
 import type { IntelligenceReport } from "../../types/report";
 
+function persistStorySnapshotBestEffort(snapshotInput: unknown) {
+  try {
+    void fetch("/api/story-snapshots", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      keepalive: true,
+      body: JSON.stringify(snapshotInput),
+    }).catch(() => {});
+  } catch {
+    // Snapshot persistence must never fail the brief.
+  }
+}
+
 function StoryPageShell({ children }: { children: ReactNode }) {
   return (
     <SiteShell>
@@ -112,7 +128,10 @@ export default function IntelligenceReportPage() {
         setIsReportLoading(true);
         setErrorMessage(null);
 
-        const generatedReport =
+        const {
+          report: generatedReport,
+          snapshotInput,
+        } =
           await generateIntelligenceReport(
             selectedArticle
           );
@@ -127,6 +146,7 @@ export default function IntelligenceReportPage() {
         );
 
         setReport(generatedReport);
+        persistStorySnapshotBestEffort(snapshotInput);
       } catch (error) {
         console.error(
           "Failed to generate intelligence report:",
@@ -155,6 +175,7 @@ export default function IntelligenceReportPage() {
         const {
           article: analyzedArticle,
           report: generatedReport,
+          snapshotInput,
         } =
           await generateIntelligenceReportFromUrl(
             selectedArticle.url
@@ -172,6 +193,7 @@ export default function IntelligenceReportPage() {
 
         setArticle(analyzedArticle);
         setReport(generatedReport);
+        persistStorySnapshotBestEffort(snapshotInput);
       } catch (error) {
         console.error(
           "Failed to generate URL intelligence report:",

@@ -9,6 +9,8 @@ import type { TrustScore } from "@/app/types/trust";
 import type { MergedAnalysis } from "@/lib/ai/mergeAnalysis";
 import type { EvidenceSource } from "@/lib/services/evidenceContext";
 import { normalizeEvidenceBrief } from "@/lib/services/evidenceBrief";
+import { createStorySnapshotInput } from "@/lib/services/buildEvidenceSnapshot";
+import type { StorySnapshotInput } from "@/lib/services/storySnapshotInput";
 
 type AnalyzeUrlArticle = {
   title: string;
@@ -251,6 +253,7 @@ export function mapAnalyzeUrlToIntelligenceReport(
 ): {
   article: Article;
   report: IntelligenceReport;
+  snapshotInput: StorySnapshotInput;
 } {
   if (!isTrustScore(payload.trustScore)) {
     throw new Error(
@@ -413,6 +416,16 @@ export function mapAnalyzeUrlToIntelligenceReport(
   return {
     article,
     report,
+    snapshotInput: createStorySnapshotInput({
+      primary: {
+        url: article.url,
+        title: article.title,
+        sourceName: article.source.name,
+        publishedAt: article.publishedAt,
+      },
+      sources: payload.evidence?.sources ?? [],
+      brief,
+    }),
   };
 }
 
@@ -421,6 +434,7 @@ export async function generateIntelligenceReportFromUrl(
 ): Promise<{
   article: Article;
   report: IntelligenceReport;
+  snapshotInput: StorySnapshotInput;
 }> {
   const response = await fetch("/api/analyze-url", {
     method: "POST",
