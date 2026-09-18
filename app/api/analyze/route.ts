@@ -7,6 +7,7 @@ import {
   type SummaryAnalysis,
 } from "@/lib/ai/generateSummary";
 import { mergeAnalysis } from "@/lib/ai/mergeAnalysis";
+import { logOps } from "@/lib/ops/log";
 import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
 import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
@@ -144,14 +145,8 @@ function createPoliticalFallback(): PoliticalAnalysis {
   };
 }
 
-function logModuleFailure(
-  moduleName: string,
-  reason: unknown
-): void {
-  console.error(
-    `Analyze API ${moduleName} failed:`,
-    reason
-  );
+function logModuleFailure(moduleName: string): void {
+  logOps("ai_failed", "analyze", moduleName);
 }
 
 export async function POST(
@@ -225,19 +220,13 @@ export async function POST(
         : createPoliticalFallback();
 
     if (summaryResult.status === "rejected") {
-      logModuleFailure(
-        "summary module",
-        summaryResult.reason
-      );
+      logModuleFailure("summary");
     }
 
     if (
       politicalResult.status === "rejected"
     ) {
-      logModuleFailure(
-        "political module",
-        politicalResult.reason
-      );
+      logModuleFailure("political");
     }
 
     const analysis = mergeAnalysis({
@@ -247,11 +236,8 @@ export async function POST(
     });
 
     return Response.json(analysis);
-  } catch (error) {
-    console.error(
-      "Analyze API orchestration error:",
-      error
-    );
+  } catch {
+    logOps("unexpected", "analyze", "generation");
 
     return Response.json(
       {

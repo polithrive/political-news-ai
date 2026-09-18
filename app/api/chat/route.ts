@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { openai } from "@/lib/ai/client";
+import { logOps } from "@/lib/ops/log";
 import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
 import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
@@ -462,21 +463,8 @@ ${question}
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error) {
-    console.error(
-      "PoliticalPulse chat endpoint failed:",
-      error
-    );
-
-    if (
-      error instanceof Error &&
-      error.message.includes("OPENAI_API_KEY")
-    ) {
-      return createErrorResponse(
-        "PoliticalPulse AI is not configured correctly.",
-        500
-      );
-    }
+  } catch {
+    logOps("ai_failed", "chat", "generation");
 
     return createErrorResponse(
       "PoliticalPulse could not answer this question. Please try again.",

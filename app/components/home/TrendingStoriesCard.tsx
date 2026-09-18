@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import type { Article } from "@/app/types/article";
 
+import { trackBriefSelected } from "@/lib/analytics/track";
 import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
@@ -38,7 +39,10 @@ export default function TrendingStoriesCard({
               <Link
                 href={href}
                 prefetch={false}
-                onClick={() => saveSelectedArticle(article)}
+                onClick={() => {
+                  saveSelectedArticle(article);
+                  trackBriefSelected(article.url, "home");
+                }}
                 className="flex gap-2.5 hover:text-[#8EDCFF]"
               >
                 <span className="w-4 shrink-0 font-serif text-sm font-bold text-[#55C8FF]">

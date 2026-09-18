@@ -52,7 +52,7 @@ Ryan’s decisions for public V1 honesty:
 - **Trust forwarded IPs only on Vercel** (`VERCEL` set). Off-platform, all callers share identity `unknown` rather than honoring client-supplied `X-Forwarded-For`.
 - **`AI_DISABLED`** (1/true/yes/on) returns HTTP 503 on AI-generating routes without a code redeploy. It does not hide secrets and does not disable `/api/news` or snapshot persistence.
 - **Understand Any Article** fetches HTML itself (GET, `redirect: manual`, hop + DNS checks) and then parses. It is not a general-purpose proxy.
-- **CSP is Report-Only** for V1. Enforcing CSP would risk Next.js inline/runtime scripts, arbitrary publisher images, and LP4 analytics hosts that are not chosen yet.
+- **CSP is Report-Only** for V1. Enforcing CSP would risk Next.js inline/runtime scripts and arbitrary publisher images. The report-only policy now allowlists `va.vercel-scripts.com` for Web Analytics; it is still not enforcing.
 - **Next.js 16.3.3** is the smallest 16.x release that patches the July 2026 GHSA set **and** the August 2026 AVIF/Windows critical issues. Do not treat 16.2.11 as sufficient.
 - **Legal contact:** Brand as The Angle Report. Do **not** invent a public email; Contact must say no inbox is published yet.
 - De-scope is **reversible hide / noindex / 404**, not a redesign and not building auth, ESP, or real polls.
@@ -64,3 +64,12 @@ Ryan’s decisions for public V1 honesty:
 - `localStorage` selectedArticle is cache/optimization only.
 - Do not serialize the full article object into the query string.
 - Do not introduce a second analysis pipeline or a new DB table for first-load shareability.
+
+## Product measurement (LP4)
+
+- **Vendor:** Vercel Web Analytics on **Vercel Pro**. Do not add a second analytics product for V1.
+- **Plus is off.** Funnel events use **two custom properties** (`surface`, `detail`). UTM dashboards wait until Ryan enables Plus.
+- **No accounts** and no extra fingerprinting. Repeat visitors use Vercel’s built-in visitor model only.
+- **Fail-open:** analytics must never block homepage, briefs, Ask The Angle, Understand Any Article, or What Changed.
+- **Minimize data:** strip `?u=` from pageviews; hash story identity; never send article bodies, questions, raw URLs, or secrets.
+- **Ops logs** are structured `console.error` JSON in Vercel, not Sentry/Datadog.

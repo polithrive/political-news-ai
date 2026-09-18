@@ -8,6 +8,9 @@ import ShareBriefButton from "./ShareBriefButton";
 
 import type { Article } from "@/app/types/article";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { storyRefFromUrl } from "@/lib/analytics/storyRef";
+import { trackEvent, trackReadOriginal } from "@/lib/analytics/track";
 import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 
 type StoryBriefHeaderProps = {
@@ -91,6 +94,12 @@ export default function StoryBriefHeader({
                 ) : null}
                 <a
                   href="#what-changed"
+                  onClick={() => {
+                    trackEvent(ANALYTICS_EVENTS.whatChangedToggled, {
+                      surface: "brief",
+                      detail: storyRefFromUrl(article.url),
+                    });
+                  }}
                   className="font-medium text-[#55C8FF] transition hover:text-[#8EDCFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8]"
                 >
                   Reporting updated
@@ -108,6 +117,7 @@ export default function StoryBriefHeader({
                 href={article.url}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => trackReadOriginal(article.url, "brief")}
                 className={actionClassName}
               >
                 Read original
@@ -120,6 +130,7 @@ export default function StoryBriefHeader({
             <ShareBriefButton
               title={article.title}
               sharePath={createIntelligenceHref(article)}
+              storyRef={storyRefFromUrl(article.url)}
               className={actionClassName}
             />
 

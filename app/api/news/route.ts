@@ -1,5 +1,6 @@
 import { analyzeNewsApiPool, curateHomepageFeed } from "@/lib/services/homepageCuration";
 import { acquireHomepageCandidates } from "@/lib/services/newsAcquisition";
+import { logOps } from "@/lib/ops/log";
 import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
 import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
@@ -872,18 +873,8 @@ export async function GET(
       servedFromLastGood:
         acquired.diagnostics.servedFromLastGood === true,
     });
-  } catch (error) {
-    console.error(
-      "News API route error:",
-      {
-        error,
-
-        totalRouteMs:
-          getDurationMs(
-            routeStartedAt
-        ),
-      }
-    );
+  } catch {
+    logOps("unexpected", "news", "generation");
 
     return Response.json(
       {

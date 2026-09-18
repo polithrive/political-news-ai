@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
+
 type ShareBriefButtonProps = {
   title: string;
   sharePath?: string | null;
+  storyRef?: string;
   className?: string;
 };
 
 export default function ShareBriefButton({
   title,
   sharePath,
+  storyRef = "unknown",
   className,
 }: ShareBriefButtonProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">(
@@ -23,6 +28,13 @@ export default function ShareBriefButton({
       : `${window.location.origin}${window.location.pathname}${window.location.search}`;
     const text = `${title}\n\nA 60-second brief from The Angle Report\n${url}`;
 
+    const markShared = () => {
+      trackEvent(ANALYTICS_EVENTS.shareClicked, {
+        surface: "brief",
+        detail: storyRef,
+      });
+    };
+
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({
@@ -30,10 +42,12 @@ export default function ShareBriefButton({
           text: "A 60-second brief from The Angle Report",
           url,
         });
+        markShared();
         return;
       }
 
       await navigator.clipboard.writeText(text);
+      markShared();
       setStatus("copied");
       window.setTimeout(() => setStatus("idle"), 2000);
     } catch (error) {
@@ -46,6 +60,7 @@ export default function ShareBriefButton({
 
       try {
         await navigator.clipboard.writeText(text);
+        markShared();
         setStatus("copied");
         window.setTimeout(() => setStatus("idle"), 2000);
       } catch {

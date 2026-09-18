@@ -3,6 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
+
 import Footer from "./components/Footer";
 import HomePublication from "./components/home/HomePublication";
 import SearchResults from "./components/SearchResults";
@@ -30,6 +33,14 @@ function HomePage() {
   useEffect(() => {
     setSearchTerm(queryFromUrl);
   }, [queryFromUrl]);
+
+  useEffect(() => {
+    trackEvent(
+      ANALYTICS_EVENTS.homepageViewed,
+      { surface: "home" },
+      { onceKey: "homepage_viewed" }
+    );
+  }, []);
 
   return (
     <SiteShell

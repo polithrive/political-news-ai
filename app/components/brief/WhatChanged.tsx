@@ -1,7 +1,9 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
 import type { EvidenceBriefFact } from "@/app/types/report";
 import type { WhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
 
@@ -10,6 +12,7 @@ import { formatPublisherDisplayName } from "./briefUi";
 
 type WhatChangedProps = {
   whatChanged: WhatChangedViewModel;
+  storyRef?: string;
 };
 
 function formatComparedDate(value: string | null) {
@@ -43,7 +46,10 @@ function toBriefFact(fact: WhatChangedViewModel["facts"][number]): EvidenceBrief
   };
 }
 
-export default function WhatChanged({ whatChanged }: WhatChangedProps) {
+export default function WhatChanged({
+  whatChanged,
+  storyRef = "unknown",
+}: WhatChangedProps) {
   const panelId = useId();
   const headingId = "what-changed-heading";
   const [isOpen, setIsOpen] = useState(whatChanged.defaultExpanded);
@@ -56,6 +62,18 @@ export default function WhatChanged({ whatChanged }: WhatChangedProps) {
   const supportLine = comparedDate
     ? `Compared with the previous saved analysis · ${comparedDate}`
     : "Compared with the previous saved analysis";
+
+  useEffect(() => {
+    if (!whatChanged.defaultExpanded) {
+      return;
+    }
+
+    trackEvent(
+      ANALYTICS_EVENTS.whatChangedToggled,
+      { surface: "brief", detail: storyRef },
+      { onceKey: `what_changed:${storyRef}` }
+    );
+  }, [storyRef, whatChanged.defaultExpanded]);
 
   return (
     <section
@@ -85,7 +103,13 @@ export default function WhatChanged({ whatChanged }: WhatChangedProps) {
               ? `What changed, ${itemCount} new items, collapse`
               : `What changed, ${itemCount} new items`
           }
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => {
+            setIsOpen((open) => !open);
+            trackEvent(ANALYTICS_EVENTS.whatChangedToggled, {
+              surface: "brief",
+              detail: storyRef,
+            });
+          }}
           className="mt-0.5 shrink-0 text-sm font-semibold text-[#55C8FF] transition hover:text-[#8EDCFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38BDF8] motion-reduce:transition-none"
         >
           {isOpen ? "Hide" : "Show"}

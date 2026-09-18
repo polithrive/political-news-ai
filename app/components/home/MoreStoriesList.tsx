@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import type { Article } from "@/app/types/article";
 
+import { trackBriefSelected } from "@/lib/analytics/track";
 import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
@@ -112,7 +113,10 @@ export default function MoreStoriesList({
                 <Link
                   href={href}
                   prefetch={false}
-                  onClick={() => saveSelectedArticle(article)}
+                  onClick={() => {
+                    saveSelectedArticle(article);
+                    trackBriefSelected(article.url, "home");
+                  }}
                   className="font-serif text-[1.05rem] font-bold leading-snug text-white hover:text-[#8EDCFF]"
                 >
                   {article.title}

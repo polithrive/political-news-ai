@@ -142,10 +142,19 @@ Exceeded limits return HTTP **429** with `Retry-After`. Kill switch returns **50
 
 **SSRF:** `normalizeArticleUrl` / `assertSafePublicHttpUrl` reject non-http(s), credentials, non-80/443 ports, localhost, RFC1918, link-local/metadata IPv4, IPv6 loopback/ULA/link-local, and metadata hostnames. Fetch resolves DNS and rejects private answers, follows at most 3 redirects, re-validates each `Location`, and caps body size. Residual DNS-rebinding between lookup and connect is not fully closed without IP-pinned TLS.
 
-**Headers** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` camera/mic/geo off, `X-DNS-Prefetch-Control: off`, `poweredByHeader: false`, CSP **Report-Only**. Applied to `/` and app routes, not `/_next/image` or `/_next/static`.
+**Headers** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` camera/mic/geo off, `X-DNS-Prefetch-Control: off`, `poweredByHeader: false`, CSP **Report-Only** (script-src includes `https://va.vercel-scripts.com` for Web Analytics). Applied to `/` and app routes, not `/_next/image` or `/_next/static`.
 
 **Framework:** Next.js **16.3.3** (from 16.2.10). Image formats limited to `image/webp` (AVIF optimization off). `devIndicators` and `agentRules` are off so 16.3 agent UI does not cover the product chrome.
 
 ### MVP trust boundary (technical debt)
 
 The snapshot POST is **client-originated** because validated `EvidenceBrief` and full `EvidenceSource[]` still coexist on the client after fresh analysis. The server rebuilds the snapshot and fingerprint from a parsed contract but **does not independently re-run Phase 1 fragment-in-title/description validation**. A crafted body that resembles a validated brief can be stored. Persist should eventually move fully into the server-side evidence-analysis pipeline.
+
+## 19. Product measurement (LP4)
+
+Typed client events live in `lib/analytics/`. The only vendor is **Vercel Web Analytics** (`@vercel/analytics`).
+
+- `ProductAnalytics` mounts in `app/layout.tsx` and redacts pageview query/hash so shareable `u=` article URLs are not sent.
+- `trackEvent` is fail-open: analytics exceptions never fail the product. Custom events use at most two properties (`surface`, `detail`) because Vercel Pro Web Analytics (without Plus) allows two.
+- `detail` is either an allowlisted outcome/bucket or an 8-character `storyRef` derived from the canonical story key. Article bodies, questions, and raw URLs are not event payloads.
+- Operational visibility is `lib/ops/log.ts` JSON lines in Vercel logs (rate limit, AI disable, extract/NewsAPI/AI failure classes). It is not a separate APM product.

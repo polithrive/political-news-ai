@@ -9,7 +9,7 @@ const sections = [
     paragraphs: [
       "The Angle Report may collect information you provide directly, such as a pasted article URL, a follow-up question about a brief, or other text you submit through the product.",
       "We also store limited information on your device using the browser’s local storage so a brief you just opened can be restored on that same device. We do not operate user accounts in V1 and we do not run a newsletter signup.",
-      "Hosting and request logs may include technical details such as IP address, browser type, pages requested, and approximate timing. We do not currently use a third-party product analytics package.",
+      "Hosting and request logs may include technical details such as IP address, browser type, pages requested, and approximate timing. Product analytics are collected with Vercel Web Analytics. Page paths are recorded without share-query article addresses. Custom events use a short non-reversible story reference and a surface or outcome label, not article bodies, pasted URLs, or Ask The Angle questions.",
     ],
   },
   {
@@ -30,17 +30,17 @@ const sections = [
   {
     title: "4. Third-party services",
     paragraphs: [
-      "The Angle Report relies on third-party providers to operate. Current providers include OpenAI (AI generation), NewsAPI (headline and story metadata), Neon (story snapshot storage used for What Changed), and Vercel (hosting).",
+      "The Angle Report relies on third-party providers to operate. Current providers include OpenAI (AI generation), NewsAPI (headline and story metadata), Neon (story snapshot storage used for What Changed), Vercel (hosting), and Vercel Web Analytics (page views and product funnel events).",
       "Those providers may process limited information according to their own privacy policies and our contracts with them.",
-      "We do not currently use a separate analytics or error-monitoring vendor.",
+      "We do not use a separate error-monitoring vendor. Operational failures are recorded in Vercel runtime logs without article bodies, questions, or secrets.",
     ],
   },
   {
     title: "5. Cookies, local storage, and analytics",
     paragraphs: [
-      "V1 does not set advertising cookies and does not currently load a third-party analytics script.",
+      "V1 does not set advertising cookies and does not use fingerprinting for ads.",
       "The product uses browser local storage on your device, including a selected-article key and a report cache, so a brief can be reopened in that browser. Those keys are implementation details of the client app; renaming them is not part of this public policy.",
-      "If we add analytics later, this policy will be updated before that collection begins.",
+      "Vercel Web Analytics loads a first-party analytics script on Vercel-hosted pages. It records page views (with query strings stripped, including the public brief `u` parameter) and named funnel events with at most two custom properties. It is used to understand visits, repeat use at the platform’s standard visitor model, and whether core features work. It is not used to build user accounts.",
     ],
   },
   {
@@ -62,7 +62,7 @@ const sections = [
     title: "8. Information sharing",
     paragraphs: [
       "The Angle Report does not sell personal information.",
-      "Information may be shared with the service providers listed above as needed to host the site, generate analysis, fetch news metadata, and store story snapshots.",
+      "Information may be shared with the service providers listed above as needed to host the site, generate analysis, fetch news metadata, store story snapshots, and measure product usage.",
       "Information may also be disclosed when required by law, to protect rights or safety, or in connection with a merger, acquisition, financing, or transfer of business assets.",
     ],
   },

@@ -32,6 +32,10 @@ test("security headers include clickjacking and sniffing protections", async () 
   assert.equal(values["Referrer-Policy"], "strict-origin-when-cross-origin");
   assert.match(values["Permissions-Policy"], /camera=\(\)/);
   assert.ok(values["Content-Security-Policy-Report-Only"]);
+  assert.match(
+    values["Content-Security-Policy-Report-Only"],
+    /va\.vercel-scripts\.com/
+  );
 });
 
 test("analyze-url rejects a private destination without generating", async () => {

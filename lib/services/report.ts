@@ -1,3 +1,4 @@
+import { attachHttpStatus } from "@/lib/analytics/httpStatus";
 import type { Article } from "@/app/types/article";
 import type {
   DebatePerspective,
@@ -313,8 +314,9 @@ async function requestReportAnalysis(
   );
 
   if (!response.ok) {
-    throw new Error(
-      "Failed to generate intelligence report"
+    throw attachHttpStatus(
+      new Error("Failed to generate intelligence report"),
+      response.status
     );
   }
 

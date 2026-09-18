@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
 import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 import { createUrlSubmittedArticle } from "@/lib/services/urlAnalysisReport";
@@ -60,6 +62,7 @@ export default function AnalyzeUrlForm({
     }
 
     saveSelectedArticle(submittedArticle);
+    trackEvent(ANALYTICS_EVENTS.analyzeSubmitted, { surface: "home" });
 
     router.push(href);
   }

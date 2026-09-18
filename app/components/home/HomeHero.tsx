@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import type { Article } from "@/app/types/article";
 
+import { trackReadOriginal } from "@/lib/analytics/track";
+
 import RelativeTime from "./RelativeTime";
 import StoryBriefLink from "./StoryBriefLink";
 import { storyCategory } from "./storyMeta";
@@ -94,6 +96,7 @@ export default function HomeHero({
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackReadOriginal(article.url, "home")}
                   className="inline-flex items-center rounded-full border border-[#3A6A96] px-4 py-2.5 text-sm font-semibold text-white hover:border-[#55C8FF]"
                 >
                   Read original →

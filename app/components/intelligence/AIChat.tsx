@@ -10,6 +10,9 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { ANALYTICS_EVENTS, failureDetailFromHttpStatus } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
+
 import type { ChatMessage } from "@/app/types/chat";
 
 import SectionHeader from "@/app/components/ui/SectionHeader";
@@ -21,6 +24,7 @@ type AIChatProps = {
   reportTitle?: string;
   variant?: "default" | "compact";
   independentSourceCount?: number;
+  storyRef?: string;
 };
 
 type ChatErrorResponse = {
@@ -118,6 +122,7 @@ export default function AIChat({
   reportTitle,
   variant = "default",
   independentSourceCount,
+  storyRef = "unknown",
 }: AIChatProps) {
   const isCompact = variant === "compact";
   const compactPrompts =
@@ -125,6 +130,14 @@ export default function AIChat({
     independentSourceCount < 2
       ? COMPACT_PROMPTS_LIMITED_EVIDENCE
       : COMPACT_PROMPTS_MULTI_SOURCE;
+
+  function markAskOpened() {
+    trackEvent(
+      ANALYTICS_EVENTS.askAngleOpened,
+      { surface: "chat", detail: storyRef },
+      { onceKey: `ask_open:${storyRef}` }
+    );
+  }
   const [messages, setMessages] =
     useState<ChatMessage[]>([]);
 
@@ -159,6 +172,8 @@ export default function AIChat({
     ) {
       return;
     }
+
+    markAskOpened();
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -197,6 +212,8 @@ export default function AIChat({
     activeRequestRef.current =
       abortController;
 
+    let countedFailure = false;
+
     try {
       const response = await fetch(
         "/api/chat",
@@ -225,6 +242,21 @@ export default function AIChat({
       );
 
       if (!response.ok) {
+        const detail = failureDetailFromHttpStatus(response.status);
+
+        if (response.status === 429) {
+          trackEvent(ANALYTICS_EVENTS.rateLimited, {
+            surface: "chat",
+            detail: "ai-chat",
+          });
+        }
+
+        countedFailure = true;
+        trackEvent(ANALYTICS_EVENTS.askAngleFailed, {
+          surface: "chat",
+          detail,
+        });
+
         let apiError =
           "The Angle Report could not answer this question.";
 
@@ -344,10 +376,20 @@ export default function AIChat({
       }
 
       if (!finalVisibleAnswer.trim()) {
+        countedFailure = true;
+        trackEvent(ANALYTICS_EVENTS.askAngleFailed, {
+          surface: "chat",
+          detail: "empty",
+        });
         throw new Error(
           "The Angle Report returned an empty response."
         );
       }
+
+      trackEvent(ANALYTICS_EVENTS.askAngleSuccess, {
+        surface: "chat",
+        detail: storyRef,
+      });
     } catch (error) {
       if (
         error instanceof DOMException &&
@@ -357,6 +399,13 @@ export default function AIChat({
           "The Angle Report response was stopped."
         );
       } else {
+        if (!countedFailure) {
+          trackEvent(ANALYTICS_EVENTS.askAngleFailed, {
+            surface: "chat",
+            detail: "network",
+          });
+        }
+
         const message =
           error instanceof Error
             ? error.message
@@ -488,6 +537,7 @@ export default function AIChat({
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={markAskOpened}
               placeholder="Ask a question about this story..."
               disabled={isLoading}
               aria-label="Ask a question about this story"
@@ -1210,6 +1260,7 @@ export default function AIChat({
                 )
               }
               onKeyDown={handleKeyDown}
+              onFocus={markAskOpened}
               placeholder="Ask The Angle Report about this report..."
               disabled={isLoading}
               aria-label="Ask a question about this report"

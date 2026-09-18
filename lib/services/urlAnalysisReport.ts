@@ -1,3 +1,4 @@
+import { attachHttpStatus } from "@/lib/analytics/httpStatus";
 import type { Article } from "@/app/types/article";
 import type {
   IntelligenceReport,
@@ -462,7 +463,7 @@ export async function generateIntelligenceReportFromUrl(
           )
         : "The Angle Report could not process this article.";
 
-    throw new Error(errorMessage);
+    throw attachHttpStatus(new Error(errorMessage), response.status);
   }
 
   if (

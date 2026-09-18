@@ -84,7 +84,7 @@ export default function SearchResults({
               ) : null}
 
               <div className="mt-3">
-                <StoryBriefLink article={article} />
+                <StoryBriefLink article={article} surface="search" />
               </div>
             </li>
           ))}

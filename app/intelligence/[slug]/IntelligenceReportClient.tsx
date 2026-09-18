@@ -28,6 +28,10 @@ import SourceComparison from "@/app/components/intelligence/SourceComparison";
 import StoryTimeline from "@/app/components/intelligence/StoryTimeline";
 import TrustScore from "@/app/components/intelligence/TrustScore";
 
+import { ANALYTICS_EVENTS, failureDetailFromHttpStatus } from "@/lib/analytics/taxonomy";
+import { readHttpStatus } from "@/lib/analytics/httpStatus";
+import { storyRefFromUrl } from "@/lib/analytics/storyRef";
+import { trackEvent } from "@/lib/analytics/track";
 import { getLatestNews } from "@/lib/news";
 import { getSelectedArticle, saveSelectedArticle } from "@/lib/selectedArticle";
 import { buildIntelligenceContext } from "@/lib/services/contextBuilder";
@@ -218,6 +222,25 @@ export default function IntelligenceReportClient({
         );
 
         if (!isCancelled) {
+          const status = readHttpStatus(error);
+          const storyRef = storyRefFromUrl(selectedArticle.url);
+
+          if (status === 429) {
+            trackEvent(ANALYTICS_EVENTS.rateLimited, {
+              surface: "feed",
+              detail: "ai-generate",
+            });
+          }
+
+          trackEvent(
+            ANALYTICS_EVENTS.briefFailed,
+            {
+              surface: "feed",
+              detail: failureDetailFromHttpStatus(status),
+            },
+            { onceKey: `brief_failed:${storyRef}` }
+          );
+
           setErrorMessage(
             "The Angle Report could not generate this brief. Please return to the homepage and try opening the story again."
           );
@@ -277,6 +300,28 @@ export default function IntelligenceReportClient({
         );
 
         if (!isCancelled) {
+          const status = readHttpStatus(error);
+          const storyRef = storyRefFromUrl(selectedArticle.url);
+
+          if (status === 429) {
+            trackEvent(ANALYTICS_EVENTS.rateLimited, {
+              surface: "analyze",
+              detail: "ai-expensive",
+            });
+          }
+
+          const detail = failureDetailFromHttpStatus(status);
+          trackEvent(
+            ANALYTICS_EVENTS.briefFailed,
+            { surface: "analyze", detail },
+            { onceKey: `brief_failed:${storyRef}` }
+          );
+          trackEvent(
+            ANALYTICS_EVENTS.analyzeFailed,
+            { surface: "analyze", detail },
+            { onceKey: `analyze_failed:${storyRef}` }
+          );
+
           setErrorMessage(
             error instanceof Error
               ? error.message
@@ -406,6 +451,51 @@ export default function IntelligenceReportClient({
       isCancelled = true;
     };
   }, [articleUrl, parseError, slug]);
+
+  useEffect(() => {
+    if (parseError) {
+      trackEvent(
+        ANALYTICS_EVENTS.briefFailed,
+        { surface: "identity", detail: parseError },
+        { onceKey: `brief_failed:identity:${parseError}` }
+      );
+    }
+  }, [parseError]);
+
+  useEffect(() => {
+    if (isInitializingArticle || article || parseError) {
+      return;
+    }
+
+    trackEvent(
+      ANALYTICS_EVENTS.briefFailed,
+      { surface: "identity", detail: "missing" },
+      { onceKey: "brief_failed:identity:missing" }
+    );
+  }, [article, isInitializingArticle, parseError]);
+
+  useEffect(() => {
+    if (!article || !report) {
+      return;
+    }
+
+    const storyRef = storyRefFromUrl(article.url);
+    const surface = isUrlSubmittedArticle(article) ? "analyze" : "feed";
+
+    trackEvent(
+      ANALYTICS_EVENTS.briefReady,
+      { surface, detail: storyRef },
+      { onceKey: `brief_ready:${storyRef}` }
+    );
+
+    if (surface === "analyze") {
+      trackEvent(
+        ANALYTICS_EVENTS.analyzeSuccess,
+        { surface, detail: storyRef },
+        { onceKey: `analyze_success:${storyRef}` }
+      );
+    }
+  }, [article, report]);
 
   useEffect(() => {
     if (!graphArticle || graph) {
@@ -662,6 +752,7 @@ export default function IntelligenceReportClient({
             article={article}
             report={report}
             whatChanged={whatChanged}
+            storyRef={storyRefFromUrl(article.url)}
           />
         ) : (
           <div className="mt-10 space-y-5" aria-busy="true" aria-live="polite">
@@ -684,6 +775,7 @@ export default function IntelligenceReportClient({
               variant="compact"
               reportTitle={article.title}
               reportContext={reportContext}
+              storyRef={storyRefFromUrl(article.url)}
               independentSourceCount={
                 report.brief?.independentSourceCount ??
                 report.overview.sourcesReviewed

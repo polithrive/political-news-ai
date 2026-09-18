@@ -8,6 +8,7 @@ import { formatPublisherDisplayName } from "./briefUi";
 
 type CorroboratedFactProps = {
   fact: EvidenceBriefFact;
+  onEvidenceOpened?: () => void;
 };
 
 function uniquePublishers(fact: EvidenceBriefFact): string[] {
@@ -53,6 +54,7 @@ function supportFieldLabel(
 
 export default function CorroboratedFact({
   fact,
+  onEvidenceOpened,
 }: CorroboratedFactProps) {
   const [isOpen, setIsOpen] = useState(false);
   const detailsId = useId();
@@ -106,7 +108,13 @@ export default function CorroboratedFact({
             aria-controls={detailsId}
             onClick={(event) => {
               const button = event.currentTarget;
-              setIsOpen((open) => !open);
+              setIsOpen((open) => {
+                if (!open) {
+                  onEvidenceOpened?.();
+                }
+
+                return !open;
+              });
               requestAnimationFrame(() => {
                 button.scrollIntoView({
                   block: "nearest",

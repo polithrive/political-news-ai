@@ -18,6 +18,7 @@ import { normalizeArticleUrl } from "@/lib/services/articleExtractor";
 import { buildEvidenceContext } from "@/lib/services/evidenceContext";
 
 import { calculateTrustScore } from "@/lib/services/trustScore";
+import { logOps } from "@/lib/ops/log";
 import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
 import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
@@ -254,6 +255,8 @@ export async function POST(
       );
 
     if (!extracted) {
+      logOps("extract_failed", "analyze-url", "extract");
+
       return Response.json(
         {
           error:
@@ -518,11 +521,8 @@ export async function POST(
 
       analysis,
     });
-  } catch (error) {
-    console.error(
-      "Analyze URL API orchestration error:",
-      error
-    );
+  } catch {
+    logOps("unexpected", "analyze-url", "generation");
 
     return Response.json(
       {

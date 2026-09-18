@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 
+import ProductAnalytics from "@/app/components/analytics/ProductAnalytics";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -94,6 +96,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <ProductAnalytics />
       </body>
     </html>
   );

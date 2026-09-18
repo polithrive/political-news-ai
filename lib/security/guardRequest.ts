@@ -1,3 +1,5 @@
+import { apiRouteFromRequest, logOps } from "@/lib/ops/log";
+
 import { isAiDisabled } from "./aiDisabled";
 import { getClientIp } from "./clientIp";
 import {
@@ -15,6 +17,8 @@ export function enforcePublicEndpointGuard(
   options: GuardOptions
 ): Response | null {
   if (options.ai && isAiDisabled()) {
+    logOps("ai_disabled", apiRouteFromRequest(request), "disabled");
+
     return Response.json(
       {
         error:
@@ -35,6 +39,8 @@ export function enforcePublicEndpointGuard(
   if (result.ok) {
     return null;
   }
+
+  logOps("rate_limited", apiRouteFromRequest(request), options.bucket.name);
 
   return Response.json(
     {

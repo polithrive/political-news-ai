@@ -2,6 +2,8 @@
 
 import type { Article } from "@/app/types/article";
 
+import { trackReadOriginal } from "@/lib/analytics/track";
+
 import StoryBriefLink from "./StoryBriefLink";
 import StoryImage from "./StoryImage";
 import RelativeTime from "./RelativeTime";
@@ -85,6 +87,7 @@ export default function BigStoryCard({
               href={article.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackReadOriginal(article.url, "home")}
               className="text-[12px] font-semibold text-[#9CB0C5] hover:text-white"
             >
               Read original →

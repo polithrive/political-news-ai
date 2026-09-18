@@ -2,11 +2,13 @@
 
 ## Current Phase
 
-**LP3 — Cost, abuse, and security** (GitHub issue **#6**) is **complete**.
+**LP4 — Measurement** is **complete**.
 
-Protected application checkpoint after this work: **Harden V1 cost abuse and security**.
+Protected starting checkpoint for this work: `8afe1c4` — Remove unnecessary homepage workaround.
 
-Do **not** start LP4.
+Do **not** start LP5.
+
+A GitHub issue titled “LP4 — Measurement” was **not** created: the local `gh` CLI is unauthenticated and no GitHub issue MCP was available. Create it later if you still want a tracking issue.
 
 ## Protected Checkpoint
 
@@ -15,169 +17,142 @@ Do **not** start LP4.
 | Application (2B.2) | `006ae52` | Add What Changed reader experience |
 | LP1 | `b1634e4` | De-scope incomplete V1 surfaces |
 | LP2 | `fb658d0` | Make intelligence briefs directly shareable |
-| LP3 | this commit | Harden V1 cost abuse and security |
+| LP3 | `ac16ee7` | Harden V1 cost abuse and security |
+| LP3 cleanup | `8afe1c4` | Remove unnecessary homepage workaround |
+| LP4 | this commit | Add V1 product measurement |
 
-## Rate-limit architecture
+## Analytics solution and why
 
-In-memory sliding window (`lib/security/rateLimit.ts`). One `Map` of timestamps per **server instance**.
+**Vercel Web Analytics** via `@vercel/analytics`, on **Vercel Pro**.
 
-This is **not** distributed. On Vercel:
+Ryan already hosts the app on Vercel. This is the smallest production path: no extra analytics vendor account, no self-hosted pipeline, no user accounts, and no fingerprinting product. Custom funnel events require Pro. **Web Analytics Plus was not added** (no UTM dashboard, max **two custom properties** per event).
 
-- Each serverless isolate has its own counters.
-- Cold starts reset counters.
-- Concurrent instances do not share quota.
-- Determined attackers can exceed the documented numbers by spreading across instances.
+Hobby page views alone could not answer brief/analyze/chat/rate-limit questions.
 
-It is still useful against casual abuse and accidental retry storms without adding Redis/Upstash.
+## Cost and Ryan action
 
-**Client identity:** `getClientIp` in `lib/security/clientIp.ts`.
+- **Plan:** Vercel Pro (already chosen). Custom events are included on Pro. Usage beyond the team’s event credit is billed by Vercel (on the order of cents per thousand events).
+- **Plus ($10/mo) was not enabled.** Referrer/UTM breakdown in the Web Analytics UI is therefore limited. Standard page views still distinguish paths and Vercel’s visitor model (new vs returning at the platform level).
+- **No new environment variables.** Do not add analytics API keys.
+- **Dashboard enable step (required if not already on):** Vercel project → **Analytics** → enable **Web Analytics** for Production (and Preview if you want it there). Until that toggle is on, the script loads but the dashboard will not show data.
+- After deploy, view data at: Vercel → the `political-news-ai` project → **Analytics** (Web Analytics). Custom events appear under Custom Events. Page views appear as paths **without** `?u=` article URLs.
 
-- When `VERCEL` is set: first hop of `X-Forwarded-For`, else `X-Real-IP`, else `unknown`.
-- When `VERCEL` is not set: always `unknown` (do not trust spoofable forwarded headers).
+## Event taxonomy
 
-No accounts. No cookies. No CAPTCHA.
+Central layer: `lib/analytics/taxonomy.ts`, `lib/analytics/track.ts`.
 
-### Endpoints and buckets
+Every custom event has **at most two properties**, always named:
 
-| Route | Cost class | Bucket | Limit / window | Kill switch |
-|---|---|---|---|---|
-| `POST /api/analyze-url` | extract + dual AI | `ai-expensive` | 8 / 10 min | yes |
-| `POST /api/analyze` | dual AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/analyze-summary` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/analyze-political` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/analyze/debate` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/summarize` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/compare` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/bias` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/intelligence-graph` | AI | `ai-generate` | 24 / 10 min | yes |
-| `POST /api/analyze-preview` | cached AI preview | `ai-preview` | 60 / 10 min | yes |
-| `POST /api/chat` | AI | `ai-chat` | 40 / 10 min | yes |
-| `POST /api/story-snapshots` | Neon write | `snapshots-write` | 40 / 10 min | no |
-| `GET /api/story-snapshot-changes` | Neon read | `snapshots-read` | 90 / 10 min | no |
-| `GET /api/news` | NewsAPI | `news` | 90 / 1 min | no |
-| `POST /api/timeline` | mock, cheap | `cheap-api` | 40 / 10 min | no |
+| Property | Meaning |
+|---|---|
+| `surface` | Where it happened (`home`, `search`, `feed`, `analyze`, `brief`, `chat`, `news`, `identity`, `api`) |
+| `detail` | Closed outcome/bucket **or** an 8-character hex **storyRef** (FNV-1a of the canonical story key). Never a URL. |
 
-429 body: `{ error, retryAfterSeconds }` plus `Retry-After` header.
+| Event | When | Properties |
+|---|---|---|
+| `homepage_viewed` | Homepage mount, once per session in that tab | `surface=home` |
+| `brief_selected` | 60-Second Brief control, or a homepage story title that opens the brief | `surface=home\|search`, `detail=storyRef` |
+| `brief_ready` | Brief report is available (including cache) | `surface=feed\|analyze`, `detail=storyRef` |
+| `brief_failed` | Brief could not be shown | `surface=feed\|analyze\|identity`, `detail=rate_limited\|disabled\|extract\|invalid\|generation\|missing\|malformed` |
+| `evidence_opened` | First “See evidence” open on a brief | `surface=brief`, `detail=storyRef` |
+| `angle_interacted` | First click on an angle card | `surface=brief`, `detail=storyRef` |
+| `what_changed_toggled` | Module shown by default, Show/Hide, or “Reporting updated” | `surface=brief`, `detail=storyRef` |
+| `ask_angle_opened` | Focus or first submit on Ask The Angle | `surface=chat`, `detail=storyRef` |
+| `ask_angle_success` | Non-empty streamed answer | `surface=chat`, `detail=storyRef` |
+| `ask_angle_failed` | Chat HTTP/empty/network failure | `surface=chat`, `detail=rate_limited\|disabled\|generation\|empty\|network` |
+| `analyze_submitted` | Understand Any Article form submit | `surface=home` |
+| `analyze_success` | URL-origin brief ready | `surface=analyze`, `detail=storyRef` |
+| `analyze_failed` | URL-origin brief failed | `surface=analyze`, `detail=…` |
+| `share_clicked` | Share control | `surface=brief`, `detail=storyRef` |
+| `read_original_clicked` | Read original on homepage or brief | `surface=home\|brief`, `detail=storyRef` |
+| `rate_limited` | Client received 429 on brief generate or chat | `surface=feed\|analyze\|chat`, `detail=bucket name` |
 
-Preview is looser than `/api/analyze` so the homepage card grid can still load.
+Automatic **page views** (stripped of query/hash) still measure visits to `/`, `/intelligence/[slug]`, etc.
 
-## Kill switch
+`trackEvent` swallows errors, dynamic-imports `@vercel/analytics`, and uses `onceKey` for view/ready/fail duplicates from React re-renders. A throwing tracker cannot break the UI.
 
-Env: `AI_DISABLED=1` (also `true` / `yes` / `on`).
+## What Ryan can measure after traffic
 
-AI-generating routes return **503** `{ error: "AI analysis is temporarily unavailable..." }` before OpenAI is called. No secrets in the response.
+- How many people visit (page views + `homepage_viewed`)
+- New vs returning (Vercel visitor model, not accounts)
+- Rough source mix (Vercel page-view referrer if the project exposes it on Pro; **not** UTM Plus)
+- Which stories get interest (`brief_selected` / `brief_ready` grouped by `detail` storyRef; paths show slugs only)
+- 60-Second Brief clicks (`brief_selected`) vs briefs that render (`brief_ready`) vs failures (`brief_failed`)
+- Evidence, angles, What Changed, Ask The Angle, Understand Any Article, share, Read original
+- Analyze success vs fail
+- Client-visible rate limits
+- Drop-off by comparing those event counts (not a dedicated funnel builder)
 
-Does **not** disable news acquisition or snapshot persist/read.
+## Privacy / data minimization
 
-Documented in `.env.example`. Set in Vercel env to use without redeploying code (redeploy still needed if the variable is newly added to the project).
+- No article bodies, Ask The Angle question text, pasted URLs, API keys, or PII in events or ops logs.
+- Shareable `?u=` article URLs are stripped from pageview URLs in `beforeSend`.
+- Story grouping uses `storyRefFromUrl` (hash of canonical story key), not the URL.
+- Event property values are allowlisted / hex-only; URL-like strings are dropped.
+- Privacy policy (`app/privacy/page.tsx`) updated to describe Vercel Web Analytics.
 
-## SSRF changes
+## Operational visibility
 
-Previously `@extractus/article-extractor` fetched the URL (including redirects) after a hostname-only private IPv4 check.
+Not a custom observability platform. Vercel runtime logs get one JSON line via `lib/ops/log.ts`:
 
-Now:
+- `rate_limited` / `ai_disabled` from `enforcePublicEndpointGuard`
+- `ai_failed` / `unexpected` on analyze and chat failures (no error objects, no prompts)
+- `extract_failed` when URL extraction returns nothing
+- `newsapi_failed` on NewsAPI HTTP errors (status + pool only; **no request URL**, which could have included secrets in older logs)
 
-1. `assertSafePublicHttpUrl` / `normalizeArticleUrl` — http(s) only, no userinfo, ports 80/443 only, blocked hosts (localhost, `.local`/`.internal`/`.corp`/`.lan`, metadata names, RFC1918, CGNAT, link-local/metadata 169.254, IPv6 loopback/ULA/link-local/multicast, IPv4-mapped private).
-2. DNS lookup; any private/metadata A/AAAA fails closed.
-3. `fetch` GET with `redirect: manual`, 10s timeout, 1.5 MB cap, HTML-ish content types.
-4. Max 3 redirects; each `Location` is re-validated and re-resolved.
-5. Extractor parses the **fetched HTML** only (not a follow-redirect fetch). Extractor-supplied `article.url` is re-checked; private values fall back to the fetch URL.
+View: Vercel → project → **Logs**. Filter for `"app":"angle-report"`.
 
-Residual: DNS rebinding between lookup and TCP/TLS connect (no IP-pinned TLS). Not a general proxy (no arbitrary method/host forwarding to the client).
+## Tests performed
 
-## Security headers
-
-Applied to `/:path*` in `next.config.ts`:
-
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
-- `X-DNS-Prefetch-Control: off`
-- `poweredByHeader: false`
-- `Content-Security-Policy-Report-Only` (not enforcing)
-
-**Why CSP is report-only:** Next.js 16 still emits inline/runtime scripts; publisher article images are arbitrary `https:`; LP4 analytics host is unknown. An enforcing CSP would be a product-break risk for V1.
-
-Security headers apply to `/` and app routes. They are **not** applied to `/_next/image` or `/_next/static`, so they do not stack with Next's image-optimizer CSP.
-
-Images: `formats: ["image/webp"]` so AVIF is not optimized. The homepage Capitol PNG is served `unoptimized` so the 16.3.3 optimizer cannot alter the lead visual.
-
-Next 16.3.3 also enables a top-left DevTools badge and auto-rewrites `AGENTS.md` when it detects an agent. Product config sets `devIndicators: false` and `agentRules: false` so `next dev` matches the LP2 homepage chrome.
-
-## Next.js versions
-
-- Before: **16.2.10**
-- After: **16.3.3** (and `eslint-config-next` 16.3.3)
-
-16.2.11 patches the July 2026 GHSA set but **not** GHSA-2xp9-vwfh-vxw4 (AVIF/`libheif` RCE) or the August 2026 Windows RCE. Patched line for those is 16.3.3. Smallest appropriate secure 16.x.
-
-Homepage follow-up commit: **Fix LP3 homepage regression** — 16.3.3 DevTools badge was covering the top-left brand; security headers no longer wrap `/_next/image`. Rate limits, kill switch, and SSRF are unchanged.
-
-## `npm audit --omit=dev`
-
-After Next.js 16.3.3:
-
-- No Next.js production advisories remaining in this audit.
-- Two **moderate** production advisories remain (not patched in this package; not Next itself):
-  - `baseline-browser-mapping` GHSA-w5vr-8v7q-w6rv (DoS on invalid input)
-  - `sanitize-html` GHSA-g8qq-57p8-ggw5 (SVG SMIL stored XSS in that library)
-- `npm audit fix` was **not** run; it would be unrelated dependency churn outside LP3.
-
-Critical Next.js items from 16.2.10 (July 2026 GHSA set + August 2026 AVIF/Windows RCE) are addressed by 16.3.3.
-
-## Validation
-
-- `npm test` (existing evidence/identity tests + new security tests)
+- `npm test` (includes `lib/analytics/taxonomy.test.ts`, `lib/ops/log.test.ts`, existing LP2/LP3 tests)
 - `npm run typecheck`
 - `npm run build`
-- `npm audit --omit=dev`
 - `git diff --check`
 
-Automated coverage includes: success under limit, 429 burst, independent buckets, kill switch 503, private/malformed URL reject, redirect SSRF, legitimate public URL normalize, security headers, analyze-url private 400, chat 503.
+## Files changed (principal)
 
-## Files changed
-
-- `lib/security/*` (utilities + tests; `publicUrl.ts` is client-safe; `ssrf.ts` is imported only from the server extract path)
-- `lib/services/articleExtractor.ts` (URL normalize)
-- `lib/services/extractArticle.ts` (hardened fetch + parse)
-- `app/api/*/route.ts` (public cost/abuse surfaces listed above)
-- `next.config.ts`
-- `package.json` / lockfile (Next 16.3.3)
-- `.env.example` (`AI_DISABLED`)
+- `lib/analytics/*`, `lib/ops/log.ts`
+- `app/components/analytics/ProductAnalytics.tsx`
+- `app/layout.tsx`, `app/page.tsx`, `app/privacy/page.tsx`
+- Homepage brief/analyze/share/read-original controls
+- Intelligence brief, What Changed, evidence, Ask The Angle
+- `lib/security/guardRequest.ts`, analyze / analyze-url / chat / news routes, `newsAcquisition.ts`
+- `next.config.ts` (report-only CSP allows `va.vercel-scripts.com`)
+- `package.json` / lockfile (`@vercel/analytics`)
 - `docs/development/CURRENT_PHASE.md`, `HANDOFF.md`, `ARCHITECTURE.md`, `DECISIONS.md`
 
-## Remaining security debt
+## Remaining measurement limitations
 
-- In-memory limiter is per-instance, not global.
-- DNS-rebinding TOCTOU on extract fetch.
-- Snapshot POST is still a client-originated contract (MVP trust boundary).
-- Enforcing CSP deferred.
-- Unused/legacy AI routes still exist but are now throttled + kill-switched.
-- NewsAPI license still unverified (L9).
-- No product analytics (LP4).
+- Two custom properties: cannot attach both a storyRef **and** a reason on the same event (failures use reason; success uses storyRef).
+- No Web Analytics Plus: weak UTM reporting.
+- `brief_ready` `surface=feed` includes both homepage-selected and shared feed stories.
+- Title clicks on More stories / Trending also fire `brief_selected` (they open the same brief).
+- In-memory LP3 rate limits are still per-instance; ops logs will under-count distributed abuse.
+- Custom events do nothing useful on Hobby; Pro is required.
+- GitHub issue for LP4 was not opened.
 
-## Environment variables
+## Environment / Vercel settings
 
 | Name | Required | Effect |
 |---|---|---|
-| `AI_DISABLED` | no | `1`/`true`/`yes`/`on` disables AI routes (503) |
-| `VERCEL` | set by Vercel | enables trust of platform forwarded IP |
+| *(none new)* | | Web Analytics does not use a project env var |
+| `AI_DISABLED` | no | unchanged |
+| `VERCEL` | set by Vercel | unchanged |
 
-Existing `OPENAI_API_KEY`, `NEWS_API_KEY`, `DATABASE_URL*` unchanged.
+Enable Web Analytics in the dashboard as described above.
 
 ## Decisions required from Ryan
 
-None for LP3. **Decision 4 (NewsAPI license)** still required before public scale.
+Enable Web Analytics in Vercel if it is not already enabled. **Decision 4 (NewsAPI license)** still required before public scale.
 
 ## Next recommended action
 
-Authorize **LP4 — Measurement** only. Do not start it from this handoff.
+Authorize **LP5 — domain cutover** only. Do not start it from this handoff.
 
 ## Do not do yet
 
-- LP4 analytics
 - LP5 SEO/domain/cutover
+- Web Analytics Plus unless Ryan later wants UTM
 - Forecasts/debates/clustering/AI What Changed/Angle+/extension
 - Homepage or 60-second brief redesign
 - Auth, ESP, or real polls
@@ -185,4 +160,4 @@ Authorize **LP4 — Measurement** only. Do not start it from this handoff.
 
 ## Git status at handoff
 
-Commit on `main` after push: `Harden V1 cost abuse and security`.
+Commit on `main` after push: `Add V1 product measurement`.

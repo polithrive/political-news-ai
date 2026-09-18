@@ -1,4 +1,5 @@
 import type { HomepageArticleInput } from "@/lib/services/homepageCuration";
+import { logOps } from "@/lib/ops/log";
 
 export type AcquisitionPool = "us-headlines" | "discovery" | "world";
 
@@ -79,7 +80,8 @@ const RATE_LIMIT_COOLDOWN_MS = 15 * 60 * 1000;
 
 async function fetchNewsApi(
   url: string,
-  apiKey: string
+  apiKey: string,
+  pool: AcquisitionPool
 ): Promise<NewsApiListResponse> {
   const response = await fetch(url, {
     headers: {
@@ -95,12 +97,11 @@ async function fetchNewsApi(
     response.status === 429 || data.code === "rateLimited";
 
   if (!response.ok) {
-    console.error("NewsAPI pool request failed:", {
-      url,
-      status: response.status,
-      code: data.code,
-      message: data.message,
-    });
+    logOps(
+      "newsapi_failed",
+      "news",
+      rateLimited ? `${pool}-429` : `${pool}-${response.status}`
+    );
     return { articles: [], totalResults: 0, rateLimited };
   }
 
@@ -240,9 +241,9 @@ export async function acquireHomepageCandidates(apiKey: string): Promise<{
   worldUrl.searchParams.set("excludeDomains", AGGREGATOR_EXCLUDE_DOMAINS);
 
   const [usHeadlines, discovery, world] = await Promise.all([
-    fetchNewsApi(usHeadlinesUrl.toString(), apiKey),
-    fetchNewsApi(discoveryUrl.toString(), apiKey),
-    fetchNewsApi(worldUrl.toString(), apiKey),
+    fetchNewsApi(usHeadlinesUrl.toString(), apiKey, "us-headlines"),
+    fetchNewsApi(discoveryUrl.toString(), apiKey, "discovery"),
+    fetchNewsApi(worldUrl.toString(), apiKey, "world"),
   ]);
 
   const rateLimited = Boolean(

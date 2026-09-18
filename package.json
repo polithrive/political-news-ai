@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/services/diffEvidenceSnapshots.test.ts lib/services/getStorySnapshotPair.test.ts lib/services/whatChangedViewModel.test.ts lib/services/intelligenceIdentity.test.ts lib/security/rateLimit.test.ts lib/security/guardRequest.test.ts lib/security/ssrf.test.ts lib/security/endpointGuard.test.ts",
+    "test": "tsx --test lib/services/diffEvidenceSnapshots.test.ts lib/services/getStorySnapshotPair.test.ts lib/services/whatChangedViewModel.test.ts lib/services/intelligenceIdentity.test.ts lib/security/rateLimit.test.ts lib/security/guardRequest.test.ts lib/security/ssrf.test.ts lib/security/endpointGuard.test.ts lib/analytics/taxonomy.test.ts lib/ops/log.test.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
@@ -16,6 +16,7 @@
   "dependencies": {
     "@extractus/article-extractor": "^8.1.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.3",
     "openai": "^6.45.0",

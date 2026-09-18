@@ -1,3 +1,5 @@
+"use client";
+
 import type { Article } from "@/app/types/article";
 import type {
   EvidenceBriefAngle,
@@ -7,6 +9,9 @@ import type {
 } from "@/app/types/report";
 import type { EvidenceStrength } from "@/app/types/trust";
 import type { WhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
+
+import { ANALYTICS_EVENTS } from "@/lib/analytics/taxonomy";
+import { trackEvent } from "@/lib/analytics/track";
 
 import CorroboratedFact from "./CorroboratedFact";
 import WhatChanged from "./WhatChanged";
@@ -20,6 +25,7 @@ type SixtySecondBriefProps = {
   article: Article;
   report: IntelligenceReport;
   whatChanged?: WhatChangedViewModel | null;
+  storyRef?: string;
 };
 
 type BriefSource = {
@@ -149,9 +155,11 @@ function StorySummary({
 function WhatWeKnow({
   facts,
   sourcesReviewed,
+  storyRef,
 }: {
   facts: EvidenceBriefFact[];
   sourcesReviewed: number;
+  storyRef: string;
 }) {
   const reviewedCount = Math.max(1, sourcesReviewed);
 
@@ -170,7 +178,17 @@ function WhatWeKnow({
       {facts.length > 0 ? (
         <div className="divide-y divide-[#17446D]/45 rounded-xl border border-[#17446D]/45 bg-[#04162C]/70 px-4 sm:px-5">
           {facts.map((fact, index) => (
-            <CorroboratedFact key={`${fact.text}-${index}`} fact={fact} />
+            <CorroboratedFact
+              key={`${fact.text}-${index}`}
+              fact={fact}
+              onEvidenceOpened={() => {
+                trackEvent(
+                  ANALYTICS_EVENTS.evidenceOpened,
+                  { surface: "brief", detail: storyRef },
+                  { onceKey: `evidence:${storyRef}` }
+                );
+              }}
+            />
           ))}
         </div>
       ) : (
@@ -203,7 +221,13 @@ function angleGridClass(count: number): string {
   return "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3";
 }
 
-function TheAngles({ angles }: { angles: EvidenceBriefAngle[] }) {
+function TheAngles({
+  angles,
+  storyRef,
+}: {
+  angles: EvidenceBriefAngle[];
+  storyRef: string;
+}) {
   if (angles.length === 0) {
     return null;
   }
@@ -220,6 +244,13 @@ function TheAngles({ angles }: { angles: EvidenceBriefAngle[] }) {
           <article
             key={`${angle.label}-${index}`}
             className="border-t border-[#17446D]/50 pt-3"
+            onClick={() => {
+              trackEvent(
+                ANALYTICS_EVENTS.angleInteracted,
+                { surface: "brief", detail: storyRef },
+                { onceKey: `angle:${storyRef}` }
+              );
+            }}
           >
             <h3 className="font-serif text-lg font-black tracking-[-0.02em] text-white sm:text-xl">
               {angle.label}
@@ -423,6 +454,7 @@ export default function SixtySecondBrief({
   article,
   report,
   whatChanged = null,
+  storyRef = "unknown",
 }: SixtySecondBriefProps) {
   const brief = report.brief;
   const whatHappened = readerFacingBriefText(
@@ -495,11 +527,14 @@ export default function SixtySecondBrief({
       <WhatWeKnow
         facts={facts}
         sourcesReviewed={sourcesReviewed || sources.length || 1}
+        storyRef={storyRef}
       />
 
-      {whatChanged ? <WhatChanged whatChanged={whatChanged} /> : null}
+      {whatChanged ? (
+        <WhatChanged whatChanged={whatChanged} storyRef={storyRef} />
+      ) : null}
 
-      <TheAngles angles={angles} />
+      <TheAngles angles={angles} storyRef={storyRef} />
 
       <StillUnclear items={uncertainties} />
 
