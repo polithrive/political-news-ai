@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { AnalysisResult } from "../types/analysis";
 import type { Article } from "../types/article";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "../../lib/selectedArticle";
 
 const MAX_VISIBLE_ARTICLES = 6;
@@ -98,7 +98,7 @@ export default function LiveNews({ articles, analysisResults, isLoading, errorMe
           {visibleArticles.map((article, index) => {
             const analysis = analysisResults[index] ?? null;
             const sourceName = article.source?.name ?? "Unknown Source";
-            const reportRoute = `/intelligence/${createSlug(article.title)}`;
+            const reportRoute = createIntelligenceHref(article);
 
             return (
               <article key={article.url || `${article.title}-${index}`} className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -137,9 +137,11 @@ export default function LiveNews({ articles, analysisResults, isLoading, errorMe
                   ) : null}
 
                   <div className="mt-auto pt-6">
+                    {reportRoute ? (
                     <Link prefetch={false} href={reportRoute} onClick={() => saveSelectedArticle(article)} className="flex w-full items-center justify-between rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700">
                       <span>Open Intelligence Report</span><span>→</span>
                     </Link>
+                    ) : null}
                   </div>
                 </div>
               </article>

@@ -4,11 +4,13 @@ import { useState } from "react";
 
 type ShareBriefButtonProps = {
   title: string;
+  sharePath?: string | null;
   className?: string;
 };
 
 export default function ShareBriefButton({
   title,
+  sharePath,
   className,
 }: ShareBriefButtonProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">(
@@ -16,7 +18,9 @@ export default function ShareBriefButton({
   );
 
   async function shareBrief() {
-    const url = window.location.href;
+    const url = sharePath
+      ? `${window.location.origin}${sharePath}`
+      : `${window.location.origin}${window.location.pathname}${window.location.search}`;
     const text = `${title}\n\nA 60-second brief from The Angle Report\n${url}`;
 
     try {

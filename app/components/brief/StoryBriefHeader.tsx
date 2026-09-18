@@ -8,6 +8,8 @@ import ShareBriefButton from "./ShareBriefButton";
 
 import type { Article } from "@/app/types/article";
 
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
+
 type StoryBriefHeaderProps = {
   article: Article;
   isUrlArticle?: boolean;
@@ -117,6 +119,7 @@ export default function StoryBriefHeader({
 
             <ShareBriefButton
               title={article.title}
+              sharePath={createIntelligenceHref(article)}
               className={actionClassName}
             />
 

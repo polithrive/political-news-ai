@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 import { createUrlSubmittedArticle } from "@/lib/services/urlAnalysisReport";
 
@@ -51,10 +51,17 @@ export default function AnalyzeUrlForm({
     setIsSubmitting(true);
 
     const submittedArticle = createUrlSubmittedArticle(trimmedUrl);
+    const href = createIntelligenceHref(submittedArticle);
+
+    if (!href) {
+      setErrorMessage("Please enter a valid HTTP or HTTPS article URL.");
+      setIsSubmitting(false);
+      return;
+    }
 
     saveSelectedArticle(submittedArticle);
 
-    router.push(`/intelligence/${createSlug(submittedArticle.title)}`);
+    router.push(href);
   }
 
   return (

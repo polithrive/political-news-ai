@@ -46,3 +46,11 @@ Ryan’s decisions for public V1 honesty:
 - **SSRF hardening:** Later (audit S3 / LP3), not LP1.
 - **Legal contact:** Brand as The Angle Report. Do **not** invent a public email; Contact must say no inbox is published yet.
 - De-scope is **reversible hide / noindex / 404**, not a redesign and not building auth, ESP, or real polls.
+
+## Public brief URLs (LP2)
+
+- Public identity is the **normalized article URL** in query param `u`.
+- Title slug is cosmetic.
+- `localStorage` selectedArticle is cache/optimization only.
+- Do not serialize the full article object into the query string.
+- Do not introduce a second analysis pipeline or a new DB table for first-load shareability.

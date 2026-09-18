@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import type { Article } from "@/app/types/article";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 import RelativeTime from "./RelativeTime";
@@ -87,6 +87,11 @@ export default function MoreStoriesList({
             article.curation && article.curation.clusterSize > 1
               ? article.curation.clusterSize
               : undefined;
+          const href = createIntelligenceHref(article);
+
+          if (!href) {
+            return null;
+          }
 
           return (
             <article
@@ -105,7 +110,7 @@ export default function MoreStoriesList({
 
               <div>
                 <Link
-                  href={`/intelligence/${createSlug(article.title)}`}
+                  href={href}
                   prefetch={false}
                   onClick={() => saveSelectedArticle(article)}
                   className="font-serif text-[1.05rem] font-bold leading-snug text-white hover:text-[#8EDCFF]"

@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Article } from "@/app/types/article";
 import type { IntelligencePreview } from "@/app/types/intelligencePreview";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 import IntelligencePreviewCard from "./IntelligencePreviewCard";
@@ -49,7 +49,7 @@ export default function HeroSection({
   }
 
   const intelligenceRoute = featuredArticle
-    ? `/intelligence/${createSlug(featuredArticle.title)}`
+    ? createIntelligenceHref(featuredArticle) ?? "#"
     : "#";
 
   return (

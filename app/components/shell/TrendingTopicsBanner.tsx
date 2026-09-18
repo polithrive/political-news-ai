@@ -9,7 +9,7 @@ import {
   tickerStoriesFromArticles,
   type TickerStory,
 } from "@/app/components/home/trendingTopics";
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { getLatestNews } from "@/lib/news";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
@@ -74,25 +74,35 @@ export default function TrendingTopicsBanner({
 
       <div className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-x-auto">
         <div className="trending-marquee-track flex h-full w-max items-center">
-          {loop.map((story, index) => (
+          {loop.map((story, index) => {
+            const href = createIntelligenceHref(story.article);
+
+            return (
             <span
               key={`${story.article.url || story.label}-${index}`}
               className="flex items-center"
             >
+              {href ? (
               <Link
-                href={`/intelligence/${createSlug(story.article.title)}`}
+                href={href}
                 prefetch={false}
                 onClick={() => saveSelectedArticle(story.article)}
                 className="whitespace-nowrap px-3 text-[12px] font-medium text-[#D7E4F4] hover:text-white sm:px-4"
               >
                 {story.label}
               </Link>
+              ) : (
+                <span className="whitespace-nowrap px-3 text-[12px] font-medium text-[#D7E4F4] sm:px-4">
+                  {story.label}
+                </span>
+              )}
               <span
                 className="h-1 w-1 rounded-full bg-[#3A6A96]"
                 aria-hidden="true"
               />
             </span>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

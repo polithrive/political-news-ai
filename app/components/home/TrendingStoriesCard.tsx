@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import type { Article } from "@/app/types/article";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 type TrendingStoriesCardProps = {
@@ -26,10 +26,17 @@ export default function TrendingStoriesCard({
 
       {trending.length > 0 ? (
         <ol className="mt-2.5 space-y-2">
-          {trending.map((article, index) => (
+          {trending.map((article, index) => {
+            const href = createIntelligenceHref(article);
+
+            if (!href) {
+              return null;
+            }
+
+            return (
             <li key={article.url || `${article.title}-${index}`}>
               <Link
-                href={`/intelligence/${createSlug(article.title)}`}
+                href={href}
                 prefetch={false}
                 onClick={() => saveSelectedArticle(article)}
                 className="flex gap-2.5 hover:text-[#8EDCFF]"
@@ -42,7 +49,8 @@ export default function TrendingStoriesCard({
                 </span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ol>
       ) : isLoading ? (
         <div className="mt-3 space-y-2.5">

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import type { Article } from "@/app/types/article";
 
-import { createSlug } from "@/lib/createSlug";
+import { createIntelligenceHref } from "@/lib/services/intelligenceIdentity";
 import { saveSelectedArticle } from "@/lib/selectedArticle";
 
 type StoryBriefLinkProps = {
@@ -18,9 +18,15 @@ export default function StoryBriefLink({
   label = "60-second brief",
   className,
 }: StoryBriefLinkProps) {
+  const href = createIntelligenceHref(article);
+
+  if (!href) {
+    return null;
+  }
+
   return (
     <Link
-      href={`/intelligence/${createSlug(article.title)}`}
+      href={href}
       prefetch={false}
       onClick={() => saveSelectedArticle(article)}
         className={

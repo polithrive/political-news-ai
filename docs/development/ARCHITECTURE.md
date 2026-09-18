@@ -96,6 +96,20 @@ Client contract assembly: `createStorySnapshotInput` in `lib/services/buildEvide
 - Server: `/api/analyze`, `/api/analyze-url`, `/api/story-snapshots`, Drizzle/Neon, fingerprint hashing.
 - `persistStorySnapshot` is `server-only`. Database modules must not leak into the browser bundle.
 
+## 17. Public brief identity (LP2)
+
+Canonical public story identity is the **normalized article URL** (`tryBuildStoryKey` / `story_key` rules), not the cosmetic title slug and not `localStorage`.
+
+Public path: `/intelligence/[slug]?u=<canonical-article-url>`.
+
+- `slug` is `createSlug(title)` (or `story`) for readability. Resolution keys off `u`.
+- `localStorage` (`politicalpulse_selected_article`) and report cache v4 remain **optimizations** for the same browser.
+- Fresh browsers resolve `u` against the current homepage feed (same `/api/news` last-good path). If there is no feed match, they use the existing **Understand Any Article** `/api/analyze-url` pipeline.
+- Slug-only URLs without `u` are not a shareable identity; they may still open in the same browser if selectedArticle matches the slug.
+- Share copies the canonical `pathname?u=` URL, not a hash-only or storage-dependent route.
+
+No schema change. No second analysis engine. Full-article bodies are not placed in the public URL.
+
 ### MVP trust boundary (technical debt)
 
 The snapshot POST is **client-originated** because validated `EvidenceBrief` and full `EvidenceSource[]` still coexist on the client after fresh analysis. The server rebuilds the snapshot and fingerprint from a parsed contract but **does not independently re-run Phase 1 fragment-in-title/description validation**. A crafted body that resembles a validated brief can be stored. Persist should eventually move fully into the server-side evidence-analysis pipeline.
