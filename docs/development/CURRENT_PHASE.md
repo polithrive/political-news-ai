@@ -2,31 +2,26 @@
 
 Product: The Angle Report
 
-## Checkpoints (do not conflate)
+## Checkpoints
 
-- **Protected application checkpoint (2B.1C):** `8c633b3` — Add story evidence snapshot writer
-- **Protected workflow/docs checkpoint:** `b850c79` — Add agent collaboration workflow
-- **2B.1D audit:** `fc81f5a` — Document Phase 2B.1D architecture audit
-- **Protected application checkpoint (2B.1D):** `43b5d95` — Add deterministic story snapshot diffing
-- **2B.2 audit:** `d6b0dc2` — Document Phase 2B.2 What Changed audit
-- **Protected application checkpoint (2B.2):** this implementation commit — Add What Changed reader experience
+- **Protected application checkpoint:** `006ae52` — Add What Changed reader experience
+- Feature expansion is **paused** pending V1 launch work.
 
-## Completed
+## Completed (product)
 
-- Phase 2B.1B — story-history database foundation
-- Phase 2B.1C — evidence snapshot writer
-- Phase 2B.1D — deterministic snapshot diff + pair lookup
-- Phase 2B.2 audit
-- Phase 2B.2 implementation — reader-facing What Changed module
+- Evidence-grounded 60-second brief
+- Story history snapshots + deterministic diff
+- What Changed reader module
+- V1 launch gap **audit** (docs only) — `docs/development/V1_LAUNCH_GAP_AUDIT.md`
 
 ## Current state
 
-- What Changed appears in the 60-second brief only when the reader view model is non-empty.
-- Missing-from-newer and count-only diffs stay internal.
-- Fresh generate: setReport first, then persist POST returns `whatChanged`.
-- Cache hit: GET `/api/story-snapshot-changes`.
-- History failure cannot break the brief.
+Do **not** start 2B.2.x AI phrasing, clustering, Angle+, forecasts-as-product, or other new features.
 
-## Next planned phase
+Next work, if authorized, is the launch plan in the audit (**LP1–LP5**), starting with public honesty de-scope — after Ryan decisions 1–4 where required.
 
-Not started. Do not add AI phrasing, clustering, or a public history feed unless separately authorized.
+## Next planned work
+
+V1 launch packages (not feature phases): LP1 honesty → LP2 shareable briefs → LP3 cost/abuse → LP4 measurement → LP5 domain cutover.
+
+**IMPORTANT:** Launch implementation has **not** started. This pass is audit documentation only.
