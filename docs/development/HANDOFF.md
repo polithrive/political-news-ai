@@ -2,11 +2,11 @@
 
 ## Current Phase
 
-**LP2 — Shareable briefs** (GitHub issue **#5**) is **complete**.
+**LP3 — Cost, abuse, and security** (GitHub issue **#6**) is **complete**.
 
-Protected application checkpoint after this work: **Make intelligence briefs directly shareable**.
+Protected application checkpoint after this work: **Harden V1 cost abuse and security**.
 
-Do **not** start LP3.
+Do **not** start LP4.
 
 ## Protected Checkpoint
 
@@ -14,96 +14,169 @@ Do **not** start LP3.
 |---|---|---|
 | Application (2B.2) | `006ae52` | Add What Changed reader experience |
 | LP1 | `b1634e4` | De-scope incomplete V1 surfaces |
-| LP2 | this commit | Make intelligence briefs directly shareable |
+| LP2 | `fb658d0` | Make intelligence briefs directly shareable |
+| LP3 | this commit | Harden V1 cost abuse and security |
 
-## Chosen public story identity
+## Rate-limit architecture
 
-Canonical identity is the **normalized article URL** (`tryBuildStoryKey`, same rules as snapshot `story_key`).
+In-memory sliding window (`lib/security/rateLimit.ts`). One `Map` of timestamps per **server instance**.
 
-Public href: `/intelligence/[slug]?u=<canonical-url>`
+This is **not** distributed. On Vercel:
 
-- `slug` is derived from the title for readability. It is **not** the resolver key.
-- `u` is the only required public identifier.
-- Duplicate public schemes were not added (no `/story/` route, no encoded article blob).
-- The `stories` table is **not** used for first-load resolution (a first-time story may have no snapshot).
+- Each serverless isolate has its own counters.
+- Cold starts reset counters.
+- Concurrent instances do not share quota.
+- Determined attackers can exceed the documented numbers by spreading across instances.
 
-### Current selectedArticle paths (audit)
+It is still useful against casual abuse and accidental retry storms without adding Redis/Upstash.
 
-**Writes (`saveSelectedArticle`):** StoryBriefLink, TrendingStoriesCard, MoreStoriesList title links, AnalyzeUrlForm, intelligence page after resolve, HeroSection, LiveNews, TrendingTopicsBanner.
+**Client identity:** `getClientIp` in `lib/security/clientIp.ts`.
 
-**Reads (`getSelectedArticle`):** intelligence client only — used when `u` matches that stored URL, or for slug-only legacy links when the stored title slug matches.
+- When `VERCEL` is set: first hop of `X-Forwarded-For`, else `X-Real-IP`, else `unknown`.
+- When `VERCEL` is not set: always `unknown` (do not trust spoofable forwarded headers).
 
-### How a fresh browser resolves
+No accounts. No cookies. No CAPTCHA.
 
-1. Parse and validate `u` (http/https, no private/local hosts, tracking params stripped).
-2. If the current `/api/news` feed contains that URL, use that homepage `Article` and the existing `generateIntelligenceReport` path.
-3. Otherwise use `createUrlSubmittedArticle` + existing `generateIntelligenceReportFromUrl` (`/api/analyze-url`).
-4. Report cache v4 still keys `source:title` and is local to that browser. Fresh browsers generate; they do not need selectedArticle.
-5. What Changed still uses the resolved article’s primary URL / snapshot input. Cache hits still GET `/api/story-snapshot-changes`. Fresh generates still persist-then-read.
+### Endpoints and buckets
 
-### URL-submitted articles
+| Route | Cost class | Bucket | Limit / window | Kill switch |
+|---|---|---|---|---|
+| `POST /api/analyze-url` | extract + dual AI | `ai-expensive` | 8 / 10 min | yes |
+| `POST /api/analyze` | dual AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/analyze-summary` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/analyze-political` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/analyze/debate` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/summarize` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/compare` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/bias` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/intelligence-graph` | AI | `ai-generate` | 24 / 10 min | yes |
+| `POST /api/analyze-preview` | cached AI preview | `ai-preview` | 60 / 10 min | yes |
+| `POST /api/chat` | AI | `ai-chat` | 40 / 10 min | yes |
+| `POST /api/story-snapshots` | Neon write | `snapshots-write` | 40 / 10 min | no |
+| `GET /api/story-snapshot-changes` | Neon read | `snapshots-read` | 90 / 10 min | no |
+| `GET /api/news` | NewsAPI | `news` | 90 / 1 min | no |
+| `POST /api/timeline` | mock, cheap | `cheap-api` | 40 / 10 min | no |
 
-Understand Any Article still posts into the same intelligence page. The form now navigates with `?u=`, so a copied result URL is shareable. Fresh browsers load via analyze-url.
+429 body: `{ error, retryAfterSeconds }` plus `Retry-After` header.
 
-### localStorage role after LP2
+Preview is looser than `/api/analyze` so the homepage card grid can still load.
 
-- `politicalpulse_selected_article`: optional cache so the same browser can skip a feed lookup and keep homepage metadata.
-- Report cache v4: unchanged optimization. Not a correctness dependency for opening a shared URL.
+## Kill switch
 
-### SEO / indexing leftover (LP5)
+Env: `AI_DISABLED=1` (also `true` / `yes` / `on`).
 
-- Valid `u` pages set a canonical `pathname?u=` and are indexable in principle (still client-rendered briefs).
-- Missing/malformed `u` is `noindex`.
-- No sitemap or OG images in LP2.
-- Slug-only bookmarks are not a durable public identity.
+AI-generating routes return **503** `{ error: "AI analysis is temporarily unavailable..." }` before OpenAI is called. No secrets in the response.
 
-## Files Changed In Last Completed Phase
+Does **not** disable news acquisition or snapshot persist/read.
 
-- `lib/services/intelligenceIdentity.ts` + tests
-- `app/intelligence/[slug]/page.tsx` (server metadata) + `IntelligenceReportClient.tsx`
-- Homepage/story links: StoryBriefLink, Trending, More Stories, AnalyzeUrlForm, HeroSection, LiveNews, TrendingTopicsBanner
-- `ShareBriefButton` / `StoryBriefHeader`
-- Coordination docs + `package.json` test script
+Documented in `.env.example`. Set in Vercel env to use without redeploying code (redeploy still needed if the variable is newly added to the project).
 
-## Database State
+## SSRF changes
 
-Unchanged. No migration.
+Previously `@extractus/article-extractor` fetched the URL (including redirects) after a hostname-only private IPv4 check.
 
-## Validation Status
+Now:
 
-- `npm test`
+1. `assertSafePublicHttpUrl` / `normalizeArticleUrl` — http(s) only, no userinfo, ports 80/443 only, blocked hosts (localhost, `.local`/`.internal`/`.corp`/`.lan`, metadata names, RFC1918, CGNAT, link-local/metadata 169.254, IPv6 loopback/ULA/link-local/multicast, IPv4-mapped private).
+2. DNS lookup; any private/metadata A/AAAA fails closed.
+3. `fetch` GET with `redirect: manual`, 10s timeout, 1.5 MB cap, HTML-ish content types.
+4. Max 3 redirects; each `Location` is re-validated and re-resolved.
+5. Extractor parses the **fetched HTML** only (not a follow-redirect fetch). Extractor-supplied `article.url` is re-checked; private values fall back to the fetch URL.
+
+Residual: DNS rebinding between lookup and TCP/TLS connect (no IP-pinned TLS). Not a general proxy (no arbitrary method/host forwarding to the client).
+
+## Security headers
+
+Applied to `/:path*` in `next.config.ts`:
+
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `X-DNS-Prefetch-Control: off`
+- `poweredByHeader: false`
+- `Content-Security-Policy-Report-Only` (not enforcing)
+
+**Why CSP is report-only:** Next.js 16 still emits inline/runtime scripts; publisher article images are arbitrary `https:`; LP4 analytics host is unknown. An enforcing CSP would be a product-break risk for V1.
+
+Images: `formats: ["image/webp"]` so AVIF is not optimized locally.
+
+## Next.js versions
+
+- Before: **16.2.10**
+- After: **16.3.3** (and `eslint-config-next` 16.3.3)
+
+16.2.11 patches the July 2026 GHSA set but **not** GHSA-2xp9-vwfh-vxw4 (AVIF/`libheif` RCE) or the August 2026 Windows RCE. Patched line for those is 16.3.3. Smallest appropriate secure 16.x.
+
+## `npm audit --omit=dev`
+
+After Next.js 16.3.3:
+
+- No Next.js production advisories remaining in this audit.
+- Two **moderate** production advisories remain (not patched in this package; not Next itself):
+  - `baseline-browser-mapping` GHSA-w5vr-8v7q-w6rv (DoS on invalid input)
+  - `sanitize-html` GHSA-g8qq-57p8-ggw5 (SVG SMIL stored XSS in that library)
+- `npm audit fix` was **not** run; it would be unrelated dependency churn outside LP3.
+
+Critical Next.js items from 16.2.10 (July 2026 GHSA set + August 2026 AVIF/Windows RCE) are addressed by 16.3.3.
+
+## Validation
+
+- `npm test` (existing evidence/identity tests + new security tests)
 - `npm run typecheck`
 - `npm run build`
+- `npm audit --omit=dev`
 - `git diff --check`
-- Direct-link / share / malformed URL browser checks
 
-## Known Limitations / Technical Debt
+Automated coverage includes: success under limit, 429 burst, independent buckets, kill switch 503, private/malformed URL reject, redirect SSRF, legitimate public URL normalize, security headers, analyze-url private 400, chat 503.
 
-- If a homepage story has rotated out of the NewsAPI/last-good feed, a shared link falls back to URL extraction (same engine as Understand Any Article), which can differ slightly from the original homepage brief.
-- Report cache v4 remains per-browser and title/source keyed; not bumped.
-- Extracted canonical URL after redirects can differ from the NewsAPI url; snapshot `story_key` follows the resolved primary URL used for that run.
-- No app-level AI rate limits (LP3)
-- Next.js 16.2.10 critical advisories remain (LP3 / L7)
-- No product analytics (LP4)
-- NewsAPI production license still unverified (L9)
+## Files changed
 
-## Next Recommended Action
+- `lib/security/*` (utilities + tests; `publicUrl.ts` is client-safe; `ssrf.ts` is imported only from the server extract path)
+- `lib/services/articleExtractor.ts` (URL normalize)
+- `lib/services/extractArticle.ts` (hardened fetch + parse)
+- `app/api/*/route.ts` (public cost/abuse surfaces listed above)
+- `next.config.ts`
+- `package.json` / lockfile (Next 16.3.3)
+- `.env.example` (`AI_DISABLED`)
+- `docs/development/CURRENT_PHASE.md`, `HANDOFF.md`, `ARCHITECTURE.md`, `DECISIONS.md`
 
-Authorize **LP3 — cost, abuse, and security** only.
+## Remaining security debt
 
-## Do Not Do Yet
+- In-memory limiter is per-instance, not global.
+- DNS-rebinding TOCTOU on extract fetch.
+- Snapshot POST is still a client-originated contract (MVP trust boundary).
+- Enforcing CSP deferred.
+- Unused/legacy AI routes still exist but are now throttled + kill-switched.
+- NewsAPI license still unverified (L9).
+- No product analytics (LP4).
 
-- LP3 rate limits / SSRF / Next upgrade until a new authorization
+## Environment variables
+
+| Name | Required | Effect |
+|---|---|---|
+| `AI_DISABLED` | no | `1`/`true`/`yes`/`on` disables AI routes (503) |
+| `VERCEL` | set by Vercel | enables trust of platform forwarded IP |
+
+Existing `OPENAI_API_KEY`, `NEWS_API_KEY`, `DATABASE_URL*` unchanged.
+
+## Decisions required from Ryan
+
+None for LP3. **Decision 4 (NewsAPI license)** still required before public scale.
+
+## Next recommended action
+
+Authorize **LP4 — Measurement** only. Do not start it from this handoff.
+
+## Do not do yet
+
+- LP4 analytics
+- LP5 SEO/domain/cutover
 - Forecasts/debates/clustering/AI What Changed/Angle+/extension
 - Homepage or 60-second brief redesign
 - Auth, ESP, or real polls
 - Production DNS/domain changes
-- Sitemap / social-image SEO pack (LP5)
 
-## Questions / Decisions Needed
+## Git status at handoff
 
-None for LP2. **Decision 4 (NewsAPI license)** still required before public scale.
-
-## Git Status At Handoff
-
-Commit on `main` after push: `Make intelligence briefs directly shareable`.
+Commit on `main` after push: `Harden V1 cost abuse and security`.

@@ -1,5 +1,7 @@
 import { analyzeNewsApiPool, curateHomepageFeed } from "@/lib/services/homepageCuration";
 import { acquireHomepageCandidates } from "@/lib/services/newsAcquisition";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 const NEWS_API_BASE_URL =
   "https://newsapi.org/v2";
@@ -608,6 +610,14 @@ async function fetchNewsApi(
 export async function GET(
   request: Request
 ) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.news,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   const routeStartedAt =
     performance.now();
 

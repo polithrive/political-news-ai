@@ -1,5 +1,7 @@
 import { openai } from "@/lib/ai/client";
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 type DebateRequest = {
   title?: unknown;
@@ -20,6 +22,15 @@ function toSafeString(
 }
 
 export async function POST(request: Request) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiGenerate,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const article =
       (await request.json()) as DebateRequest;

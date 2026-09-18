@@ -1,6 +1,6 @@
 import { openai } from "@/lib/ai/client";
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
-import { extractArticle } from "@/lib/services/articleExtractor";
+import { extractArticle } from "@/lib/services/extractArticle";
 
 const MAX_ARTICLE_CONTENT_LENGTH = 12_000;
 const EXTRACTION_TIMEOUT_MS = 8_000;

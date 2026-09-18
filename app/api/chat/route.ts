@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { openai } from "@/lib/ai/client";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 type ConversationMessage = {
   role: "user" | "assistant";
@@ -246,6 +248,15 @@ function createErrorResponse(
 }
 
 export async function POST(request: Request) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiChat,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     let body: ChatRequestBody;
 

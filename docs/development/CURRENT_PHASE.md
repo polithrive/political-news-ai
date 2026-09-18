@@ -6,7 +6,8 @@ Product: The Angle Report
 
 - **Protected application checkpoint (pre-LP1):** `006ae52` — Add What Changed reader experience
 - **LP1 public honesty:** `b1634e4` — De-scope incomplete V1 surfaces
-- **LP2 shareable briefs:** this commit — Make intelligence briefs directly shareable
+- **LP2 shareable briefs:** `fb658d0` — Make intelligence briefs directly shareable
+- **LP3 cost/abuse/security:** this commit — Harden V1 cost abuse and security
 
 ## Completed (product)
 
@@ -16,15 +17,16 @@ Product: The Angle Report
 - V1 launch gap **audit**
 - **LP1** — hide incomplete V1 surfaces
 - **LP2** — intelligence URLs resolve from `?u=` (canonical article URL) without requiring selectedArticle
+- **LP3** — per-IP rate limits, `AI_DISABLED` kill switch, extract SSRF hardening, security headers, Next.js 16.3.3
 
 ## Current state
 
-LP2 is complete. Do **not** start LP3 unless authorized.
+LP3 is complete. Do **not** start LP4 unless authorized.
 
 Do **not** start 2B.2.x AI phrasing, clustering, Angle+, forecasts-as-product, or other new features.
 
 ## Next planned work
 
-**LP3 — Cost, abuse, and security**, if authorized. Then LP4 measurement → LP5 domain cutover.
+**LP4 — Measurement**, if authorized. Then LP5 domain cutover.
 
 NewsAPI production license remains a launch gate.

@@ -1,10 +1,21 @@
 import OpenAI from "openai";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: Request) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiGenerate,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const { title, description } = await request.json();
 

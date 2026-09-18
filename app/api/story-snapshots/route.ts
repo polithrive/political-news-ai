@@ -7,6 +7,8 @@ import {
 import { persistStorySnapshot } from "@/lib/services/persistStorySnapshot";
 import { diffLatestStorySnapshots } from "@/lib/services/getStorySnapshotPair";
 import { buildWhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 /*
  * MVP boundary: snapshot input currently originates from the client because
@@ -15,6 +17,14 @@ import { buildWhatChangedViewModel } from "@/lib/services/whatChangedViewModel";
  * persist snapshots inside the server-side evidence-analysis pipeline instead.
  */
 export async function POST(request: Request) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.snapshotsWrite,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const contentLengthHeader = request.headers.get("content-length");
     const contentLength = Number(contentLengthHeader);

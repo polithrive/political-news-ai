@@ -6,7 +6,7 @@ Story/event **semantic clustering does not exist** for story history. Homepage f
 
 ## 1. Application stack
 
-- Next.js 16.2 (App Router), React 19, TypeScript, Tailwind 4
+- Next.js 16.3.3 (App Router), React 19, TypeScript, Tailwind 4
 - OpenAI (`lib/ai/client.ts`, `OPENAI_API_KEY`)
 - NewsAPI (`NEWS_API_KEY`; homepage acquisition in `lib/services/newsAcquisition.ts`)
 - Neon Postgres via `@neondatabase/serverless` + Drizzle (`lib/db/`, neon-http; no interactive `db.transaction()`)
@@ -109,6 +109,42 @@ Public path: `/intelligence/[slug]?u=<canonical-article-url>`.
 - Share copies the canonical `pathname?u=` URL, not a hash-only or storage-dependent route.
 
 No schema change. No second analysis engine. Full-article bodies are not placed in the public URL.
+
+## 18. Cost, abuse, and security (LP3)
+
+Reusable server utilities live in `lib/security/`:
+
+- `clientIp.ts` — identity for throttling
+- `rateLimit.ts` — sliding-window Map (`consumeRateLimit`)
+- `aiDisabled.ts` — `AI_DISABLED` env
+- `guardRequest.ts` — 503 then 429
+- `ssrf.ts` — bounded GET with manual redirects (Node DNS; imported only from the URL extract path)
+- `publicUrl.ts` — client-safe http(s) / private-host checks used by `normalizeArticleUrl`
+
+Routes call `enforcePublicEndpointGuard` at the handler entry. There is no Redis/Upstash/WAF/CAPTCHA dependency.
+
+**Identity:** if `process.env.VERCEL` is set, use the first `X-Forwarded-For` hop (then `X-Real-IP`). Otherwise `unknown`. Do not trust forwarded headers on local/`next start` without Vercel.
+
+**Buckets (per identity, in-process only):**
+
+| Bucket | Limit | Window | Routes |
+|---|---|---|---|
+| `ai-expensive` | 8 | 10 min | `POST /api/analyze-url` |
+| `ai-generate` | 24 | 10 min | `POST /api/analyze`, `analyze-summary`, `analyze-political`, `analyze/debate`, `summarize`, `compare`, `bias`, `intelligence-graph` |
+| `ai-preview` | 60 | 10 min | `POST /api/analyze-preview` (homepage cards) |
+| `ai-chat` | 40 | 10 min | `POST /api/chat` |
+| `snapshots-write` | 40 | 10 min | `POST /api/story-snapshots` |
+| `snapshots-read` | 90 | 10 min | `GET /api/story-snapshot-changes` |
+| `news` | 90 | 1 min | `GET /api/news` |
+| `cheap-api` | 40 | 10 min | `POST /api/timeline` (mock) |
+
+Exceeded limits return HTTP **429** with `Retry-After`. Kill switch returns **503**.
+
+**SSRF:** `normalizeArticleUrl` / `assertSafePublicHttpUrl` reject non-http(s), credentials, non-80/443 ports, localhost, RFC1918, link-local/metadata IPv4, IPv6 loopback/ULA/link-local, and metadata hostnames. Fetch resolves DNS and rejects private answers, follows at most 3 redirects, re-validates each `Location`, and caps body size. Residual DNS-rebinding between lookup and connect is not fully closed without IP-pinned TLS.
+
+**Headers** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` camera/mic/geo off, `X-DNS-Prefetch-Control: off`, `poweredByHeader: false`, CSP **Report-Only**.
+
+**Framework:** Next.js **16.3.3** (from 16.2.10). Image formats limited to `image/webp` (AVIF optimization off).
 
 ### MVP trust boundary (technical debt)
 

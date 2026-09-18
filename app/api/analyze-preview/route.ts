@@ -1,4 +1,6 @@
 import { generateCachedPreview } from "@/lib/ai/generateCachedPreview";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 type PreviewRequest = {
   title?: unknown;
@@ -22,6 +24,15 @@ function toSafeString(
 export async function POST(
   request: Request
 ) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiPreview,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const article =
       (await request.json()) as PreviewRequest;

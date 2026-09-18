@@ -12,14 +12,14 @@ import {
 
 import { mergeAnalysis } from "@/lib/ai/mergeAnalysis";
 
-import {
-  extractArticle,
-  normalizeArticleUrl,
-} from "@/lib/services/articleExtractor";
+import { extractArticle } from "@/lib/services/extractArticle";
+import { normalizeArticleUrl } from "@/lib/services/articleExtractor";
 
 import { buildEvidenceContext } from "@/lib/services/evidenceContext";
 
 import { calculateTrustScore } from "@/lib/services/trustScore";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 type AnalyzeUrlRequest = {
   url?: unknown;
@@ -199,6 +199,15 @@ function createArticleFromExtraction(
 export async function POST(
   request: Request
 ) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiExpensive,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const body =
       (await request.json()) as AnalyzeUrlRequest;

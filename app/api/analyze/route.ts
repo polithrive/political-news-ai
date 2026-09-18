@@ -7,6 +7,8 @@ import {
   type SummaryAnalysis,
 } from "@/lib/ai/generateSummary";
 import { mergeAnalysis } from "@/lib/ai/mergeAnalysis";
+import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
+import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
 type ArticleRequest = {
   title?: unknown;
@@ -155,6 +157,15 @@ function logModuleFailure(
 export async function POST(
   request: Request
 ) {
+  const blocked = enforcePublicEndpointGuard(request, {
+    bucket: RATE_LIMIT_BUCKETS.aiGenerate,
+    ai: true,
+  });
+
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const article =
       (await request.json()) as ArticleRequest;

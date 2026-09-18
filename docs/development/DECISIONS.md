@@ -44,6 +44,16 @@ Ryan’s decisions for public V1 honesty:
 - **Polls and forecasts:** Hide entirely. Do not relabel mocks as Live or illustrative on the homepage.
 - **NewsAPI production license:** Launch-gate only (audit L9 / Decision 4). Not part of LP1.
 - **SSRF hardening:** Later (audit S3 / LP3), not LP1.
+
+## Cost, abuse, and security (LP3)
+
+- **No accounts.** Public V1 is protected with per-IP rate limits and an env kill switch, not authentication.
+- **Rate limiter is in-process memory** (one Map per Node/serverless instance). It is **not** a distributed quota. Cold starts, multiple Vercel instances, and rolling deploys each have their own counters. Document this honestly; do not treat it as a WAF.
+- **Trust forwarded IPs only on Vercel** (`VERCEL` set). Off-platform, all callers share identity `unknown` rather than honoring client-supplied `X-Forwarded-For`.
+- **`AI_DISABLED`** (1/true/yes/on) returns HTTP 503 on AI-generating routes without a code redeploy. It does not hide secrets and does not disable `/api/news` or snapshot persistence.
+- **Understand Any Article** fetches HTML itself (GET, `redirect: manual`, hop + DNS checks) and then parses. It is not a general-purpose proxy.
+- **CSP is Report-Only** for V1. Enforcing CSP would risk Next.js inline/runtime scripts, arbitrary publisher images, and LP4 analytics hosts that are not chosen yet.
+- **Next.js 16.3.3** is the smallest 16.x release that patches the July 2026 GHSA set **and** the August 2026 AVIF/Windows critical issues. Do not treat 16.2.11 as sufficient.
 - **Legal contact:** Brand as The Angle Report. Do **not** invent a public email; Contact must say no inbox is published yet.
 - De-scope is **reversible hide / noindex / 404**, not a redesign and not building auth, ESP, or real polls.
 
