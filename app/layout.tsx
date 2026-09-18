@@ -87,7 +87,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full scroll-pt-[76px] antialiased`}
     >
       <body
         className={`${geistSans.className} flex min-h-full flex-col bg-[#020D21]`}
