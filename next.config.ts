@@ -39,13 +39,22 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Next 16.3.3 draws the DevTools badge at top-left over the brand and
+  // rewrites AGENTS.md when it detects an agent. Neither is a product UI.
+  agentRules: false,
+  devIndicators: false,
   images: {
     formats: ["image/webp"],
   },
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/",
+        headers: securityHeaders,
+      },
+      {
+        // Keep optimizer-owned CSP on /_next/image; do not stack page CSP on it.
+        source: "/((?!_next/image|_next/static).*)",
         headers: securityHeaders,
       },
     ];

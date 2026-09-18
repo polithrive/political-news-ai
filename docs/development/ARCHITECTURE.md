@@ -142,9 +142,9 @@ Exceeded limits return HTTP **429** with `Retry-After`. Kill switch returns **50
 
 **SSRF:** `normalizeArticleUrl` / `assertSafePublicHttpUrl` reject non-http(s), credentials, non-80/443 ports, localhost, RFC1918, link-local/metadata IPv4, IPv6 loopback/ULA/link-local, and metadata hostnames. Fetch resolves DNS and rejects private answers, follows at most 3 redirects, re-validates each `Location`, and caps body size. Residual DNS-rebinding between lookup and connect is not fully closed without IP-pinned TLS.
 
-**Headers** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` camera/mic/geo off, `X-DNS-Prefetch-Control: off`, `poweredByHeader: false`, CSP **Report-Only**.
+**Headers** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` camera/mic/geo off, `X-DNS-Prefetch-Control: off`, `poweredByHeader: false`, CSP **Report-Only**. Applied to `/` and app routes, not `/_next/image` or `/_next/static`.
 
-**Framework:** Next.js **16.3.3** (from 16.2.10). Image formats limited to `image/webp` (AVIF optimization off).
+**Framework:** Next.js **16.3.3** (from 16.2.10). Image formats limited to `image/webp` (AVIF optimization off). `devIndicators` and `agentRules` are off so 16.3 agent UI does not cover the product chrome.
 
 ### MVP trust boundary (technical debt)
 

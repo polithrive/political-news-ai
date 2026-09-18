@@ -99,7 +99,11 @@ Applied to `/:path*` in `next.config.ts`:
 
 **Why CSP is report-only:** Next.js 16 still emits inline/runtime scripts; publisher article images are arbitrary `https:`; LP4 analytics host is unknown. An enforcing CSP would be a product-break risk for V1.
 
-Images: `formats: ["image/webp"]` so AVIF is not optimized locally.
+Security headers apply to `/` and app routes. They are **not** applied to `/_next/image` or `/_next/static`, so they do not stack with Next's image-optimizer CSP.
+
+Images: `formats: ["image/webp"]` so AVIF is not optimized. The homepage Capitol PNG is served `unoptimized` so the 16.3.3 optimizer cannot alter the lead visual.
+
+Next 16.3.3 also enables a top-left DevTools badge and auto-rewrites `AGENTS.md` when it detects an agent. Product config sets `devIndicators: false` and `agentRules: false` so `next dev` matches the LP2 homepage chrome.
 
 ## Next.js versions
 
@@ -107,6 +111,8 @@ Images: `formats: ["image/webp"]` so AVIF is not optimized locally.
 - After: **16.3.3** (and `eslint-config-next` 16.3.3)
 
 16.2.11 patches the July 2026 GHSA set but **not** GHSA-2xp9-vwfh-vxw4 (AVIF/`libheif` RCE) or the August 2026 Windows RCE. Patched line for those is 16.3.3. Smallest appropriate secure 16.x.
+
+Homepage follow-up commit: **Fix LP3 homepage regression** — 16.3.3 DevTools badge was covering the top-left brand; security headers no longer wrap `/_next/image`. Rate limits, kill switch, and SSRF are unchanged.
 
 ## `npm audit --omit=dev`
 

@@ -44,6 +44,7 @@ export default function HomeHero({
           alt=""
           fill
           priority
+          unoptimized
           sizes="(max-width: 1024px) 100vw, 70vw"
           className="object-cover object-[68%_42%]"
         />

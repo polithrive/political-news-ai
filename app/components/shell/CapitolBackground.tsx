@@ -11,6 +11,7 @@ export default function CapitolBackground() {
         alt=""
         fill
         priority
+        unoptimized
         sizes="100vw"
         className="object-cover object-[center_40%] opacity-[0.72]"
       />
