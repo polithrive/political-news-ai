@@ -12,23 +12,18 @@ export default function HomeRailPoll() {
           className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#55C8FF]"
         >
           <ChartIcon className="h-4 w-4" />
-          Live Poll
+          Reader Poll
         </p>
       </div>
 
       <h2 className="mt-3 font-serif text-[1.05rem] font-bold leading-snug text-white">
-        A sourced reader poll will appear here.
+        What Angle Report readers think
       </h2>
 
-      <div className="mt-4 space-y-2.5" aria-hidden="true">
-        <div className="h-1.5 rounded-full bg-[#020D21]" />
-        <div className="h-1.5 rounded-full bg-[#020D21]" />
-        <div className="h-1.5 rounded-full bg-[#020D21]" />
-      </div>
-
       <p className="mt-3 text-[12px] leading-5 text-[#9CB0C5]">
-        When we publish a question tied to a real story, you&apos;ll vote here.
-        Results will come from Angle Report readers — not estimates.
+        When a question is tied to a current story, you can weigh in here.
+        Results will reflect Angle Report reader responses, not scientific
+        polling.
       </p>
     </section>
   );
