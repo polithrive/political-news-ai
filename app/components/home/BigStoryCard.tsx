@@ -40,8 +40,8 @@ export default function BigStoryCard({
       : undefined;
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-xl bg-[#04162C]">
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#05182E]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#17446D]/55 bg-[#04162C]">
+      <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-[#05182E]">
         <StoryImage
           src={article.urlToImage}
           category={category}
@@ -62,17 +62,15 @@ export default function BigStoryCard({
       </div>
 
       <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-        <h3 className="font-serif text-[1.05rem] font-bold leading-snug tracking-[-0.02em] text-white">
+        <h3 className="line-clamp-3 min-h-[3.9rem] font-serif text-[1.05rem] font-bold leading-snug tracking-[-0.02em] text-white">
           {article.title}
         </h3>
 
-        {summary ? (
-          <p className="mt-2 line-clamp-3 text-[13px] leading-5 text-[#9CB0C5]">
-            {summary}
-          </p>
-        ) : null}
+        <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-[13px] leading-5 text-[#9CB0C5]">
+          {summary || "Open the 60-second brief for multi-source analysis."}
+        </p>
 
-        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-4 text-[12px]">
+        <div className="mt-auto flex min-h-[2.25rem] flex-wrap items-center gap-x-3 gap-y-2 pt-3 text-[12px]">
           {typeof sourceCount === "number" && sourceCount > 0 ? (
             <p className="text-[#7890AC]">
               {sourceCount === 1 ? "1 source" : `${sourceCount} sources`}
