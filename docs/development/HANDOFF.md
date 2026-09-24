@@ -2,11 +2,43 @@
 
 ## Current Phase
 
-**LP5 Phase 1 — Launch code readiness** is **complete**.
+**LP5 Phase 1 — Launch code readiness** is **complete** at `b267a51`.
 
-Protected starting checkpoint: `d18b592` — Add V1 product measurement.
+**Visual Pass 1** (homepage rail / hero / Big Stories) is on branch `visual-pass-1`. It is **not** merged to `main`.
 
-**Production cutover has NOT occurred.** Do not treat this commit as a live domain launch.
+Local Cursor uses Neon **development** branch. Neon **main** is reserved for production.
+
+**Production cutover has NOT occurred.**
+
+## Protected Checkpoint
+
+| Role | Hash | Message |
+|---|---|---|
+| Application (2B.2) | `006ae52` | Add What Changed reader experience |
+| LP1 | `b1634e4` | De-scope incomplete V1 surfaces |
+| LP2 | `fb658d0` | Make intelligence briefs directly shareable |
+| LP3 | `ac16ee7` | Harden V1 cost abuse and security |
+| LP3 cleanup | `8afe1c4` | Remove unnecessary homepage workaround |
+| LP4 | `d18b592` | Add V1 product measurement |
+| LP5 code | `b267a51` | Prepare V1 for production launch |
+
+## Visual Pass 1 (`visual-pass-1`)
+
+- Right rail: Trending Today + honest Poll + Forecast cards (no mock votes/odds, no `/polls` `/forecasts` restore).
+- Hero: tighter spacing, smaller type, long-headline clamp; capitol photography kept.
+- Big Stories: shared border chrome, title/summary clamps, stretch grid.
+- Grid still `lg:row-span-2`; rail now has three cards so the empty navy column should fill from content, not min-height hacks.
+
+## What was not done (this pass)
+
+- No 60-second brief visual pass.
+- No Understand Any Article / Check a Source / More Stories / footer pass.
+- No mock poll/forecast data. No Neon/Vercel/env changes.
+
+## Next recommended action
+
+ChatGPT review of Visual Pass 1. Merge to `main` only if authorized. Do not cut over production from this handoff.
+
 
 ## Protected Checkpoint
 

@@ -38,7 +38,7 @@ export default function HomePublication({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-7">
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch">
         <div className="order-1">
           <HomeHero
             article={leadArticle}
@@ -47,7 +47,7 @@ export default function HomePublication({
           />
         </div>
 
-        <div className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-0">
           <HomeRightRail
             articles={trendingArticles}
             isLoading={isLoading}
@@ -79,7 +79,7 @@ export default function HomePublication({
               </div>
 
               {bigStories.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {bigStories.map((article, index) => {
                     const articleIndex = articles.findIndex(
                       (candidate) => candidate.url === article.url
@@ -102,11 +102,11 @@ export default function HomePublication({
                   })}
                 </div>
               ) : isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
-                      className="min-h-[280px] animate-pulse rounded-xl bg-[#04162C]"
+                      className="min-h-[280px] animate-pulse rounded-xl border border-[#17446D]/55 bg-[#04162C]"
                     />
                   ))}
                 </div>

@@ -17,6 +17,32 @@ type HomeHeroProps = {
   isLoading?: boolean;
 };
 
+const PREVIEW_UNAVAILABLE_COPY = [
+  "The Angle Report could not generate an AI preview for this story.",
+  "PoliticalPulse could not generate an AI preview for this story.",
+  "The Angle Report could not generate a summary for this story.",
+];
+
+const READER_SUMMARY_FALLBACK =
+  "Open the original reporting for the full story.";
+
+function heroDek(
+  article?: Article | null,
+  summary?: string
+): string {
+  const previewSummary = summary?.trim() || "";
+  const usablePreview =
+    previewSummary && !PREVIEW_UNAVAILABLE_COPY.includes(previewSummary)
+      ? previewSummary
+      : "";
+
+  return (
+    usablePreview ||
+    article?.description?.trim() ||
+    (article ? READER_SUMMARY_FALLBACK : "")
+  );
+}
+
 export default function HomeHero({
   article,
   summary,
@@ -35,7 +61,7 @@ export default function HomeHero({
     );
   }, []);
 
-  const dek = summary?.trim() || article?.description?.trim() || "";
+  const dek = heroDek(article, summary);
   const category = article ? storyCategory(article) : "";
 
   return (
@@ -54,8 +80,8 @@ export default function HomeHero({
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,13,33,0.2)_0%,transparent_45%,rgba(2,13,33,0.55)_100%)]" />
       </div>
 
-      <div className="relative px-5 py-9 sm:px-7 sm:py-11 lg:min-h-[318px] lg:py-12">
-        <div className="flex max-w-xl flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div className="relative px-5 py-7 sm:px-7 sm:py-8 lg:py-9">
+        <div className="flex max-w-2xl flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#55C8FF]">
             Today&apos;s top story
           </p>
@@ -66,7 +92,7 @@ export default function HomeHero({
 
         {article ? (
           <>
-            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7DD3FC]">
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7DD3FC]">
               {category}
               {article.publishedAt ? (
                 <>
@@ -76,17 +102,17 @@ export default function HomeHero({
               ) : null}
             </p>
 
-            <h1 className="mt-3 max-w-xl font-serif text-[2.05rem] font-black leading-[1.08] tracking-[-0.04em] text-pretty text-white sm:text-[2.45rem] lg:text-[2.75rem]">
+            <h1 className="mt-2 max-w-xl text-pretty font-serif text-[1.65rem] font-black leading-[1.18] tracking-[-0.03em] text-white sm:text-[1.9rem] sm:leading-[1.16] lg:max-w-[38rem] lg:text-[2.1rem] lg:leading-[1.14]">
               {article.title}
             </h1>
 
             {dek ? (
-              <p className="mt-4 max-w-lg text-[16px] leading-7 text-[#C5D4E8] line-clamp-3">
+              <p className="mt-2.5 max-w-xl text-[15px] leading-6 text-[#C5D4E8] sm:line-clamp-3 sm:text-[16px] sm:leading-7">
                 {dek}
               </p>
             ) : null}
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <StoryBriefLink
                 article={article}
                 className="inline-flex items-center rounded-full bg-[#FF2638] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
@@ -106,18 +132,18 @@ export default function HomeHero({
           </>
         ) : (
           <>
-            <h1 className="mt-4 max-w-lg font-serif text-[2.35rem] font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-[2.85rem] lg:text-[3.15rem]">
+            <h1 className="mt-2 max-w-xl font-serif text-[1.65rem] font-black leading-[1.18] tracking-[-0.03em] text-white sm:text-[1.9rem] sm:leading-[1.16] lg:text-[2.1rem] lg:leading-[1.14]">
               {isLoading
                 ? "Loading today's top story…"
                 : "Today's top story will appear here."}
             </h1>
-            <p className="mt-5 max-w-md text-[16px] leading-7 text-[#C5D4E8]">
+            <p className="mt-3 max-w-md text-[15px] leading-6 text-[#C5D4E8] sm:text-[16px] sm:leading-7">
               Clear. Balanced. Multi-source analysis.
             </p>
           </>
         )}
 
-        <p className="pointer-events-none absolute bottom-6 right-7 hidden max-w-[160px] text-right text-[13px] leading-5 text-[#D7E4F4] lg:block">
+        <p className="pointer-events-none absolute bottom-5 right-6 hidden max-w-[148px] text-right text-[12px] leading-5 text-[#9CB0C5] lg:block">
           Different perspectives.
           <br />
           A clearer picture.

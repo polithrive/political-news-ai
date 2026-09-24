@@ -26,14 +26,15 @@ Product: The Angle Report
 
 ## Current state
 
-LP5 **launch code** is ready. **Production cutover has NOT occurred.** `theanglereport.com` is still expected to serve Coming Soon until Ryan performs DNS/Vercel/env/Neon/NewsAPI configuration.
+LP5 **launch code** is ready at `b267a51`. Homepage **Visual Pass 1** lives on branch `visual-pass-1` (not merged to `main`).
+
+**Production cutover has NOT occurred.**
 
 Do **not** start domain cutover unless authorized.
 
-Do **not** start 2B.2.x AI phrasing, clustering, Angle+, forecasts-as-product, or other new features.
+Do **not** start 2B.2.x AI phrasing, clustering, Angle+, or forecasts-as-product (forecast/poll **chrome** on the homepage rail is honest empty states only).
 
 ## Next planned work
 
-**LP5 Phase 2 — production configuration and domain cutover**, if authorized.
+Visual Pass 1 review, then further UI passes if authorized. **LP5 Phase 2 — production configuration and domain cutover**, if authorized.
 
-Remaining launch gates: NewsAPI production license, Production env, Neon migrate, Vercel Pro + Web Analytics enablement, DNS away from Coming Soon.
