@@ -76,17 +76,17 @@ export default function HomeHero({
               ) : null}
             </p>
 
-            <h1 className="mt-2.5 max-w-2xl text-balance font-serif text-[1.85rem] font-black leading-[1.12] tracking-[-0.035em] text-white sm:text-[2.2rem] lg:line-clamp-4 lg:text-[2.4rem]">
+            <h1 className="mt-2 max-w-xl text-pretty font-serif text-[1.65rem] font-black leading-[1.18] tracking-[-0.03em] text-white sm:text-[1.9rem] sm:leading-[1.16] lg:max-w-[38rem] lg:text-[2.1rem] lg:leading-[1.14]">
               {article.title}
             </h1>
 
             {dek ? (
-              <p className="mt-3 max-w-xl text-[15px] leading-6 text-[#C5D4E8] sm:line-clamp-3 sm:text-[16px] sm:leading-7">
+              <p className="mt-2.5 max-w-xl text-[15px] leading-6 text-[#C5D4E8] sm:line-clamp-3 sm:text-[16px] sm:leading-7">
                 {dek}
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <StoryBriefLink
                 article={article}
                 className="inline-flex items-center rounded-full bg-[#FF2638] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FF4151]"
@@ -106,7 +106,7 @@ export default function HomeHero({
           </>
         ) : (
           <>
-            <h1 className="mt-3 max-w-xl font-serif text-[1.85rem] font-black leading-[1.12] tracking-[-0.035em] text-white sm:text-[2.2rem] lg:text-[2.4rem]">
+            <h1 className="mt-2 max-w-xl font-serif text-[1.65rem] font-black leading-[1.18] tracking-[-0.03em] text-white sm:text-[1.9rem] sm:leading-[1.16] lg:text-[2.1rem] lg:leading-[1.14]">
               {isLoading
                 ? "Loading today's top story…"
                 : "Today's top story will appear here."}

@@ -21,9 +21,8 @@ export default function HomeRailPoll() {
       </h2>
 
       <p className="mt-3 text-[12px] leading-5 text-[#9CB0C5]">
-        When a question is tied to a current story, you can weigh in here.
-        Results will reflect Angle Report reader responses, not scientific
-        polling.
+        No question is up yet. When one is tied to a current story, you can
+        weigh in here. Answers come from our readers, not from a pollster.
       </p>
     </section>
   );

@@ -16,9 +16,8 @@ export default function HomeRailForecast() {
       </h2>
 
       <p className="mt-3 text-[12px] leading-5 text-[#9CB0C5]">
-        When a developing story has a credible published forecast or a
-        trackable outcome, The Angle Report will show the source and timing
-        here.
+        No forecast is posted yet. When a developing story has a published
+        outlook we can attribute, the source and timing will appear here.
       </p>
     </section>
   );

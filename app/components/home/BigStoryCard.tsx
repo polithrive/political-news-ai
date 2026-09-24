@@ -20,11 +20,29 @@ type BigStoryCardProps = {
   priority?: boolean;
 };
 
+const PREVIEW_UNAVAILABLE_COPY = [
+  "The Angle Report could not generate an AI preview for this story.",
+  "PoliticalPulse could not generate an AI preview for this story.",
+];
+
+const READER_SUMMARY_FALLBACK =
+  "Open the original reporting for the full story.";
+
 function storySummary(
   article: Article,
   preview?: StoryCardPreview | null
 ): string {
-  return preview?.summary?.trim() || article.description?.trim() || "";
+  const previewSummary = preview?.summary?.trim() || "";
+  const usablePreview =
+    previewSummary && !PREVIEW_UNAVAILABLE_COPY.includes(previewSummary)
+      ? previewSummary
+      : "";
+
+  return (
+    usablePreview ||
+    article.description?.trim() ||
+    READER_SUMMARY_FALLBACK
+  );
 }
 
 export default function BigStoryCard({
@@ -67,7 +85,7 @@ export default function BigStoryCard({
         </h3>
 
         <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-[13px] leading-5 text-[#9CB0C5]">
-          {summary || "Open the 60-second brief for multi-source analysis."}
+          {summary}
         </p>
 
         <div className="mt-auto flex min-h-[2.25rem] flex-wrap items-center gap-x-3 gap-y-2 pt-3 text-[12px]">
