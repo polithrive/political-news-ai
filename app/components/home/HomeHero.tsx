@@ -17,6 +17,32 @@ type HomeHeroProps = {
   isLoading?: boolean;
 };
 
+const PREVIEW_UNAVAILABLE_COPY = [
+  "The Angle Report could not generate an AI preview for this story.",
+  "PoliticalPulse could not generate an AI preview for this story.",
+  "The Angle Report could not generate a summary for this story.",
+];
+
+const READER_SUMMARY_FALLBACK =
+  "Open the original reporting for the full story.";
+
+function heroDek(
+  article?: Article | null,
+  summary?: string
+): string {
+  const previewSummary = summary?.trim() || "";
+  const usablePreview =
+    previewSummary && !PREVIEW_UNAVAILABLE_COPY.includes(previewSummary)
+      ? previewSummary
+      : "";
+
+  return (
+    usablePreview ||
+    article?.description?.trim() ||
+    (article ? READER_SUMMARY_FALLBACK : "")
+  );
+}
+
 export default function HomeHero({
   article,
   summary,
@@ -35,7 +61,7 @@ export default function HomeHero({
     );
   }, []);
 
-  const dek = summary?.trim() || article?.description?.trim() || "";
+  const dek = heroDek(article, summary);
   const category = article ? storyCategory(article) : "";
 
   return (
