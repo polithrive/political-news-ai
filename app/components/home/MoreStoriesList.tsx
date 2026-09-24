@@ -51,13 +51,13 @@ export default function MoreStoriesList({
 
   return (
     <section id="more-stories" className="scroll-mt-28">
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#55C8FF]">
             More stories
           </p>
           <p className="text-sm text-[#9CB0C5]">
-            Stay informed with the latest analysis.
+            More from today&apos;s feed.
           </p>
         </div>
 
@@ -76,19 +76,20 @@ export default function MoreStoriesList({
                   : "text-[#D7E4F4] hover:text-white"
               }`}
             >
-              {item === "More" ? "More ▾" : item}
+              {item}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+      <div className="grid md:grid-cols-2 md:gap-x-8">
         {visible.map((article, index) => {
           const sourceCount =
             article.curation && article.curation.clusterSize > 1
               ? article.curation.clusterSize
               : undefined;
           const href = createIntelligenceHref(article);
+          const dek = article.description?.trim() || "";
 
           if (!href) {
             return null;
@@ -97,19 +98,19 @@ export default function MoreStoriesList({
           return (
             <article
               key={article.url || `${article.title}-${index}`}
-              className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-4"
+              className="grid grid-cols-[120px_minmax(0,1fr)] items-start gap-4 border-b border-[#17446D]/40 py-4"
             >
-              <div className="relative h-[72px] overflow-hidden rounded-lg bg-[#05182E]">
+              <div className="relative aspect-[3/2] overflow-hidden rounded-lg bg-[#05182E]">
                 <StoryImage
                   src={article.urlToImage}
                   category={storyCategory(article)}
                   sourceCount={sourceCount}
-                  sizes="92px"
+                  sizes="120px"
                   className="object-cover object-center"
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <Link
                   href={href}
                   prefetch={false}
@@ -121,8 +122,13 @@ export default function MoreStoriesList({
                 >
                   {article.title}
                 </Link>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                  <p className="text-[12px] text-[#9CB0C5]">
+                {dek ? (
+                  <p className="mt-1 line-clamp-1 text-[13px] leading-5 text-[#9CB0C5]">
+                    {dek}
+                  </p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap items-center gap-y-1">
+                  <p className="text-[12px] text-[#7890AC]">
                     <RelativeTime publishedAt={article.publishedAt} />
                     <span className="mx-1.5 text-[#4E6A84]">•</span>
                     {storyCategory(article)}
@@ -138,7 +144,7 @@ export default function MoreStoriesList({
                   <StoryBriefLink
                     article={article}
                     label="60-sec brief"
-                    className="inline-flex items-center rounded-full bg-[#FF2638] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#FF4151]"
+                    className="ml-3 border-l border-[#3A6A96]/70 pl-3 text-[12px] font-semibold text-[#55C8FF] hover:text-[#8EDCFF]"
                   />
                 </div>
               </div>
@@ -148,13 +154,13 @@ export default function MoreStoriesList({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-[#9CB0C5]">
+        <p className="pt-4 text-sm text-[#9CB0C5]">
           No stories in this topic yet. Try All.
         </p>
       ) : null}
 
       {visibleCount < filtered.length ? (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <button
             type="button"
             onClick={() =>
