@@ -1,16 +1,14 @@
 import { analyzeNewsApiPool, curateHomepageFeed } from "@/lib/services/homepageCuration";
 import { acquireHomepageCandidates } from "@/lib/services/newsAcquisition";
+import { fetchNewsSearch, resolveNewsProvider } from "@/lib/services/newsProvider";
 import { logOps } from "@/lib/ops/log";
 import { enforcePublicEndpointGuard } from "@/lib/security/guardRequest";
 import { RATE_LIMIT_BUCKETS } from "@/lib/security/rateLimit";
 
-const NEWS_API_BASE_URL =
-  "https://newsapi.org/v2";
-
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_HOMEPAGE_ARTICLES = 30;
 
-const RELATED_FETCH_SIZE = 30;
+const RELATED_FETCH_SIZE = 25;
 const RELATED_RETURN_SIZE = 12;
 
 const MAX_SEARCH_QUERY_LENGTH = 500;
@@ -171,12 +169,6 @@ const EXCLUDED_TERMS = [
   "team rumors",
   "trade rumors",
 ];
-
-type NewsApiErrorResponse = {
-  status?: string;
-  code?: string;
-  message?: string;
-};
 
 type NewsApiArticle = {
   source?: {
@@ -459,7 +451,7 @@ function isNearDuplicateTitle(
 /*
  * Keeps the first article in a near-duplicate
  * cluster. Homepage articles are already
- * newest-first from NewsAPI, so later wire
+ * newest-first from the news provider, so later wire
  * copies of the same event are dropped from
  * the homepage feed only.
  */
@@ -593,21 +585,6 @@ function prepareRelatedArticles(
   );
 }
 
-async function fetchNewsApi(
-  endpoint: string,
-  apiKey: string
-): Promise<Response> {
-  return fetch(endpoint, {
-    headers: {
-      "X-Api-Key": apiKey,
-    },
-
-    next: {
-      revalidate: 300,
-    },
-  });
-}
-
 export async function GET(
   request: Request
 ) {
@@ -623,20 +600,14 @@ export async function GET(
     performance.now();
 
   try {
-    const apiKey =
-      process.env.NEWS_API_KEY;
+    const provider = resolveNewsProvider();
 
-    if (!apiKey) {
+    if (!provider.ok) {
       return Response.json(
         {
           status: "error",
-
-          code:
-            "missingApiKey",
-
-          message:
-            "NEWS_API_KEY is not configured.",
-
+          code: provider.code,
+          message: provider.message,
           articles: [],
         },
         {
@@ -683,33 +654,6 @@ export async function GET(
         );
       }
 
-      const newsApiUrl =
-        new URL(
-          `${NEWS_API_BASE_URL}/everything`
-        );
-
-      newsApiUrl.searchParams.set(
-        "q",
-        relatedQuery
-      );
-
-      newsApiUrl.searchParams.set(
-        "language",
-        "en"
-      );
-
-      newsApiUrl.searchParams.set(
-        "sortBy",
-        "relevancy"
-      );
-
-      newsApiUrl.searchParams.set(
-        "pageSize",
-        String(
-          RELATED_FETCH_SIZE
-        )
-      );
-
       console.info(
         "PoliticalPulse related-news query:",
         {
@@ -723,73 +667,49 @@ export async function GET(
       const newsApiStartedAt =
         performance.now();
 
-      const response =
-        await fetchNewsApi(
-          newsApiUrl.toString(),
-          apiKey
-        );
+      const result = await fetchNewsSearch({
+        q: relatedQuery,
+        language: "en",
+        sortBy: "relevancy",
+        pageSize: RELATED_FETCH_SIZE,
+      });
 
       const newsApiFetchMs =
         getDurationMs(
           newsApiStartedAt
         );
 
-      const data =
-        (await response.json()) as
-          NewsApiErrorResponse & {
-            articles?: unknown[];
-            totalResults?: number;
-          };
-
-      if (!response.ok) {
+      if (result.status < 200 || result.status >= 300) {
         console.error(
-          "NewsAPI request failed:",
+          "Related news request failed:",
           {
-            status:
-              response.status,
-
-            code:
-              data.code,
-
-            message:
-              data.message,
-
+            status: result.status,
+            rateLimited: result.rateLimited,
             newsApiFetchMs,
           }
         );
 
+        if (result.rateLimited) {
+          logOps("newsapi_failed", "news", "related-429");
+        }
+
         return Response.json(
           {
             status: "error",
-
-            code:
-              data.code ??
-              "newsApiError",
-
+            code: result.rateLimited ? "rateLimited" : "newsApiError",
             message:
-              data.message ??
               "The Angle Report could not retrieve news.",
-
             articles: [],
+            rateLimited: result.rateLimited,
           },
           {
-            status:
-              response.status,
+            status: result.status || 502,
           }
         );
       }
 
-      const rawArticles =
-        Array.isArray(
-          data.articles
-        )
-          ? data.articles
-          : [];
-
-      const articles =
-        prepareRelatedArticles(
-          rawArticles
-        );
+      const rawArticles = result.articles;
+      const articles = prepareRelatedArticles(rawArticles);
 
       console.info(
         "PoliticalPulse news performance:",
@@ -803,7 +723,7 @@ export async function GET(
             articles.length,
 
           totalResults:
-            data.totalResults ?? 0,
+            result.totalResults,
 
           newsApiFetchMs,
 
@@ -828,9 +748,7 @@ export async function GET(
       performance.now();
 
     const acquired =
-      await acquireHomepageCandidates(
-        apiKey
-      );
+      await acquireHomepageCandidates();
 
     const articles =
       prepareHomepageArticles(

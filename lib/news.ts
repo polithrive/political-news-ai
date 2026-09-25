@@ -44,7 +44,7 @@ export async function getLatestNews(): Promise<Article[]> {
 
     if (data.articles.length === 0 && data.rateLimited) {
       throw new Error(
-        "NewsAPI's developer quota is exhausted (100 requests per 24 hours). The homepage will refill when the quota resets, usually within 12 hours."
+        "The news provider is rate-limited. The homepage will refill when the quota resets."
       );
     }
 

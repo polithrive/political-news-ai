@@ -1,3 +1,5 @@
+import { fetchTopHeadlines, resolveNewsProvider } from "@/lib/services/newsProvider";
+
 export type Article = {
   title: string;
   description: string;
@@ -10,14 +12,25 @@ export type Article = {
 };
 
 export async function getNews(): Promise<Article[]> {
-  const response = await fetch(
-    `https://newsapi.org/v2/top-headlines?country=us&category=general&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`,
-    {
-      cache: "no-store",
-    }
-  );
+  const provider = resolveNewsProvider();
 
-  const data = await response.json();
+  if (!provider.ok || provider.name !== "newsapi") {
+    return [];
+  }
 
-  return data.articles || [];
+  const result = await fetchTopHeadlines({
+    country: "us",
+    pageSize: 10,
+  });
+
+  return result.articles.map((article) => ({
+    title: article.title ?? "",
+    description: article.description ?? "",
+    url: article.url ?? "",
+    urlToImage: article.urlToImage ?? "",
+    publishedAt: article.publishedAt ?? "",
+    source: {
+      name: article.source?.name ?? "",
+    },
+  }));
 }
